@@ -1,0 +1,56 @@
+<ng-container 
+  *ngIf="(entities$ | async)?.length > 0; then entities; else noentities"
+  ></ng-container>
+
+<ng-template #noentities>
+  <h1>Welcome!</h1>
+  <p>Use this sample app to get you started. The app includes the following:</p>
+  <ul>
+    <li>Listener for the <code>onPageLoad</code> event</li>
+    <li>Performs an API call using the <code>restService</code> service</li>
+    <li>Updates the object using the <code>restService</code> service</li>
+    <li>Refreshes the page in Alma</li>
+  </ul>
+  <p>Use these building blocks to be on your way to developing your own Cloud App.</p>
+  <div class="highlight">Navigate to a page in Alma to view a list of entities.</div>
+</ng-template>
+
+<ng-template #entities>
+  <div class="eca-actions">
+    <button mat-flat-button color="secondary" (click)="clear()" [disabled]="!selectedEntity">Clear</button>
+    <button mat-flat-button color="primary" (click)="update(apiResultArea.value)"
+      [disabled]="!apiResult || loading">Update
+    </button>
+  </div>
+  <h1>Entities</h1>
+  <mat-card [style.display]="apiResult ? '' : 'none'">
+    <mat-card-header>
+      <mat-card-title>API Result</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <textarea #apiResultArea [value]="apiResult | json"></textarea>
+    </mat-card-content>
+  </mat-card>
+  <mat-card [style.display]="selectedEntity ? '' : 'none'">
+    <mat-card-header>
+      <mat-card-title>Selected Entity</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <pre>{{selectedEntity | json}}</pre>
+    </mat-card-content>
+  </mat-card>  
+  <label id="entities-radio-group-label">Select an entity:</label>
+  <mat-radio-group
+    aria-labelledby="entities-radio-group-label"
+    class="entities-radio-group"
+    [(ngModel)]="selectedEntity"
+    (change)="entitySelected($event)">
+    <mat-radio-button *ngFor="let entity of entities$ | async" [value]="entity">
+      {{entity.description}}
+    </mat-radio-button>
+  </mat-radio-group>
+</ng-template>
+
+<div class="loading-shade" *ngIf="loading">
+  <mat-spinner diameter="50"></mat-spinner>
+</div>
