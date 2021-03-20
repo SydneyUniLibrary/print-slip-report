@@ -52,14 +52,7 @@ export class MainComponent implements OnInit, OnDestroy {
   columnDefinitions = COLUMNS_DEFINITIONS
   lastUsedOptionsStorage = new LastUsedOptionsStorage()
 
-  form = this.formBuilder.group({
-    libraryCode: [ '', Validators.required ],
-    circDeskCode: [ '', Validators.required ],
-    columns: this.formBuilder.array(
-      this.columnDefinitions.map(_ => this.formBuilder.control(false)),
-      atLeastOneIsSelected,
-    ),
-  })
+  form = this.restoreOptions()
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
   .pipe(tap(() => this.clear()))
@@ -164,6 +157,26 @@ export class MainComponent implements OnInit, OnDestroy {
     popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
+  }
+
+  restoreOptions() {
+    let options = this.lastUsedOptionsStorage.lastUsed
+    let libraryCode = options?.libraryCode ?? ""
+    let circDeskCode = options?.circDeskCode ?? ""
+    // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
+    let includeMap = new Map(
+      options?.columnOptions?.map(x => [ x.code, x.include ])
+      ?? this.columnDefinitions.map(c => [ c.code, false ])
+    )
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    return this.formBuilder.group({
+      libraryCode: [ libraryCode, Validators.required ],
+      circDeskCode: [ circDeskCode, Validators.required ],
+      columns: this.formBuilder.array(
+        checkboxValues.map(x => this.formBuilder.control(x)),
+        atLeastOneIsSelected,
+      ),
+    })
   }
 
   saveOptions(): void {
@@ -402,12 +415,32 @@ class LastUsedOptionsStorage {
     public storage_key: string = 'au.edu.sydney.library.print-slip-report.last-used-options'
   ) { }
 
+  get lastUsed(): PrintSlipReportOptions | null {
+    try {
+      return this.deserialise(this.isAvailable ? window.localStorage.getItem(this.storage_key) : null)
+    } catch (e) {
+      console.error('Failed to restore last used options from storage', e)
+      return null
+    }
+  }
+
   set lastUsed(options: PrintSlipReportOptions) {
     try {
       window.localStorage.setItem(this.storage_key, this.serialize(options))
     } catch (e) {
       console.error('Failed to save last used options into storage', e, options)
-}
+    }
+  }
+
+  protected deserialise(blob: string | null): PrintSlipReportOptions | null {
+    if (blob) {
+      try {
+        return JSON.parse(blob) as PrintSlipReportOptions
+      } catch (e) {
+        console.error('Failed to restore last used options from storage', e, blob)
+      }
+    }
+    return null
   }
 
   protected serialize(options: PrintSlipReportOptions): string {
