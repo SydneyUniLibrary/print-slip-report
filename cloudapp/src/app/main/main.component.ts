@@ -6,6 +6,37 @@ import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 
+
+class ColumnDefinition {
+
+  constructor(
+    public name: string,
+    public mapFn: (requestedResource: any) => String
+  ) {}
+
+}
+
+
+const COLUMNS_DEFINITIONS = [
+  new ColumnDefinition('Title', x => x?.resource_metadata?.title),
+  new ColumnDefinition('Location', x => x?.location?.shelving_location),
+  new ColumnDefinition('Call Number', x => x?.location?.call_number),
+  new ColumnDefinition('Author', x => x?.resource_metadata?.author),
+  new ColumnDefinition('ISBN', x => x?.resource_metadata?.isbn),
+  new ColumnDefinition('ISSN', x => x?.resource_metadata?.issn),
+  new ColumnDefinition('Publisher', x => x?.resource_metadata?.publisher),
+  new ColumnDefinition('Publication Date', x => x?.resource_metadata?.publication_year),
+  new ColumnDefinition('Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
+  new ColumnDefinition('Requested For', x => x?.request?.[0]?.requester?.desc),
+  new ColumnDefinition('Request ID', x => x?.request?.[0]?.id),
+  new ColumnDefinition('Barcode', x => x?.location?.copy?.[0]?.barcode),
+  new ColumnDefinition('Pickup Location', x => x?.request?.[0]?.destination?.desc),
+  new ColumnDefinition('Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
+  new ColumnDefinition('Request Note', x => x?.request?.[0]?.comment),
+  new ColumnDefinition('Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
+]
+
+
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
@@ -16,28 +47,13 @@ export class MainComponent implements OnInit, OnDestroy {
   loading = false;
   selectedEntity: Entity;
   apiResult: any;
-  columnNames = [
-    'Title',
-    'Location',
-    'Call Number',
-    'Author',
-    'ISBN',
-    'ISSN',
-    'Publisher',
-    'Publication Date',
-    'Request Type',
-    'Requested For',
-    'Request ID',
-    'Barcode',
-    'Pickup Location',
-    'Storage Location ID',
-  ]
+  columnDefinitions = COLUMNS_DEFINITIONS
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
     circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(false)),
+      this.columnDefinitions.map(_ => this.formBuilder.control(false)),
       atLeastOneIsSelected,
     ),
   })
@@ -71,9 +87,8 @@ export class MainComponent implements OnInit, OnDestroy {
         limit: 100, // TODO: Handle more than 100 requested resources
       },
     }).subscribe({
-      next: (resp: RestResponse) => {
-        // TODO: Pop up and print the HTML report
-        this.alert.warn('Print is not implemented yet', { autoClose: true })
+      next: resp => {
+        this.generatePrint(resp.requested_resource)
         this.loading = false
       },
       error: (err: RestErrorResponse) => {
@@ -110,6 +125,15 @@ export class MainComponent implements OnInit, OnDestroy {
       default:
         this.alert.error(`The API parameter ${invalidParameterError.parameter} was invalid`)
     }
+  }
+
+  generatePrint(requestedResources: any[]): void {
+    let checkboxValues = this.columns.value
+    let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
+    let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
+    mappedRequestedResources.forEach(x => console.log(x))
+    // TODO: Pop up
+    this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
 
   get columns(): FormArray {
@@ -239,4 +263,16 @@ function parseInvalidParameterError(restErrorResponse: RestErrorResponse): Inval
     }
   }
   return null
+}
+
+
+function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any): String[] {
+  return selectedColumns.map(col => {
+    try {
+      return col.mapFn(requestedResource)
+    } catch (e) {
+      console.error(`Failed to mapped column ${col.name} for `, requestedResource)
+      return undefined
+    }
+  })
 }
