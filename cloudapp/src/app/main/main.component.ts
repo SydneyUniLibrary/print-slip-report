@@ -35,7 +35,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
   form = this.formBuilder.group({
     libraryCode: [ 'LAW', Validators.required ],
-    circDeskCode: [ 'DEFAULT_CIRC_DESK', Validators.required ],
+    circDeskCode: [ 'DEFAULT_CIRC_DESK2', Validators.required ],
     columns: this.formBuilder.array(
       this.columnNames.map(n => this.formBuilder.control(true)),
       atLeastOneIsSelected,
@@ -99,7 +99,13 @@ export class MainComponent implements OnInit, OnDestroy {
           { autoClose: false }
         )
         break
-      // TODO: Handle invalid circ desk code
+      case 'circ_desk':
+        this.circDeskCode.setErrors({ 'invalidCode': true })
+        this.alert.info(
+          `Valid circulation desk codes are ${invalidParameterError.validOptions.join(', ')}`,
+          { autoClose: false }
+        )
+        break
       default:
         this.alert.error(`The API parameter ${invalidParameterError.parameter} was invalid`)
     }
@@ -139,8 +145,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get circDeskCodeError(): String | null {
     let errors = this.circDeskCode.errors
-    if ('required' in errors) {
+    if (errors?.required) {
       return 'You need to enter a circulation desk code'
+    } else if (errors?.invalidCode) {
+      return 'This is not a valid circulation desk code'
     } else {
       return null
     }
