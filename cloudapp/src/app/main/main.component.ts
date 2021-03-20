@@ -288,13 +288,13 @@ class ReportGenerator {
   ) { }
 
   generate(): string {
-    return ([
+    return flatten([
       '<table border="1">',
       this.thead(),
       '<tbody>',
       this.values.map(r => this.tr(r)),
       '</table>'
-    ]).flat(2).join('\n')
+    ]).join('\n')
   }
 
   private thead(): string[] {
@@ -311,4 +311,10 @@ class ReportGenerator {
     return value ? escape(value.toString()) : ''
   }
 
+}
+
+
+function flatten(a: any): string[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return a.flat(2)
 }
