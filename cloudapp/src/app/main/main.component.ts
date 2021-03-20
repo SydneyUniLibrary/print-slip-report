@@ -131,7 +131,8 @@ export class MainComponent implements OnInit, OnDestroy {
     let checkboxValues = this.columns.value
     let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
     let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
-    mappedRequestedResources.forEach(x => console.log(x))
+    let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
+    console.log(generatedReport)
     // TODO: Pop up
     this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
@@ -275,4 +276,38 @@ function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any)
       return undefined
     }
   })
+}
+
+
+class ReportGenerator {
+
+  constructor(
+    private columnNames: string[],
+    private values: string[][]
+  ) { }
+
+  generate(): string {
+    return ([
+      '<table border="1">',
+      this.thead(),
+      '<tbody>',
+      this.values.map(r => this.tr(r)),
+      '</table>'
+    ]).flat(2).join('\n')
+  }
+
+  private thead(): string[] {
+    let thList = this.columnNames.map(x => `<th>${this.t(x)}`)
+    return [ '<thead>', '<tr>', ...thList ]
+  }
+
+  private tr(row: string[]): string[] {
+    let tdList = row.map(x => `<td>${this.t(x)}`)
+    return [ '<tr>', ...tdList ]
+  }
+
+  private t(value: string): string {
+    return value ? value : ''
+  }
+
 }
