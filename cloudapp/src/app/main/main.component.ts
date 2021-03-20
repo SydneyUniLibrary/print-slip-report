@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
-import { FormArray, FormBuilder } from '@angular/forms'
+import { FormArray, FormBuilder, Validators } from '@angular/forms'
 
 @Component({
   selector: 'app-main',
@@ -34,8 +34,8 @@ export class MainComponent implements OnInit, OnDestroy {
   ]
 
   form = this.formBuilder.group({
-    libraryCode: '',
-    circDeskCode: '',
+    libraryCode: [ '', Validators.required ],
+    circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
       this.columnNames.map(n => this.formBuilder.control(false))
     ),
