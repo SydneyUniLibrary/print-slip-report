@@ -137,7 +137,7 @@ export class MainComponent implements OnInit, OnDestroy {
     let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
     let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
     let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
-    let win = window.open('', 'PrintSlipReport', 'status=0')
+    let win = window.open('', '', 'status=0')
     if (!win) {
       console.log('win is null')
       this.alert.error('Your browser prevented the popup that has the report from appearing')
