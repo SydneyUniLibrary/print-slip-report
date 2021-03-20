@@ -12,7 +12,7 @@ class ColumnDefinition {
 
   constructor(
     public name: string,
-    public mapFn: (requestedResource: any) => String
+    public mapFn: (requestedResource: any) => string
   ) {}
 
 }
@@ -155,7 +155,7 @@ export class MainComponent implements OnInit, OnDestroy {
     return this.form.get('columns') as FormArray
   }
 
-  get columnsError(): String | null {
+  get columnsError(): string | null {
     let errors = this.columns.errors
     if ('atLeastOneIsSelected' in errors) {
       return 'Select at least 1 column to include in the print'
@@ -168,7 +168,7 @@ export class MainComponent implements OnInit, OnDestroy {
     return this.form.get('libraryCode') as FormControl
   }
 
-  get libraryCodeError(): String | null {
+  get libraryCodeError(): string | null {
     let errors = this.libraryCode.errors
     if (errors?.required) {
       return 'You need to enter a library code'
@@ -183,7 +183,7 @@ export class MainComponent implements OnInit, OnDestroy {
     return this.form.get('circDeskCode') as FormControl
   }
 
-  get circDeskCodeError(): String | null {
+  get circDeskCodeError(): string | null {
     let errors = this.circDeskCode.errors
     if (errors?.required) {
       return 'You need to enter a circulation desk code'
@@ -260,8 +260,8 @@ function atLeastOneIsSelected(formArray: FormArray): ValidationErrors | null {
 class InvalidParameterError {
 
   constructor(
-    public parameter: String,
-    public validOptions: String[],
+    public parameter: string,
+    public validOptions: string[],
   ) {}
 
 }
@@ -281,7 +281,7 @@ function parseInvalidParameterError(restErrorResponse: RestErrorResponse): Inval
 }
 
 
-function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any): String[] {
+function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any): string[] {
   return selectedColumns.map(col => {
     try {
       return col.mapFn(requestedResource)
