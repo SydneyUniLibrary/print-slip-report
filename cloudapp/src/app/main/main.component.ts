@@ -148,7 +148,6 @@ export class MainComponent implements OnInit, OnDestroy {
       win.document.close()
       this.alert.success('The report popped up in a new window')
     }
-    this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
 
   get columns(): FormArray {
