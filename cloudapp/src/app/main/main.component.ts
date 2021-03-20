@@ -59,6 +59,7 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   print() {
+    this.loading = true
     const libraryCode = this.form.get('libraryCode').value
     const circDeskCode = this.form.get('circDeskCode').value
     this.restService.call({
@@ -72,6 +73,7 @@ export class MainComponent implements OnInit, OnDestroy {
       next: (resp: RestResponse) => {
         // TODO: Pop up and print the HTML report
         this.alert.warn('Print is not implemented yet', { autoClose: true })
+        this.loading = false
       },
     })
   }
