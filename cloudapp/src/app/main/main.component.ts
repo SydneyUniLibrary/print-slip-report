@@ -68,6 +68,7 @@ export class MainComponent implements OnInit, OnDestroy {
       queryParams: {
         library: libraryCode,
         circ_desk: circDeskCode,
+        limit: 100, // TODO: Handle more than 100 requested resources
       },
     }).subscribe({
       next: (resp: RestResponse) => {
