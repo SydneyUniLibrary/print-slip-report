@@ -18,19 +18,22 @@ class ColumnDefinition {
 
 
 const COLUMNS_DEFINITIONS = [
-  new ColumnDefinition('Title', () => ''),
-  new ColumnDefinition('Location', () => ''),
-  new ColumnDefinition('Call Number', () => ''),
-  new ColumnDefinition('Author', () => ''),
-  new ColumnDefinition('ISBN', () => ''),
-  new ColumnDefinition('ISSN', () => ''),
-  new ColumnDefinition('Publisher', () => ''),
-  new ColumnDefinition('Publication Date', () => ''),
-  new ColumnDefinition('Request Type', () => ''),
-  new ColumnDefinition('Requested For', () => ''),
-  new ColumnDefinition('Request ID', () => ''),
-  new ColumnDefinition('Pickup Location', () => ''),
-  new ColumnDefinition('Storage Location ID', () => ''),
+  new ColumnDefinition('Title', x => x?.resource_metadata?.title),
+  new ColumnDefinition('Location', x => x?.location?.shelving_location),
+  new ColumnDefinition('Call Number', x => x?.location?.call_number),
+  new ColumnDefinition('Author', x => x?.resource_metadata?.author),
+  new ColumnDefinition('ISBN', x => x?.resource_metadata?.isbn),
+  new ColumnDefinition('ISSN', x => x?.resource_metadata?.issn),
+  new ColumnDefinition('Publisher', x => x?.resource_metadata?.publisher),
+  new ColumnDefinition('Publication Date', x => x?.resource_metadata?.publication_year),
+  new ColumnDefinition('Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
+  new ColumnDefinition('Requested For', x => x?.request?.[0]?.requester?.desc),
+  new ColumnDefinition('Request ID', x => x?.request?.[0]?.id),
+  new ColumnDefinition('Barcode', x => x?.location?.copy?.[0]?.barcode),
+  new ColumnDefinition('Pickup Location', x => x?.request?.[0]?.destination?.desc),
+  new ColumnDefinition('Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
+  new ColumnDefinition('Request Note', x => x?.request?.[0]?.comment),
+  new ColumnDefinition('Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
 ]
 
 
