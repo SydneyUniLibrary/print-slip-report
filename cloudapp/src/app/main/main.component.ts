@@ -5,6 +5,7 @@ import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
+import { escape } from 'html-escaper'
 
 
 class ColumnDefinition {
@@ -131,8 +132,18 @@ export class MainComponent implements OnInit, OnDestroy {
     let checkboxValues = this.columns.value
     let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
     let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
-    mappedRequestedResources.forEach(x => console.log(x))
-    // TODO: Pop up
+    let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
+    let win = window.open('', 'PrintSlipReport', 'status=0')
+    if (!win) {
+      console.log('win is null')
+      this.alert.error('Your browser prevented the popup that has the report from appearing')
+    } else {
+      win.document.write('<!HTML>')
+      win.document.write('<body>')
+      win.document.write(generatedReport)
+      win.document.close()
+      this.alert.info('The report popped up in a new window')
+    }
     this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
 
@@ -275,4 +286,44 @@ function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any)
       return undefined
     }
   })
+}
+
+
+class ReportGenerator {
+
+  constructor(
+    private columnNames: string[],
+    private values: string[][]
+  ) { }
+
+  generate(): string {
+    return flatten([
+      '<table border="1">',
+      this.thead(),
+      '<tbody>',
+      this.values.map(r => this.tr(r)),
+      '</table>'
+    ]).join('\n')
+  }
+
+  private thead(): string[] {
+    let thList = this.columnNames.map(x => `<th>${this.t(x)}`)
+    return [ '<thead>', '<tr>', ...thList ]
+  }
+
+  private tr(row: string[]): string[] {
+    let tdList = row.map(x => `<td>${this.t(x)}`)
+    return [ '<tr>', ...tdList ]
+  }
+
+  private t(value: string): string {
+    return value ? escape(value.toString()) : ''
+  }
+
+}
+
+
+function flatten(a: any): string[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return a.flat(2)
 }
