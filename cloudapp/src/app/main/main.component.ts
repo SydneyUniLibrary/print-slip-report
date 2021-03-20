@@ -5,6 +5,7 @@ import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
+import { escape } from 'html-escaper'
 
 
 class ColumnDefinition {
@@ -307,7 +308,7 @@ class ReportGenerator {
   }
 
   private t(value: string): string {
-    return value ? value : ''
+    return value ? escape(value.toString()) : ''
   }
 
 }
