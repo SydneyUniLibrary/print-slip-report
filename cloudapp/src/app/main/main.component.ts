@@ -143,7 +143,7 @@ export class MainComponent implements OnInit, OnDestroy {
       this.alert.error('Your browser prevented the popup that has the report from appearing')
     } else {
       win.document.write('<!HTML>')
-      win.document.write('<body>')
+      win.document.write('<body onload="window.print()">')
       win.document.write(generatedReport)
       win.document.close()
       this.alert.success('The report popped up in a new window')
