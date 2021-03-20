@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
-import { FormArray, FormBuilder, FormControl, Validators } from '@angular/forms'
+import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 
 @Component({
   selector: 'app-main',
@@ -37,7 +37,8 @@ export class MainComponent implements OnInit, OnDestroy {
     libraryCode: [ '', Validators.required ],
     circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(false))
+      this.columnNames.map(n => this.formBuilder.control(false)),
+      atLeastOneIsSelected,
     ),
   })
 
@@ -64,6 +65,15 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get columns(): FormArray {
     return this.form.get('columns') as FormArray
+  }
+
+  get columnsError(): String | null {
+    let errors = this.columns.errors
+    if ('atLeastOneIsSelected' in errors) {
+      return 'Select at least 1 column to include in the print'
+    } else {
+      return null
+    }
   }
 
   get libraryCode(): FormControl {
@@ -142,4 +152,13 @@ export class MainComponent implements OnInit, OnDestroy {
     }
     return undefined;
   }
+}
+
+
+function atLeastOneIsSelected(formArray: FormArray): ValidationErrors | null {
+  return (
+    (!formArray.controls.some(c => c.value))
+    ? { 'atLeastOneIsSelected': true }
+    : null
+  )
 }

@@ -23,9 +23,12 @@
   </div>
 
   <div formArrayName="columns">
-    <div [style.margin-top.px]="24" [style.margin-bottom.px]="12">Columns</div>
-    <div *ngFor="let column of columns.controls; let i=index">
-      <mat-checkbox [formControlName]="i">{{ columnNames[i] }}</mat-checkbox>
+    <div [style.margin-top.px]="24">Columns</div>
+    <mat-error *ngIf=" columns.invalid">{{ columnsError }}</mat-error>
+    <div [style.margin-top.px]="12">
+      <div *ngFor="let column of columns.controls; let i=index">
+        <mat-checkbox [formControlName]="i">{{ columnNames[i] }}</mat-checkbox>
+      </div>
     </div>
   </div>
 
