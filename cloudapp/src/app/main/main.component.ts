@@ -110,6 +110,7 @@ export class MainComponent implements OnInit, OnDestroy {
       },
     }).subscribe({
       next: resp => {
+        this.saveOptions()
         if (resp?.requested_resource) {
           this.generatePrint(resp.requested_resource, popupWindow)
         } else {
@@ -163,6 +164,17 @@ export class MainComponent implements OnInit, OnDestroy {
     popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
+  }
+
+  saveOptions(): void {
+    let checkboxValues = this.columns.value
+    this.lastUsedOptionsStorage.lastUsed = {
+      libraryCode: this.libraryCode.value,
+      circDeskCode: this.circDeskCode.value,
+      columnOptions: this.columnDefinitions.map(
+        (c, i) => ({ code: c.code, include: checkboxValues[i] })
+      )
+    }
   }
 
   get columns(): FormArray {
@@ -347,6 +359,18 @@ function flatten(a: any): string[] {
 }
 
 
+type PrintSlipReportOptions = {
+  libraryCode: string
+  circDeskCode: string
+  columnOptions: PrintSlipReportColumnOption[]
+}
+
+type PrintSlipReportColumnOption = {
+  code: string
+  include: boolean
+}
+
+
 class LastUsedOptionsStorage {
 
   isAvailable = LastUsedOptionsStorage.isLocalStorageAvailable()
@@ -372,6 +396,22 @@ class LastUsedOptionsStorage {
         && (storage && storage.length !== 0) // acknowledge QuotaExceededError only if there's something already stored
       )
     }
+  }
+
+  constructor(
+    public storage_key: string = 'au.edu.sydney.library.print-slip-report.last-used-options'
+  ) { }
+
+  set lastUsed(options: PrintSlipReportOptions) {
+    try {
+      window.localStorage.setItem(this.storage_key, this.serialize(options))
+    } catch (e) {
+      console.error('Failed to save last used options into storage', e, options)
+}
+  }
+
+  protected serialize(options: PrintSlipReportOptions): string {
+    return JSON.stringify(options)
   }
 
 }
