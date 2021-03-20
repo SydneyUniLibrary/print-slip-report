@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
-import { FormBuilder } from '@angular/forms'
+import { FormArray, FormBuilder } from '@angular/forms'
 
 @Component({
   selector: 'app-main',
@@ -16,10 +16,29 @@ export class MainComponent implements OnInit, OnDestroy {
   loading = false;
   selectedEntity: Entity;
   apiResult: any;
+  columnNames = [
+    'Title',
+    'Location',
+    'Call Number',
+    'Author',
+    'ISBN',
+    'ISSN',
+    'Publisher',
+    'Publication Date',
+    'Request Type',
+    'Requested For',
+    'Request ID',
+    'Barcode',
+    'Pickup Location',
+    'Storage Location ID',
+  ]
 
   form = this.formBuilder.group({
     libraryCode: '',
     circDeskCode: '',
+    columns: this.formBuilder.array(
+      this.columnNames.map(n => this.formBuilder.control(false))
+    ),
   })
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
@@ -41,6 +60,10 @@ export class MainComponent implements OnInit, OnDestroy {
   print() {
     console.dir(this.form.value)
     this.alert.warn('Print is not implemented yet', { autoClose: true })
+  }
+
+  get columns(): FormArray {
+    return this.form.get('columns') as FormArray
   }
 
   entitySelected(event: MatRadioChange) {

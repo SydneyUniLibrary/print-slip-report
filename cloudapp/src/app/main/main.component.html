@@ -14,6 +14,13 @@
     <input matInput formControlName="circDeskCode">
   </mat-form-field>
 
+  <div formArrayName="columns">
+    <mat-label>Columns</mat-label>
+    <div *ngFor="let column of columns.controls; let i=index">
+      <mat-checkbox [formControlName]="i">{{ columnNames[i] }}</mat-checkbox>
+    </div>
+  </div>
+
 </form>
 
 <div class="loading-shade" *ngIf="loading">
