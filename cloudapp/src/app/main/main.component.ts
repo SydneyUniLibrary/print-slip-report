@@ -6,6 +6,34 @@ import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 
+
+class ColumnDefinition {
+
+  constructor(
+    public name: string,
+    public mapFn: (requestedResource: any) => String
+  ) {}
+
+}
+
+
+const COLUMNS_DEFINITIONS = [
+  new ColumnDefinition('Title', () => ''),
+  new ColumnDefinition('Location', () => ''),
+  new ColumnDefinition('Call Number', () => ''),
+  new ColumnDefinition('Author', () => ''),
+  new ColumnDefinition('ISBN', () => ''),
+  new ColumnDefinition('ISSN', () => ''),
+  new ColumnDefinition('Publisher', () => ''),
+  new ColumnDefinition('Publication Date', () => ''),
+  new ColumnDefinition('Request Type', () => ''),
+  new ColumnDefinition('Requested For', () => ''),
+  new ColumnDefinition('Request ID', () => ''),
+  new ColumnDefinition('Pickup Location', () => ''),
+  new ColumnDefinition('Storage Location ID', () => ''),
+]
+
+
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
@@ -16,28 +44,13 @@ export class MainComponent implements OnInit, OnDestroy {
   loading = false;
   selectedEntity: Entity;
   apiResult: any;
-  columnNames = [
-    'Title',
-    'Location',
-    'Call Number',
-    'Author',
-    'ISBN',
-    'ISSN',
-    'Publisher',
-    'Publication Date',
-    'Request Type',
-    'Requested For',
-    'Request ID',
-    'Barcode',
-    'Pickup Location',
-    'Storage Location ID',
-  ]
+  columnDefinitions = COLUMNS_DEFINITIONS
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
     circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(false)),
+      this.columnDefinitions.map(_ => this.formBuilder.control(false)),
       atLeastOneIsSelected,
     ),
   })
