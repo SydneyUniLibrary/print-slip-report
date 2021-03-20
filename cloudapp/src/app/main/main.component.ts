@@ -49,6 +49,7 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedEntity: Entity;
   apiResult: any;
   columnDefinitions = COLUMNS_DEFINITIONS
+  lastUsedOptionsStorage = new LastUsedOptionsStorage()
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
@@ -70,6 +71,12 @@ export class MainComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    if (!this.lastUsedOptionsStorage.isAvailable) {
+      this.alert.warn(
+        "Your browser is preventing your options below from being saved.",
+        { autoClose: true }
+      )
+    }
   }
 
   ngOnDestroy(): void {
@@ -336,4 +343,34 @@ class ReportGenerator {
 function flatten(a: any): string[] {
   // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
   return a.flat(2)
+}
+
+
+class LastUsedOptionsStorage {
+
+  isAvailable = LastUsedOptionsStorage.isLocalStorageAvailable()
+
+  static isLocalStorageAvailable(): boolean {
+    // Copied from https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+    let storage
+    try {
+      storage = window['localStorage']
+      let x = '__storage_test__'
+      storage.setItem(x, x)
+      storage.removeItem(x)
+      return true
+    } catch (e) {
+      return (
+        e instanceof DOMException
+        && (
+          e.code === 22 // everything except Firefox
+          || e.code === 1014 // Firefox
+          || e.name === 'QuotaExceededError' // test name field too, because code might not be present in everything except Firefox
+          || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' // Firefox
+        )
+        && (storage && storage.length !== 0) // acknowledge QuotaExceededError only if there's something already stored
+      )
+    }
+  }
+
 }
