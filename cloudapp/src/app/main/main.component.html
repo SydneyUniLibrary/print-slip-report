@@ -4,12 +4,12 @@
     <button type="submit" mat-flat-button color="primary" [disabled]="!form.valid || loading">Print</button>
   </div>
 
-  <mat-form-field appearance="fill">
+  <mat-form-field appearance="standard" [style.margin-right.px]="4">
     <mat-label>Library code</mat-label>
     <input matInput formControlName="libraryCode">
   </mat-form-field>
 
-  <mat-form-field appearance="fill">
+  <mat-form-field appearance="standard">
     <mat-label>Circulation desk code</mat-label>
     <input matInput formControlName="circDeskCode">
   </mat-form-field>
