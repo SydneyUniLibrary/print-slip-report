@@ -89,7 +89,11 @@ export class MainComponent implements OnInit, OnDestroy {
       },
     }).subscribe({
       next: resp => {
-        this.generatePrint(resp.requested_resource)
+        if (resp?.requested_resource) {
+          this.generatePrint(resp.requested_resource)
+        } else {
+          this.alert.info('There are no requested resources to print.')
+        }
         this.loading = false
       },
       error: (err: RestErrorResponse) => {
