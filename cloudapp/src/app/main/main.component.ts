@@ -146,7 +146,7 @@ export class MainComponent implements OnInit, OnDestroy {
       win.document.write('<body>')
       win.document.write(generatedReport)
       win.document.close()
-      this.alert.info('The report popped up in a new window')
+      this.alert.success('The report popped up in a new window')
     }
     this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
