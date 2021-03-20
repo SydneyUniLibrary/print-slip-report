@@ -2,7 +2,7 @@ import { Observable  } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
+  Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 
@@ -34,10 +34,10 @@ export class MainComponent implements OnInit, OnDestroy {
   ]
 
   form = this.formBuilder.group({
-    libraryCode: [ '', Validators.required ],
-    circDeskCode: [ '', Validators.required ],
+    libraryCode: [ 'LAW', Validators.required ],
+    circDeskCode: [ 'DEFAULT_CIRC_DESK2', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(false)),
+      this.columnNames.map(n => this.formBuilder.control(true)),
       atLeastOneIsSelected,
     ),
   })
@@ -59,8 +59,56 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   print() {
-    console.dir(this.form.value)
-    this.alert.warn('Print is not implemented yet', { autoClose: true })
+    this.loading = true
+    const libraryCode = this.form.get('libraryCode').value
+    const circDeskCode = this.form.get('circDeskCode').value
+    this.restService.call({
+      url: '/task-lists/requested-resources',
+      method: HttpMethod.GET,
+      queryParams: {
+        library: libraryCode,
+        circ_desk: circDeskCode,
+      },
+    }).subscribe({
+      next: (resp: RestResponse) => {
+        // TODO: Pop up and print the HTML report
+        this.alert.warn('Print is not implemented yet', { autoClose: true })
+        this.loading = false
+      },
+      error: (err: RestErrorResponse) => {
+        console.error("REST API Error", err)
+        const invalidParameterError = parseInvalidParameterError(err)
+        if (invalidParameterError) {
+          this.onInvalidParameterError(invalidParameterError)
+        } else {
+          let msg = err.message || "See the console in your browser's developer tools for more information."
+          this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+        }
+        this.loading = false
+      }
+    })
+  }
+
+  private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
+    let msg: string
+    switch (invalidParameterError.parameter) {
+      case 'library':
+        this.libraryCode.setErrors({ 'invalidCode': true })
+        this.alert.info(
+          `Valid library codes are ${invalidParameterError.validOptions.join(', ')}`,
+          { autoClose: false }
+        )
+        break
+      case 'circ_desk':
+        this.circDeskCode.setErrors({ 'invalidCode': true })
+        this.alert.info(
+          `Valid circulation desk codes are ${invalidParameterError.validOptions.join(', ')}`,
+          { autoClose: false }
+        )
+        break
+      default:
+        this.alert.error(`The API parameter ${invalidParameterError.parameter} was invalid`)
+    }
   }
 
   get columns(): FormArray {
@@ -82,8 +130,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get libraryCodeError(): String | null {
     let errors = this.libraryCode.errors
-    if ('required' in errors) {
+    if (errors?.required) {
       return 'You need to enter a library code'
+    } else if (errors?.invalidCode) {
+      return 'This is not a valid library code'
     } else {
       return null
     }
@@ -95,8 +145,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get circDeskCodeError(): String | null {
     let errors = this.circDeskCode.errors
-    if ('required' in errors) {
+    if (errors?.required) {
       return 'You need to enter a circulation desk code'
+    } else if (errors?.invalidCode) {
+      return 'This is not a valid circulation desk code'
     } else {
       return null
     }
@@ -152,6 +204,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
     return undefined;
   }
+
 }
 
 
@@ -161,4 +214,28 @@ function atLeastOneIsSelected(formArray: FormArray): ValidationErrors | null {
     ? { 'atLeastOneIsSelected': true }
     : null
   )
+}
+
+
+class InvalidParameterError {
+
+  constructor(
+    public parameter: String,
+    public validOptions: String[],
+  ) {}
+
+}
+
+
+function parseInvalidParameterError(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
+  const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == "40166410")
+  if (error) {
+    const match = error[0].errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
+    if (match) {
+      let parameter = match[1]
+      let validOptions = match[2].split(',')
+      return new InvalidParameterError(parameter, validOptions)
+    }
+  }
+  return null
 }
