@@ -18,7 +18,8 @@ export class MainComponent implements OnInit, OnDestroy {
   apiResult: any;
 
   form = this.formBuilder.group({
-    libraryCode: ''
+    libraryCode: '',
+    circDeskCode: '',
   })
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
