@@ -84,9 +84,8 @@ export class MainComponent implements OnInit, OnDestroy {
         limit: 100, // TODO: Handle more than 100 requested resources
       },
     }).subscribe({
-      next: (resp: RestResponse) => {
-        // TODO: Pop up and print the HTML report
-        this.alert.warn('Print is not implemented yet', { autoClose: true })
+      next: resp => {
+        this.generatePrint(resp.requested_resource)
         this.loading = false
       },
       error: (err: RestErrorResponse) => {
@@ -123,6 +122,15 @@ export class MainComponent implements OnInit, OnDestroy {
       default:
         this.alert.error(`The API parameter ${invalidParameterError.parameter} was invalid`)
     }
+  }
+
+  generatePrint(requestedResources: any[]): void {
+    let checkboxValues = this.columns.value
+    let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
+    let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
+    mappedRequestedResources.forEach(x => console.log(x))
+    // TODO: Pop up
+    this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
 
   get columns(): FormArray {
@@ -252,4 +260,16 @@ function parseInvalidParameterError(restErrorResponse: RestErrorResponse): Inval
     }
   }
   return null
+}
+
+
+function mapColumns(selectedColumns: ColumnDefinition[], requestedResource: any): String[] {
+  return selectedColumns.map(col => {
+    try {
+      return col.mapFn(requestedResource)
+    } catch (e) {
+      console.error(`Failed to mapped column ${col.name} for `, requestedResource)
+      return undefined
+    }
+  })
 }
