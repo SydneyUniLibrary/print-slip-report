@@ -2,7 +2,7 @@ import { Observable  } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
+  Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 
@@ -34,10 +34,10 @@ export class MainComponent implements OnInit, OnDestroy {
   ]
 
   form = this.formBuilder.group({
-    libraryCode: [ '', Validators.required ],
-    circDeskCode: [ '', Validators.required ],
+    libraryCode: [ 'LAW', Validators.required ],
+    circDeskCode: [ 'DEFAULT_CIRC_DESK', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(false)),
+      this.columnNames.map(n => this.formBuilder.control(true)),
       atLeastOneIsSelected,
     ),
   })
@@ -59,8 +59,21 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   print() {
-    console.dir(this.form.value)
-    this.alert.warn('Print is not implemented yet', { autoClose: true })
+    const libraryCode = this.form.get('libraryCode').value
+    const circDeskCode = this.form.get('circDeskCode').value
+    this.restService.call({
+      url: '/task-lists/requested-resources',
+      method: HttpMethod.GET,
+      queryParams: {
+        library: libraryCode,
+        circ_desk: circDeskCode,
+      },
+    }).subscribe({
+      next: (resp: RestResponse) => {
+        // TODO: Pop up and print the HTML report
+        this.alert.warn('Print is not implemented yet', { autoClose: true })
+      },
+    })
   }
 
   get columns(): FormArray {
