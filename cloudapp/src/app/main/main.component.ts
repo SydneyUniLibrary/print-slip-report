@@ -34,10 +34,10 @@ export class MainComponent implements OnInit, OnDestroy {
   ]
 
   form = this.formBuilder.group({
-    libraryCode: [ 'LAW', Validators.required ],
-    circDeskCode: [ 'DEFAULT_CIRC_DESK2', Validators.required ],
+    libraryCode: [ '', Validators.required ],
+    circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnNames.map(n => this.formBuilder.control(true)),
+      this.columnNames.map(n => this.formBuilder.control(false)),
       atLeastOneIsSelected,
     ),
   })
