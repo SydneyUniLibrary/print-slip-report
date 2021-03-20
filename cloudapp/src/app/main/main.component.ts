@@ -75,6 +75,14 @@ export class MainComponent implements OnInit, OnDestroy {
         this.alert.warn('Print is not implemented yet', { autoClose: true })
         this.loading = false
       },
+      error: (err: RestErrorResponse) => {
+        // TODO: Handle invalid library code
+        // TODO: Handle invalid circ desk code
+        console.error("REST API Error", err)
+        let msg = err.message || "See the console in your browser's developer tools for more information."
+        this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+        this.loading = false
+      }
     })
   }
 
