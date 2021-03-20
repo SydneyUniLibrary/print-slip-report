@@ -1,9 +1,10 @@
 import { Observable  } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod, 
+import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
+import { FormBuilder } from '@angular/forms'
 
 @Component({
   selector: 'app-main',
@@ -16,19 +17,29 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedEntity: Entity;
   apiResult: any;
 
+  form = this.formBuilder.group({
+    libraryCode: ''
+  })
+
   entities$: Observable<Entity[]> = this.eventsService.entities$
   .pipe(tap(() => this.clear()))
 
   constructor(
     private restService: CloudAppRestService,
     private eventsService: CloudAppEventsService,
-    private alert: AlertService 
+    private alert: AlertService,
+    private formBuilder: FormBuilder,
   ) { }
 
   ngOnInit() {
   }
 
   ngOnDestroy(): void {
+  }
+
+  print() {
+    console.dir(this.form.value)
+    this.alert.warn('Print is not implemented yet', { autoClose: true })
   }
 
   entitySelected(event: MatRadioChange) {
@@ -53,7 +64,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     let request: Request = {
-      url: this.selectedEntity.link, 
+      url: this.selectedEntity.link,
       method: HttpMethod.PUT,
       requestBody
     };
@@ -70,7 +81,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.alert.error('Failed to update data: ' + e.message);
         console.error(e);
       }
-    });    
+    });
   }
 
   private tryParseJson(value: any) {

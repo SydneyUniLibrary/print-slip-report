@@ -1,6 +1,15 @@
-<div class="eca-actions">
-  <button mat-flat-button color="primary" [disabled]="!apiResult || loading">Print</button>
-</div>
+<form [formGroup]="form" (ngSubmit)="print()">
+
+  <div class="eca-actions">
+    <button type="submit" mat-flat-button color="primary" [disabled]="!form.valid || loading">Print</button>
+  </div>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Library code</mat-label>
+    <input matInput formControlName="libraryCode">
+  </mat-form-field>
+
+</form>
 
 <div class="loading-shade" *ngIf="loading">
   <mat-spinner diameter="50"></mat-spinner>
