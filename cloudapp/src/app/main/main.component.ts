@@ -1,10 +1,8 @@
 import { Observable  } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-  CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService, InitData,
-} from '@exlibris/exl-cloudapp-angular-lib'
+import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod, 
+  Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 
 @Component({
@@ -17,7 +15,6 @@ export class MainComponent implements OnInit, OnDestroy {
   loading = false;
   selectedEntity: Entity;
   apiResult: any;
-  libraryCode: string = ""
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
   .pipe(tap(() => this.clear()))
@@ -25,14 +22,10 @@ export class MainComponent implements OnInit, OnDestroy {
   constructor(
     private restService: CloudAppRestService,
     private eventsService: CloudAppEventsService,
-    private alert: AlertService
+    private alert: AlertService 
   ) { }
 
   ngOnInit() {
-    this.eventsService.getInitData().subscribe(
-      // [issue-24] initData.user.currentlyAtLibCode is always undefined so we can't use it
-      (initData: InitData) => { console.dir(initData); this.libraryCode = initData.user.currentlyAtLibCode }
-    )
   }
 
   ngOnDestroy(): void {
@@ -60,7 +53,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
     this.loading = true;
     let request: Request = {
-      url: this.selectedEntity.link,
+      url: this.selectedEntity.link, 
       method: HttpMethod.PUT,
       requestBody
     };
@@ -77,7 +70,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.alert.error('Failed to update data: ' + e.message);
         console.error(e);
       }
-    });
+    });    
   }
 
   private tryParseJson(value: any) {

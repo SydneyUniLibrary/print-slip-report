@@ -1,4 +1,4 @@
-<ng-container
+<ng-container 
   *ngIf="(entities$ | async)?.length > 0; then entities; else noentities"
   ></ng-container>
 
@@ -12,7 +12,7 @@
     <li>Refreshes the page in Alma</li>
   </ul>
   <p>Use these building blocks to be on your way to developing your own Cloud App.</p>
-  <div class="highlight">Library code is {{libraryCode}}</div>
+  <div class="highlight">Navigate to a page in Alma to view a list of entities.</div>
 </ng-template>
 
 <ng-template #entities>
@@ -38,7 +38,7 @@
     <mat-card-content>
       <pre>{{selectedEntity | json}}</pre>
     </mat-card-content>
-  </mat-card>
+  </mat-card>  
   <label id="entities-radio-group-label">Select an entity:</label>
   <mat-radio-group
     aria-labelledby="entities-radio-group-label"
