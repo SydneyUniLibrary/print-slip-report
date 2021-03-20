@@ -80,7 +80,7 @@ export class MainComponent implements OnInit, OnDestroy {
     return this.form.get('libraryCode') as FormControl
   }
 
-  get libraryCodeError(): String {
+  get libraryCodeError(): String | null {
     let errors = this.libraryCode.errors
     if ('required' in errors) {
       return 'You need to enter a library code'
@@ -93,7 +93,7 @@ export class MainComponent implements OnInit, OnDestroy {
     return this.form.get('circDeskCode') as FormControl
   }
 
-  get circDeskCodeError(): String {
+  get circDeskCodeError(): String | null {
     let errors = this.circDeskCode.errors
     if ('required' in errors) {
       return 'You need to enter a circulation desk code'
