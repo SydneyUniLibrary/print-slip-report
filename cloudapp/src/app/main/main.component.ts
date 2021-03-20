@@ -76,14 +76,33 @@ export class MainComponent implements OnInit, OnDestroy {
         this.loading = false
       },
       error: (err: RestErrorResponse) => {
-        // TODO: Handle invalid library code
-        // TODO: Handle invalid circ desk code
         console.error("REST API Error", err)
-        let msg = err.message || "See the console in your browser's developer tools for more information."
-        this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+        const invalidParameterError = parseInvalidParameterError(err)
+        if (invalidParameterError) {
+          this.onInvalidParameterError(invalidParameterError)
+        } else {
+          let msg = err.message || "See the console in your browser's developer tools for more information."
+          this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+        }
         this.loading = false
       }
     })
+  }
+
+  private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
+    let msg: string
+    switch (invalidParameterError.parameter) {
+      case 'library':
+        this.libraryCode.setErrors({ 'invalidCode': true })
+        this.alert.info(
+          `Valid library codes are ${invalidParameterError.validOptions.join(', ')}`,
+          { autoClose: false }
+        )
+        break
+      // TODO: Handle invalid circ desk code
+      default:
+        this.alert.error(`The API parameter ${invalidParameterError.parameter} was invalid`)
+    }
   }
 
   get columns(): FormArray {
@@ -105,8 +124,10 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get libraryCodeError(): String | null {
     let errors = this.libraryCode.errors
-    if ('required' in errors) {
+    if (errors?.required) {
       return 'You need to enter a library code'
+    } else if (errors?.invalidCode) {
+      return 'This is not a valid library code'
     } else {
       return null
     }
@@ -175,6 +196,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }
     return undefined;
   }
+
 }
 
 
@@ -184,4 +206,28 @@ function atLeastOneIsSelected(formArray: FormArray): ValidationErrors | null {
     ? { 'atLeastOneIsSelected': true }
     : null
   )
+}
+
+
+class InvalidParameterError {
+
+  constructor(
+    public parameter: String,
+    public validOptions: String[],
+  ) {}
+
+}
+
+
+function parseInvalidParameterError(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
+  const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == "40166410")
+  if (error) {
+    const match = error[0].errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
+    if (match) {
+      let parameter = match[1]
+      let validOptions = match[2].split(',')
+      return new InvalidParameterError(parameter, validOptions)
+    }
+  }
+  return null
 }
