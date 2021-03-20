@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
-import { FormArray, FormBuilder, Validators } from '@angular/forms'
+import { FormArray, FormBuilder, FormControl, Validators } from '@angular/forms'
 
 @Component({
   selector: 'app-main',
@@ -64,6 +64,32 @@ export class MainComponent implements OnInit, OnDestroy {
 
   get columns(): FormArray {
     return this.form.get('columns') as FormArray
+  }
+
+  get libraryCode(): FormControl {
+    return this.form.get('libraryCode') as FormControl
+  }
+
+  get libraryCodeError(): String {
+    let errors = this.libraryCode.errors
+    if ('required' in errors) {
+      return 'You need to enter a library code'
+    } else {
+      return null
+    }
+  }
+
+  get circDeskCode(): FormControl {
+    return this.form.get('circDeskCode') as FormControl
+  }
+
+  get circDeskCodeError(): String {
+    let errors = this.circDeskCode.errors
+    if ('required' in errors) {
+      return 'You need to enter a circulation desk code'
+    } else {
+      return null
+    }
   }
 
   entitySelected(event: MatRadioChange) {

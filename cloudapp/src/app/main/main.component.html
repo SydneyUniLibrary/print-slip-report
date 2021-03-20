@@ -4,18 +4,26 @@
     <button type="submit" mat-flat-button color="primary" [disabled]="!form.valid || loading">Print</button>
   </div>
 
-  <mat-form-field appearance="standard" [style.margin-right.px]="4" hideRequiredMarker="true">
-    <mat-label>Library code</mat-label>
-    <input matInput formControlName="libraryCode" required>
-  </mat-form-field>
+  <div>
 
-  <mat-form-field appearance="standard" hideRequiredMarker="true">
-    <mat-label>Circulation desk code</mat-label>
-    <input matInput formControlName="circDeskCode" required>
-  </mat-form-field>
+    <mat-form-field appearance="standard" [style.margin-right.px]="8" hideRequiredMarker="true"
+                    hintLabel="Enter the library's code, not its name">
+      <mat-label>Library code</mat-label>
+      <input matInput formControlName="libraryCode" required>
+      <mat-error *ngIf="libraryCode.invalid">{{ libraryCodeError }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="standard" hideRequiredMarker="true"
+                    hintLabel="Enter the desk's code, not its name">
+      <mat-label>Circulation desk code</mat-label>
+      <input matInput formControlName="circDeskCode" required>
+      <mat-error *ngIf="circDeskCode.invalid">{{ circDeskCodeError }}</mat-error>
+    </mat-form-field>
+
+  </div>
 
   <div formArrayName="columns">
-    <mat-label>Columns</mat-label>
+    <div [style.margin-top.px]="24" [style.margin-bottom.px]="12">Columns</div>
     <div *ngFor="let column of columns.controls; let i=index">
       <mat-checkbox [formControlName]="i">{{ columnNames[i] }}</mat-checkbox>
     </div>
