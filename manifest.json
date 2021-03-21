@@ -4,6 +4,7 @@
    "subtitle": "A customisable alternative to Alma's built-in print slip report",
    "author": "slippery dips",
    "description": "*** BETA RELEASE *** Print only some of the columns of the print slip report. No more Excel!",
+   "license": "https://raw.githubusercontent.com/SydneyUniLibrary/print-slip-report/main/LICENSE",
    "contentSecurity": {
       "sandbox": {
          "popups": true
