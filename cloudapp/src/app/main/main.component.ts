@@ -159,8 +159,14 @@ export class MainComponent implements OnInit, OnDestroy {
     this.alert.success('The report popped up in a new window')
   }
 
+  resetOptions() {
+    this.lastUsedOptionsStorage.lastUsed = null
+    this.form = this.restoreOptions()
+  }
+
   restoreOptions() {
     let options = this.lastUsedOptionsStorage.lastUsed
+    // TODO: If options is null, restore the options from the app's configuration
     let libraryCode = options?.libraryCode ?? ""
     let circDeskCode = options?.circDeskCode ?? ""
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
@@ -425,10 +431,18 @@ class LastUsedOptionsStorage {
   }
 
   set lastUsed(options: PrintSlipReportOptions) {
-    try {
-      window.localStorage.setItem(this.storage_key, this.serialize(options))
-    } catch (e) {
-      console.error('Failed to save last used options into storage', e, options)
+    if (options) {
+      try {
+        window.localStorage.setItem(this.storage_key, this.serialize(options))
+      } catch (e) {
+        console.error('Failed to save last used options into storage', e, options)
+      }
+    } else {
+      try {
+        window.localStorage.removeItem(this.storage_key)
+      } catch (e) {
+        console.error('Failed to remove last used options from storage', e)
+      }
     }
   }
 

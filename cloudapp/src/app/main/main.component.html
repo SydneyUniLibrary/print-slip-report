@@ -1,7 +1,8 @@
-<form [formGroup]="form" (ngSubmit)="print()">
+<form [formGroup]="form">
 
   <div class="eca-actions">
-    <button type="submit" mat-flat-button color="primary" [disabled]="!form.valid || loading">Print</button>
+    <button mat-flat-button color="secondary" (click)="resetOptions()">Reset</button>
+    <button type="submit" mat-flat-button color="primary" (click)="print()" [disabled]="!form.valid || loading">Print</button>
   </div>
 
   <div>
