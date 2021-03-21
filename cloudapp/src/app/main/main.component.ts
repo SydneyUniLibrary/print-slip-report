@@ -84,10 +84,11 @@ export class MainComponent implements OnInit, OnDestroy {
       if (resp?.requested_resource) {
         this.generatePrint(resp.requested_resource, popupWindow)
       } else {
-        this.alert.info('There are no requested resources to print.')
+        this.alert.info('There are no requested resources to print.')        
       }
       this.loading = false
     } catch (err) {
+      popupWindow.close()        
       console.error("REST API Error", err)
       const invalidParameterError = parseInvalidParameterError(err)
       if (invalidParameterError) {
