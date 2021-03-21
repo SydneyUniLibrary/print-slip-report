@@ -53,6 +53,7 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   async print() {
+    this.alert.clear()
     this.loading = true
     // Open the popup window early to prevent it being blocked.
     // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
@@ -86,6 +87,7 @@ export class MainComponent implements OnInit, OnDestroy {
       if (resp?.requested_resource) {
         this.generatePrint(resp.requested_resource, popupWindow)
       } else {
+        popupWindow.close()
         this.alert.info('There are no requested resources to print.')
       }
       this.loading = false
