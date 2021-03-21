@@ -150,7 +150,7 @@ export class MainComponent implements OnInit, OnDestroy {
     let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
     let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
     let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
-    popupWindow.document.write('<style>#please-wait { display: none }</style>')
+    popupWindow.document.write('<style>@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); #please-wait { display: none } table, th, td { border: 1px solid; border-collapse: collapse; } table { font: 14px "Roboto", sans-serif; } th, td { padding: 0.2rem; }</style>')
     popupWindow.document.write(generatedReport)
     popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
@@ -308,7 +308,7 @@ class ReportGenerator {
 
   generate(): string {
     return flatten([
-      '<table border="1">',
+      '<table>',
       this.thead(),
       '<tbody>',
       this.values.map(r => this.tr(r)),
