@@ -1,0 +1,27 @@
+<div class="eca-actions">
+  <button mat-flat-button color="secondary" [routerLink]="['/']"><mat-icon>arrow_back</mat-icon> Home</button>
+  <button type="submit" mat-flat-button color="primary" (click)="onSave()" [disabled]="!form.valid || saving">Save</button>
+</div>
+<h1>Configuration</h1>
+
+<form [formGroup]="form" *ngIf="ready">
+
+<mat-card>
+  <mat-card-header>
+    <mat-card-title>Default columns</mat-card-title>
+    <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <div formArrayName="columnDefaults">
+      <div *ngFor="let column of columnDefaults.controls; let i=index">
+        <mat-checkbox [formControlName]="i">{{ columnDefinitions[i].name }}</mat-checkbox>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+</form>
+
+<div class="loading-shade" *ngIf="saving || !ready">
+  <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+</div>

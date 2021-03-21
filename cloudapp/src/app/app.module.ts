@@ -9,11 +9,13 @@ import { MaterialModule, getTranslateModule, AlertModule } from '@exlibris/exl-c
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { MainComponent } from './main/main.component';
+import { ConfigComponent } from './config/config.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    MainComponent
+    MainComponent,
+    ConfigComponent
   ],
   imports: [
     MaterialModule,
