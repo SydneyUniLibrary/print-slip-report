@@ -128,7 +128,6 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
-    let msg: string
     switch (invalidParameterError.parameter) {
       case 'library':
         this.libraryCode.setErrors({ 'invalidCode': true })
@@ -398,7 +397,7 @@ class LastUsedOptionsStorage {
     return this.storeService.get(this.storage_key).pipe(
       map(this.deserialise, this),
       catchError(err => {
-        console.error('Failed to load last used options from storage', e)
+        console.error('Failed to load last used options from storage', err)
         return of(null)
       })
     )
