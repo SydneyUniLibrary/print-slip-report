@@ -1,8 +1,9 @@
 {
    "id": "print-slip-report",
    "title": "Print Slip Report",
-   "subtitle": "An alternative to Alma's built-in print slip report",
+   "subtitle": "A customisable alternative to Alma's built-in print slip report",
    "author": "slippery dips",
+   "description": "*** BETA RELEASE *** Print only some of the columns of the print slip report. No more Excel!",
    "contentSecurity": {
       "sandbox": {
          "popups": true
