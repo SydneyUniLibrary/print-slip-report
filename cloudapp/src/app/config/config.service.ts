@@ -19,6 +19,7 @@ export type PrintSlipReportColumnConfig = {
 export class ConfigService {
 
   config: PrintSlipReportConfig | null
+  loaded = false
 
 
   constructor(
@@ -26,8 +27,26 @@ export class ConfigService {
   ) { }
 
 
+  get columnDefaults() {
+    return this.config?.columnDefaults
+  }
+
+
   set columnDefaults(v) {
     this.config = { ...this.config, columnDefaults: v }
+  }
+
+
+  async load() {
+    if (!this.loaded) {
+      try {
+        let blob = await this.configService.get().toPromise()
+        this.config = deserialise(blob)
+      } catch (err) {
+        this.config = null
+      }
+      this.loaded = true
+    }
   }
 
 
@@ -39,6 +58,18 @@ export class ConfigService {
     }
   }
 
+}
+
+
+function deserialise(blob: string | null): PrintSlipReportConfig | null {
+  if (blob) {
+    try {
+      return JSON.parse(blob) as PrintSlipReportConfig
+    } catch (e) {
+      console.error('Failed to restore the app configuration from storage', e, blob)
+    }
+  }
+  return null
 }
 
 

@@ -26,6 +26,7 @@ export class ConfigComponent implements OnInit {
 
   constructor(
     private alertService: AlertService,
+    private configService: ConfigService,
     private formBuilder: FormBuilder,
   ) { }
 
@@ -35,7 +36,12 @@ export class ConfigComponent implements OnInit {
   }
 
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    try {
+      await this.restoreConfig()
+    } finally {
+      this.ready = true
+    }
   }
 
 
@@ -49,6 +55,19 @@ export class ConfigComponent implements OnInit {
       this.alertService.error(`Failed to save the configuration. ${msg}`)
     } finally {
       this.saving = false
+    }
+  }
+
+
+  async restoreConfig() {
+    await this.configService.load()
+    let columnDefaultsConfig = this.configService.columnDefaults
+    let includeMap = new Map(
+      columnDefaultsConfig?.map(x => [ x.code, x.include ])
+      ?? this.columnDefinitions.map(c => [ c.code, false ])
+    )
+    let columnDefaults = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    this.form.setValue({ columnDefaults })
   }
 
 

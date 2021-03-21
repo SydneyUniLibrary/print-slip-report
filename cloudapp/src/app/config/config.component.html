@@ -4,7 +4,7 @@
 </div>
 <h1>Configuration</h1>
 
-<form [formGroup]="form">
+<form [formGroup]="form" *ngIf="ready">
 
 <mat-card>
   <mat-card-header>
@@ -22,6 +22,6 @@
 
 </form>
 
-<div class="loading-shade" *ngIf="saving">
+<div class="loading-shade" *ngIf="saving || !ready">
   <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
 </div>
