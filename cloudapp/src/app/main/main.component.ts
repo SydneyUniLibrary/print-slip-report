@@ -105,6 +105,7 @@ export class MainComponent implements OnInit, OnDestroy {
         if (resp?.requested_resource) {
           this.generatePrint(resp.requested_resource, popupWindow)
         } else {
+          popupWindow.close()
           this.alert.info('There are no requested resources to print.')
         }
         this.loading = false
