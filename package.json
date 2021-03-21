@@ -1,7 +1,11 @@
 {
-  "name": "my-exl-cloudapp",
-  "version": "1.0.0",
-  "license" : "BSD-3-Clause",
+  "name": "eca-print-slip-report",
+  "description": "A customisable alternative to Alma's built-in print slip report",
+  "version": "2021.0.0-beta.1",
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/SydneyUniLibrary/print-slip-report",
+  "bugs": "https://github.com/SydneyUniLibrary/print-slip-report/issues",
+  "repository": "https://github.com/SydneyUniLibrary/print-slip-report.git",
   "private": true,
   "scripts": {
     "start": "eca start"
