@@ -110,6 +110,7 @@ export class MainComponent implements OnInit, OnDestroy {
         this.loading = false
       },
       error: (err: RestErrorResponse) => {
+        popupWindow.close()
         console.error("REST API Error", err)
         const invalidParameterError = parseInvalidParameterError(err)
         if (invalidParameterError) {
