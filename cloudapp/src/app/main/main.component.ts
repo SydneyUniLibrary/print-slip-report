@@ -76,6 +76,7 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   print() {
+    this.alert.clear()
     this.loading = true
     // Open the popup window early to prevent it being blocked.
     // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
