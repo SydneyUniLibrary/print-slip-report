@@ -77,6 +77,19 @@ export class MainComponent implements OnInit, OnDestroy {
 
   print() {
     this.loading = true
+    // Open the popup window early to prevent it being blocked.
+    // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
+    let popupWindow = window.open('', 'PrintSlipReport', 'status=0')
+    if (popupWindow) {
+      popupWindow.document.write('<!HTML>')
+      popupWindow.document.write('<body>')
+      popupWindow.document.write('<h1 id="please-wait">Please wait...</h1>')
+    } else {
+      console.warn('Your browser prevented the popup that has the report from appearing')
+      this.alert.error('Your browser prevented the popup that has the report from appearing')
+      this.loading = false
+      return
+    }
     const libraryCode = this.form.get('libraryCode').value
     const circDeskCode = this.form.get('circDeskCode').value
     this.restService.call({
@@ -90,7 +103,7 @@ export class MainComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: resp => {
         if (resp?.requested_resource) {
-          this.generatePrint(resp.requested_resource)
+          this.generatePrint(resp.requested_resource, popupWindow)
         } else {
           this.alert.info('There are no requested resources to print.')
         }
@@ -132,22 +145,16 @@ export class MainComponent implements OnInit, OnDestroy {
     }
   }
 
-  generatePrint(requestedResources: any[]): void {
+  generatePrint(requestedResources: any[], popupWindow: Window): void {
     let checkboxValues = this.columns.value
     let selectedColumns = this.columnDefinitions.filter((_, i) => checkboxValues[i])
     let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
     let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
-    let win = window.open('', '', 'status=0')
-    if (!win) {
-      console.log('win is null')
-      this.alert.error('Your browser prevented the popup that has the report from appearing')
-    } else {
-      win.document.write('<!HTML>')
-      win.document.write('<body onload="window.print()">')
-      win.document.write(generatedReport)
-      win.document.close()
-      this.alert.success('The report popped up in a new window')
-    }
+    popupWindow.document.write('<style>#please-wait { display: none }</style>')
+    popupWindow.document.write(generatedReport)
+    popupWindow.document.write('<script>window.print()</script>')
+    popupWindow.document.close()
+    this.alert.success('The report popped up in a new window')
   }
 
   get columns(): FormArray {
