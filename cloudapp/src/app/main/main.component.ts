@@ -1,5 +1,5 @@
-import { Observable, of } from 'rxjs';
-import { catchError, finalize, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
   Entity, RestErrorResponse, AlertService, CloudAppStoreService } from '@exlibris/exl-cloudapp-angular-lib';
@@ -41,14 +41,14 @@ export class MainComponent implements OnInit, OnDestroy {
     private storeService: CloudAppStoreService,
   ) { }
 
-  ngOnInit() {
-    this.restoreOptions()
+  async ngOnInit() {
+    await this.restoreOptions()
   }
 
   ngOnDestroy(): void {
   }
 
-  print() {
+  async print() {
     this.loading = true
     // Open the popup window early to prevent it being blocked.
     // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
@@ -65,36 +65,36 @@ export class MainComponent implements OnInit, OnDestroy {
     }
     const libraryCode = this.form.get('libraryCode').value
     const circDeskCode = this.form.get('circDeskCode').value
-    this.restService.call({
-      url: '/task-lists/requested-resources',
-      method: HttpMethod.GET,
-      queryParams: {
-        library: libraryCode,
-        circ_desk: circDeskCode,
-        limit: 100, // TODO: Handle more than 100 requested resources
-      },
-    }).subscribe({
-      next: resp => {
-        this.saveOptions()
-        if (resp?.requested_resource) {
-          this.generatePrint(resp.requested_resource, popupWindow)
-        } else {
-          this.alert.info('There are no requested resources to print.')
-        }
-        this.loading = false
-      },
-      error: (err: RestErrorResponse) => {
-        console.error("REST API Error", err)
-        const invalidParameterError = parseInvalidParameterError(err)
-        if (invalidParameterError) {
-          this.onInvalidParameterError(invalidParameterError)
-        } else {
-          let msg = err.message || "See the console in your browser's developer tools for more information."
-          this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
-        }
-        this.loading = false
+    try {
+      let resp = await (
+        this.restService.call({
+          url: '/task-lists/requested-resources',
+          method: HttpMethod.GET,
+          queryParams: {
+            library: libraryCode,
+            circ_desk: circDeskCode,
+            limit: 100, // TODO: Handle more than 100 requested resources
+          },
+        }).toPromise()
+      )
+      await this.saveOptions()
+      if (resp?.requested_resource) {
+        this.generatePrint(resp.requested_resource, popupWindow)
+      } else {
+        this.alert.info('There are no requested resources to print.')
       }
-    })
+      this.loading = false
+    } catch (err) {
+      console.error("REST API Error", err)
+      const invalidParameterError = parseInvalidParameterError(err)
+      if (invalidParameterError) {
+        this.onInvalidParameterError(invalidParameterError)
+      } else {
+        let msg = err.message || "See the console in your browser's developer tools for more information."
+        this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+      }
+      this.loading = false
+    }
   }
 
   private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
@@ -136,30 +136,31 @@ export class MainComponent implements OnInit, OnDestroy {
     this.form.setValue({ libraryCode: '', circDeskCode: '', columns: checkboxValues })
   }
 
-  restoreOptions() {
-    this.lastUsedOptionsStorage.load().subscribe(options => {
-      // TODO: If options is null, restore the options from the app's configuration
-      let lib = options?.libraryCode ?? ""
-      let desk = options?.circDeskCode ?? ""
-      // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
-      let includeMap = new Map(
-        options?.columnOptions?.map(x => [ x.code, x.include ])
-        ?? this.columnDefinitions.map(c => [ c.code, false ])
-      )
-      let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-      this.form.setValue({ libraryCode: lib, circDeskCode: desk, columns: checkboxValues })
-    })
+  async restoreOptions() {
+    await this.lastUsedOptionsStorage.load()
+    let options = this.lastUsedOptionsStorage.options
+    // TODO: If options is null, restore the options from the app's configuration
+    let lib = options?.libraryCode ?? ""
+    let desk = options?.circDeskCode ?? ""
+    // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
+    let includeMap = new Map(
+      options?.columnOptions?.map(x => [ x.code, x.include ])
+      ?? this.columnDefinitions.map(c => [ c.code, false ])
+    )
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    this.form.setValue({ libraryCode: lib, circDeskCode: desk, columns: checkboxValues })
   }
 
-  saveOptions(): void {
+  async saveOptions() {
     let checkboxValues = this.columns.value
-    this.lastUsedOptionsStorage.save({
+    this.lastUsedOptionsStorage.options = {
       libraryCode: this.libraryCode.value,
       circDeskCode: this.circDeskCode.value,
       columnOptions: this.columnDefinitions.map(
         (c, i) => ({ code: c.code, include: checkboxValues[i] })
       )
-    })
+    }
+    await this.lastUsedOptionsStorage.save()
   }
 
   get columns(): FormArray {
@@ -358,32 +359,39 @@ type PrintSlipReportColumnOption = {
 
 class LastUsedOptionsStorage {
 
+  options: PrintSlipReportOptions | null = null
+  loaded = false
+
   constructor(
     private storeService: CloudAppStoreService,
-    public storage_key: string = 'last-used-options'
+    public storageKey: string = 'last-used-options'
   ) { }
 
-  load(): Observable<PrintSlipReportOptions | null> {
-    return this.storeService.get(this.storage_key).pipe(
-      map(this.deserialise, this),
-      catchError(err => {
+  async load() {
+    if (!this.loaded) {
+      try {
+        let blob = await this.storeService.get(this.storageKey).toPromise()
+        this.options = this.deserialise(blob)
+      } catch (err) {
         console.error('Failed to load last used options from storage', err)
-        return of(null)
-      })
-    )
+        this.options = null
+      }
+    }
   }
 
-  save(options: PrintSlipReportOptions | null): void {
-    if (options) {
-      this.storeService.set(this.storage_key, this.serialize(options)).subscribe({
-        next: () => console.debug('Saved last used options into storage'),
-        error: err => console.error('Failed to save last used options into storage', err, options),
-      })
+  async save() {
+    if (this.options) {
+      await this.storeService.set(this.storageKey, this.serialize(this.options)).toPromise()
+      // this.storeService.set(this.storageKey, this.serialize(options)).subscribe({
+      //   next: () => console.debug('Saved last used options into storage'),
+      //   error: err => console.error('Failed to save last used options into storage', err, options),
+      // })
     } else {
-      this.storeService.remove(this.storage_key).subscribe({
-        next: () => console.debug('Removed last used options from storage'),
-        error: err => console.error('Failed to remove last used options from storage', err),
-      })
+      await this.storeService.remove(this.storageKey).toPromise()
+      // this.storeService.remove(this.storageKey).subscribe({
+      //   next: () => console.debug('Removed last used options from storage'),
+      //   error: err => console.error('Failed to remove last used options from storage', err),
+      // })
     }
   }
 
