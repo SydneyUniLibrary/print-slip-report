@@ -1,8 +1,8 @@
-import { Observable  } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
+  Entity, RestErrorResponse, AlertService, CloudAppStoreService } from '@exlibris/exl-cloudapp-angular-lib';
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 import { escape } from 'html-escaper'
@@ -50,9 +50,15 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedEntity: Entity;
   apiResult: any;
   columnDefinitions = COLUMNS_DEFINITIONS
-  lastUsedOptionsStorage = new LastUsedOptionsStorage()
+  lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
 
-  form = this.restoreOptions()
+  form = this.formBuilder.group({
+    libraryCode: [ '', Validators.required ],
+    circDeskCode: [ '', Validators.required ],
+    columns: this.formBuilder.array(
+      this.columnDefinitions.map(() => this.formBuilder.control(false)),
+      atLeastOneIsSelected),
+  })
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
   .pipe(tap(() => this.clear()))
@@ -62,15 +68,11 @@ export class MainComponent implements OnInit, OnDestroy {
     private eventsService: CloudAppEventsService,
     private alert: AlertService,
     private formBuilder: FormBuilder,
+    private storeService: CloudAppStoreService,
   ) { }
 
   ngOnInit() {
-    if (!this.lastUsedOptionsStorage.isAvailable) {
-      this.alert.warn(
-        "Your browser is preventing your options below from being saved.",
-        { autoClose: true }
-      )
-    }
+    this.restoreOptions()
   }
 
   ngOnDestroy(): void {
@@ -160,40 +162,35 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   resetOptions() {
-    this.lastUsedOptionsStorage.lastUsed = null
-    this.form = this.restoreOptions()
+    // TODO: Restore the options from the app's configuration
+    let checkboxValues = this.columnDefinitions.map(() => false)
+    this.form.setValue({ libraryCode: '', circDeskCode: '', columns: checkboxValues })
   }
 
   restoreOptions() {
-    let options = this.lastUsedOptionsStorage.lastUsed
-    // TODO: If options is null, restore the options from the app's configuration
-    let libraryCode = options?.libraryCode ?? ""
-    let circDeskCode = options?.circDeskCode ?? ""
-    // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
-    let includeMap = new Map(
-      options?.columnOptions?.map(x => [ x.code, x.include ])
-      ?? this.columnDefinitions.map(c => [ c.code, false ])
-    )
-    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-    return this.formBuilder.group({
-      libraryCode: [ libraryCode, Validators.required ],
-      circDeskCode: [ circDeskCode, Validators.required ],
-      columns: this.formBuilder.array(
-        checkboxValues.map(x => this.formBuilder.control(x)),
-        atLeastOneIsSelected,
-      ),
+    this.lastUsedOptionsStorage.load().subscribe(options => {
+      // TODO: If options is null, restore the options from the app's configuration
+      let lib = options?.libraryCode ?? ""
+      let desk = options?.circDeskCode ?? ""
+      // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
+      let includeMap = new Map(
+        options?.columnOptions?.map(x => [ x.code, x.include ])
+        ?? this.columnDefinitions.map(c => [ c.code, false ])
+      )
+      let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+      this.form.setValue({ libraryCode: lib, circDeskCode: desk, columns: checkboxValues })
     })
   }
 
   saveOptions(): void {
     let checkboxValues = this.columns.value
-    this.lastUsedOptionsStorage.lastUsed = {
+    this.lastUsedOptionsStorage.save({
       libraryCode: this.libraryCode.value,
       circDeskCode: this.circDeskCode.value,
       columnOptions: this.columnDefinitions.map(
         (c, i) => ({ code: c.code, include: checkboxValues[i] })
       )
-    }
+    })
   }
 
   get columns(): FormArray {
@@ -392,57 +389,32 @@ type PrintSlipReportColumnOption = {
 
 class LastUsedOptionsStorage {
 
-  isAvailable = LastUsedOptionsStorage.isLocalStorageAvailable()
-
-  static isLocalStorageAvailable(): boolean {
-    // Copied from https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
-    let storage
-    try {
-      storage = window['localStorage']
-      let x = '__storage_test__'
-      storage.setItem(x, x)
-      storage.removeItem(x)
-      return true
-    } catch (e) {
-      return (
-        e instanceof DOMException
-        && (
-          e.code === 22 // everything except Firefox
-          || e.code === 1014 // Firefox
-          || e.name === 'QuotaExceededError' // test name field too, because code might not be present in everything except Firefox
-          || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' // Firefox
-        )
-        && (storage && storage.length !== 0) // acknowledge QuotaExceededError only if there's something already stored
-      )
-    }
-  }
-
   constructor(
-    public storage_key: string = 'au.edu.sydney.library.print-slip-report.last-used-options'
+    private storeService: CloudAppStoreService,
+    public storage_key: string = 'last-used-options'
   ) { }
 
-  get lastUsed(): PrintSlipReportOptions | null {
-    try {
-      return this.deserialise(this.isAvailable ? window.localStorage.getItem(this.storage_key) : null)
-    } catch (e) {
-      console.error('Failed to restore last used options from storage', e)
-      return null
-    }
+  load(): Observable<PrintSlipReportOptions | null> {
+    return this.storeService.get(this.storage_key).pipe(
+      map(this.deserialise, this),
+      catchError(err => {
+        console.error('Failed to load last used options from storage', e)
+        return of(null)
+      })
+    )
   }
 
-  set lastUsed(options: PrintSlipReportOptions) {
+  save(options: PrintSlipReportOptions | null): void {
     if (options) {
-      try {
-        window.localStorage.setItem(this.storage_key, this.serialize(options))
-      } catch (e) {
-        console.error('Failed to save last used options into storage', e, options)
-      }
+      this.storeService.set(this.storage_key, this.serialize(options)).subscribe({
+        next: () => console.debug('Saved last used options into storage'),
+        error: err => console.error('Failed to save last used options into storage', err, options),
+      })
     } else {
-      try {
-        window.localStorage.removeItem(this.storage_key)
-      } catch (e) {
-        console.error('Failed to remove last used options from storage', e)
-      }
+      this.storeService.remove(this.storage_key).subscribe({
+        next: () => console.debug('Removed last used options from storage'),
+        error: err => console.error('Failed to remove last used options from storage', err),
+      })
     }
   }
 
