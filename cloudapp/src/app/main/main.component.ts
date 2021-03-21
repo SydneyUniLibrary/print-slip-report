@@ -11,6 +11,7 @@ import { escape } from 'html-escaper'
 class ColumnDefinition {
 
   constructor(
+    public code: string,
     public name: string,
     public mapFn: (requestedResource: any) => string
   ) {}
@@ -19,22 +20,22 @@ class ColumnDefinition {
 
 
 const COLUMNS_DEFINITIONS = [
-  new ColumnDefinition('Title', x => x?.resource_metadata?.title),
-  new ColumnDefinition('Location', x => x?.location?.shelving_location),
-  new ColumnDefinition('Call Number', x => x?.location?.call_number),
-  new ColumnDefinition('Author', x => x?.resource_metadata?.author),
-  new ColumnDefinition('ISBN', x => x?.resource_metadata?.isbn),
-  new ColumnDefinition('ISSN', x => x?.resource_metadata?.issn),
-  new ColumnDefinition('Publisher', x => x?.resource_metadata?.publisher),
-  new ColumnDefinition('Publication Date', x => x?.resource_metadata?.publication_year),
-  new ColumnDefinition('Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
-  new ColumnDefinition('Requested For', x => x?.request?.[0]?.requester?.desc),
-  new ColumnDefinition('Request ID', x => x?.request?.[0]?.id),
-  new ColumnDefinition('Barcode', x => x?.location?.copy?.[0]?.barcode),
-  new ColumnDefinition('Pickup Location', x => x?.request?.[0]?.destination?.desc),
-  new ColumnDefinition('Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
-  new ColumnDefinition('Request Note', x => x?.request?.[0]?.comment),
-  new ColumnDefinition('Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
+  new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
+  new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
+  new ColumnDefinition('call-number', 'Call Number', x => x?.location?.call_number),
+  new ColumnDefinition('author', 'Author', x => x?.resource_metadata?.author),
+  new ColumnDefinition('isbn', 'ISBN', x => x?.resource_metadata?.isbn),
+  new ColumnDefinition('issn', 'ISSN', x => x?.resource_metadata?.issn),
+  new ColumnDefinition('publisher', 'Publisher', x => x?.resource_metadata?.publisher),
+  new ColumnDefinition('publication-date', 'Publication Date', x => x?.resource_metadata?.publication_year),
+  new ColumnDefinition('request-type', 'Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
+  new ColumnDefinition('requested-for', 'Requested For', x => x?.request?.[0]?.requester?.desc),
+  new ColumnDefinition('request-id', 'Request ID', x => x?.request?.[0]?.id),
+  new ColumnDefinition('barcode', 'Barcode', x => x?.location?.copy?.[0]?.barcode),
+  new ColumnDefinition('pickup-location', 'Pickup Location', x => x?.request?.[0]?.destination?.desc),
+  new ColumnDefinition('item-call-number', 'Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
+  new ColumnDefinition('request-note', 'Request Note', x => x?.request?.[0]?.comment),
+  new ColumnDefinition('storage-location-id', 'Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
 ]
 
 
@@ -49,15 +50,9 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedEntity: Entity;
   apiResult: any;
   columnDefinitions = COLUMNS_DEFINITIONS
+  lastUsedOptionsStorage = new LastUsedOptionsStorage()
 
-  form = this.formBuilder.group({
-    libraryCode: [ '', Validators.required ],
-    circDeskCode: [ '', Validators.required ],
-    columns: this.formBuilder.array(
-      this.columnDefinitions.map(_ => this.formBuilder.control(false)),
-      atLeastOneIsSelected,
-    ),
-  })
+  form = this.restoreOptions()
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
   .pipe(tap(() => this.clear()))
@@ -70,6 +65,12 @@ export class MainComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    if (!this.lastUsedOptionsStorage.isAvailable) {
+      this.alert.warn(
+        "Your browser is preventing your options below from being saved.",
+        { autoClose: true }
+      )
+    }
   }
 
   ngOnDestroy(): void {
@@ -102,6 +103,7 @@ export class MainComponent implements OnInit, OnDestroy {
       },
     }).subscribe({
       next: resp => {
+        this.saveOptions()
         if (resp?.requested_resource) {
           this.generatePrint(resp.requested_resource, popupWindow)
         } else {
@@ -155,6 +157,43 @@ export class MainComponent implements OnInit, OnDestroy {
     popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
+  }
+
+  resetOptions() {
+    this.lastUsedOptionsStorage.lastUsed = null
+    this.form = this.restoreOptions()
+  }
+
+  restoreOptions() {
+    let options = this.lastUsedOptionsStorage.lastUsed
+    // TODO: If options is null, restore the options from the app's configuration
+    let libraryCode = options?.libraryCode ?? ""
+    let circDeskCode = options?.circDeskCode ?? ""
+    // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
+    let includeMap = new Map(
+      options?.columnOptions?.map(x => [ x.code, x.include ])
+      ?? this.columnDefinitions.map(c => [ c.code, false ])
+    )
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    return this.formBuilder.group({
+      libraryCode: [ libraryCode, Validators.required ],
+      circDeskCode: [ circDeskCode, Validators.required ],
+      columns: this.formBuilder.array(
+        checkboxValues.map(x => this.formBuilder.control(x)),
+        atLeastOneIsSelected,
+      ),
+    })
+  }
+
+  saveOptions(): void {
+    let checkboxValues = this.columns.value
+    this.lastUsedOptionsStorage.lastUsed = {
+      libraryCode: this.libraryCode.value,
+      circDeskCode: this.circDeskCode.value,
+      columnOptions: this.columnDefinitions.map(
+        (c, i) => ({ code: c.code, include: checkboxValues[i] })
+      )
+    }
   }
 
   get columns(): FormArray {
@@ -336,4 +375,90 @@ class ReportGenerator {
 function flatten(a: any): string[] {
   // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
   return a.flat(2)
+}
+
+
+type PrintSlipReportOptions = {
+  libraryCode: string
+  circDeskCode: string
+  columnOptions: PrintSlipReportColumnOption[]
+}
+
+type PrintSlipReportColumnOption = {
+  code: string
+  include: boolean
+}
+
+
+class LastUsedOptionsStorage {
+
+  isAvailable = LastUsedOptionsStorage.isLocalStorageAvailable()
+
+  static isLocalStorageAvailable(): boolean {
+    // Copied from https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API
+    let storage
+    try {
+      storage = window['localStorage']
+      let x = '__storage_test__'
+      storage.setItem(x, x)
+      storage.removeItem(x)
+      return true
+    } catch (e) {
+      return (
+        e instanceof DOMException
+        && (
+          e.code === 22 // everything except Firefox
+          || e.code === 1014 // Firefox
+          || e.name === 'QuotaExceededError' // test name field too, because code might not be present in everything except Firefox
+          || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' // Firefox
+        )
+        && (storage && storage.length !== 0) // acknowledge QuotaExceededError only if there's something already stored
+      )
+    }
+  }
+
+  constructor(
+    public storage_key: string = 'au.edu.sydney.library.print-slip-report.last-used-options'
+  ) { }
+
+  get lastUsed(): PrintSlipReportOptions | null {
+    try {
+      return this.deserialise(this.isAvailable ? window.localStorage.getItem(this.storage_key) : null)
+    } catch (e) {
+      console.error('Failed to restore last used options from storage', e)
+      return null
+    }
+  }
+
+  set lastUsed(options: PrintSlipReportOptions) {
+    if (options) {
+      try {
+        window.localStorage.setItem(this.storage_key, this.serialize(options))
+      } catch (e) {
+        console.error('Failed to save last used options into storage', e, options)
+      }
+    } else {
+      try {
+        window.localStorage.removeItem(this.storage_key)
+      } catch (e) {
+        console.error('Failed to remove last used options from storage', e)
+      }
+    }
+  }
+
+  protected deserialise(blob: string | null): PrintSlipReportOptions | null {
+    if (blob) {
+      try {
+        return JSON.parse(blob) as PrintSlipReportOptions
+      } catch (e) {
+        console.error('Failed to restore last used options from storage', e, blob)
+      }
+    }
+    return null
+  }
+
+  protected serialize(options: PrintSlipReportOptions): string {
+    return JSON.stringify(options)
+  }
+
 }
