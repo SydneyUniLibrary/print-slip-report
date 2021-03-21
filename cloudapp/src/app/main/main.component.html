@@ -1,4 +1,4 @@
-<form [formGroup]="form">
+<form [formGroup]="form" *ngIf="ready">
 
   <div class="eca-actions">
     <button mat-flat-button color="secondary" (click)="resetOptions()">Reset</button>

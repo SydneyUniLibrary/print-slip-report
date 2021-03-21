@@ -22,6 +22,7 @@ export class MainComponent implements OnInit, OnDestroy {
   apiResult: any;
   columnDefinitions = COLUMNS_DEFINITIONS
   lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
+  ready = false
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
@@ -45,6 +46,7 @@ export class MainComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.restoreOptions()
+    this.ready = true
   }
 
   ngOnDestroy(): void {
@@ -84,11 +86,11 @@ export class MainComponent implements OnInit, OnDestroy {
       if (resp?.requested_resource) {
         this.generatePrint(resp.requested_resource, popupWindow)
       } else {
-        this.alert.info('There are no requested resources to print.')        
+        this.alert.info('There are no requested resources to print.')
       }
       this.loading = false
     } catch (err) {
-      popupWindow.close()        
+      popupWindow.close()
       console.error("REST API Error", err)
       const invalidParameterError = parseInvalidParameterError(err)
       if (invalidParameterError) {
