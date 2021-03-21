@@ -6,6 +6,7 @@ import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 import { escape } from 'html-escaper'
+import { ConfigService } from '../config/config.service'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
 
 
@@ -39,6 +40,7 @@ export class MainComponent implements OnInit, OnDestroy {
     private alert: AlertService,
     private formBuilder: FormBuilder,
     private storeService: CloudAppStoreService,
+    private configService: ConfigService,
   ) { }
 
   async ngOnInit() {
@@ -130,24 +132,30 @@ export class MainComponent implements OnInit, OnDestroy {
     this.alert.success('The report popped up in a new window')
   }
 
-  resetOptions() {
-    // TODO: Restore the options from the app's configuration
-    let checkboxValues = this.columnDefinitions.map(() => false)
+  async resetOptions() {
+    await this.configService.load()
+    let config = this.configService.config
+    let includeMap = new Map(flatten1([
+      this.columnDefinitions.map(c => [ c.code, false ]),
+      config?.columnDefaults?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+    ]))
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
     this.form.setValue({ libraryCode: '', circDeskCode: '', columns: checkboxValues })
   }
 
   async restoreOptions() {
-    await this.lastUsedOptionsStorage.load()
+    await Promise.all([ this.lastUsedOptionsStorage.load(), this.configService.load() ])
     let options = this.lastUsedOptionsStorage.options
-    // TODO: If options is null, restore the options from the app's configuration
-    let lib = options?.libraryCode ?? ""
-    let desk = options?.circDeskCode ?? ""
+    let config = this.configService.config
+    let lib = options?.libraryCode ?? ''
+    let desk = options?.circDeskCode ?? ''
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
-    let includeMap = new Map(
-      options?.columnOptions?.map(x => [ x.code, x.include ])
-      ?? this.columnDefinitions.map(c => [ c.code, false ])
-    )
-    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    let includeMap = new Map(flatten1([
+      this.columnDefinitions.map(c => [ c.code, false ]),
+      config?.columnDefaults?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+      options?.columnOptions?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+    ]))
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code))
     this.form.setValue({ libraryCode: lib, circDeskCode: desk, columns: checkboxValues })
   }
 
@@ -313,7 +321,7 @@ class ReportGenerator {
   ) { }
 
   generate(): string {
-    return flatten([
+    return flatten2([
       '<table border="1">',
       this.thead(),
       '<tbody>',
@@ -339,9 +347,14 @@ class ReportGenerator {
 }
 
 
-function flatten(a: any): string[] {
+function flatten1<T>(a: (T | T[])[]): T[] {
   // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
-  return a.flat(2)
+  return (a as any).flat(1)
+}
+
+function flatten2<T>(a: (T | T[] | T[][])[]): T[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return (a as any).flat(2)
 }
 
 
