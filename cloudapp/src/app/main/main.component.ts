@@ -26,6 +26,7 @@ export class MainComponent implements OnInit, OnDestroy {
   lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
   ready = false
   initData: InitData
+  libraryCodeIsFromInitData: boolean = false
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
@@ -161,6 +162,7 @@ export class MainComponent implements OnInit, OnDestroy {
     let lib = options?.libraryCode ?? ''
     let desk = options?.circDeskCode ?? ''
     if (this.initData?.user?.currentlyAtLibCode) {
+      this.libraryCodeIsFromInitData = true
       lib = this.initData?.user?.currentlyAtLibCode
     }
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
