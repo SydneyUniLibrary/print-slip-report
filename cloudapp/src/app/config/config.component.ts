@@ -3,6 +3,7 @@ import { FormArray, FormBuilder } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ConfigService } from './config.service'
+import { LibrariesService } from './libraries.service'
 
 
 
@@ -28,6 +29,7 @@ export class ConfigComponent implements OnInit {
     private alertService: AlertService,
     private configService: ConfigService,
     private formBuilder: FormBuilder,
+    private librariesService: LibrariesService,
   ) { }
 
 
@@ -60,7 +62,7 @@ export class ConfigComponent implements OnInit {
 
 
   async restoreConfig() {
-    await this.configService.load()
+    await Promise.all([ this.configService.load(), this.librariesService.load() ])
     let columnDefaultsConfig = this.configService.columnDefaults
     let includeMap = new Map(
       columnDefaultsConfig?.map(x => [ x.code, x.include ])
