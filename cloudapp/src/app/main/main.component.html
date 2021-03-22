@@ -9,7 +9,7 @@
 
     <mat-form-field appearance="standard" [style.margin-right.px]="8" hideRequiredMarker="true">
       <mat-label>Library code</mat-label>
-      <input matInput formControlName="libraryCode" [readonly]="libraryCodeIsFromInitData" required>
+      <input matInput formControlName="libraryCode" [readonly]="libraryCodeIsFromInitData" required (change)="onLibraryCodeChange()">
       <mat-hint *ngIf="libraryCodeIsFromInitData">Choose another location in Alma's persistent menu to change this</mat-hint>
       <mat-hint *ngIf="!libraryCodeIsFromInitData">Enter the library's code, not its name</mat-hint>
       <mat-error *ngIf="libraryCode.invalid">{{ libraryCodeError }}</mat-error>

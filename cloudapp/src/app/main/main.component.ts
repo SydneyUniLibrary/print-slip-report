@@ -144,6 +144,20 @@ export class MainComponent implements OnInit, OnDestroy {
     this.alert.success('The report popped up in a new window')
   }
 
+  onLibraryCodeChange() {
+    if (!this.circDeskCode.value) {
+      this.resetCircDeskCode(this.libraryCode.value.trim())
+    }
+  }
+
+  resetCircDeskCode(libraryCode: string) {
+    libraryCode = libraryCode ?? this.libraryCode.value.trim()
+    let libConfig = this.configService.config?.libraryConfigs?.filter(x => x.libraryCode == libraryCode)
+    let desk = libConfig ? libConfig[0]?.defaultCircDeskCode ?? '' : ''
+    this.circDeskCode.setValue(desk)
+    return desk
+  }
+
   async resetOptions() {
     await this.configService.load()
     let config = this.configService.config
@@ -153,7 +167,8 @@ export class MainComponent implements OnInit, OnDestroy {
     ]))
     let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
     let lib = this.libraryCodeIsFromInitData ? this.libraryCode.value : '';
-    this.form.setValue({ libraryCode: lib, circDeskCode: '', columns: checkboxValues })
+    this.resetCircDeskCode(lib)
+    this.form.patchValue({ libraryCode: lib, columns: checkboxValues })
   }
 
   async restoreOptions() {
@@ -165,6 +180,9 @@ export class MainComponent implements OnInit, OnDestroy {
     if (this.initData?.user?.currentlyAtLibCode) {
       this.libraryCodeIsFromInitData = true
       lib = this.initData?.user?.currentlyAtLibCode
+    }
+    if (lib && !desk) {
+      desk = this.resetCircDeskCode(lib)
     }
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
     let includeMap = new Map(flatten1([
