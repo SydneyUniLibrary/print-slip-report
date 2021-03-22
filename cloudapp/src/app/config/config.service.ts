@@ -62,7 +62,7 @@ export class ConfigService {
 
 
 function deserialise(blob: string | null): PrintSlipReportConfig | null {
-  if (blob) {
+  if (blob && Object.keys(blob).length > 0) {
     try {
       return JSON.parse(blob) as PrintSlipReportConfig
     } catch (e) {
