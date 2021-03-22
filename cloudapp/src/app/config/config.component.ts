@@ -3,6 +3,7 @@ import { FormArray, FormBuilder } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ConfigService } from './config.service'
+import { LibrariesService } from './libraries.service'
 
 
 
@@ -14,13 +15,13 @@ import { ConfigService } from './config.service'
 export class ConfigComponent implements OnInit {
 
   columnDefinitions = COLUMNS_DEFINITIONS
+  libraryCodes: string []  // Initialised properly in restoreConfig()
   ready = false
   saving = false
 
   form = this.formBuilder.group({
-    columnDefaults: this.formBuilder.array(
-      this.columnDefinitions.map(() => this.formBuilder.control(false)),
-    ),
+    columnDefaults: this.formBuilder.array([]),  // Initialised properly in restoreConfig()
+    circDeskCodeDefaults: this.formBuilder.array([])  // Initialised properly in restoreConfig()
   })
 
 
@@ -28,11 +29,17 @@ export class ConfigComponent implements OnInit {
     private alertService: AlertService,
     private configService: ConfigService,
     private formBuilder: FormBuilder,
+    private librariesService: LibrariesService,
   ) { }
 
 
   get columnDefaults(): FormArray {
     return this.form.get('columnDefaults') as FormArray
+  }
+
+
+  get circDeskCodeDefaults(): FormArray {
+    return this.form.get('circDeskCodeDefaults') as FormArray
   }
 
 
@@ -42,6 +49,12 @@ export class ConfigComponent implements OnInit {
     } finally {
       this.ready = true
     }
+  }
+
+
+  copyCircDeskCodeDefaults() {
+    let c = this.circDeskCodeDefaults.value[0]
+    this.circDeskCodeDefaults.setValue(this.circDeskCodeDefaults.value.map(() => c))
   }
 
 
@@ -60,23 +73,69 @@ export class ConfigComponent implements OnInit {
 
 
   async restoreConfig() {
-    await this.configService.load()
-    let columnDefaultsConfig = this.configService.columnDefaults
-    let includeMap = new Map(
-      columnDefaultsConfig?.map(x => [ x.code, x.include ])
+    await Promise.all([ this.configService.load(), this.librariesService.load() ])
+    this.restoreCircDeskCodeDefaults()
+    this.restoreColumnDefaults()
+  }
+
+
+  restoreCircDeskCodeDefaults() {
+    this.libraryCodes = this.librariesService.sortedCodes
+    let config = this.configService.libraryConfigs
+    let map = new Map(flatten1([
+      this.libraryCodes.map(c => [ c, '' ]),
+      config?.map(x => [ x.libraryCode, x.defaultCircDeskCode ]) ?? [],
+    ]))
+    let values = this.libraryCodes.map(c => map.get(c) ?? '')
+    this.circDeskCodeDefaults.clear()
+    for (let x of values) {
+      this.circDeskCodeDefaults.push(this.formBuilder.control(x))
+    }
+  }
+
+
+  restoreColumnDefaults() {
+    let config = this.configService.columnDefaults
+    let map = new Map(
+      config?.map(x => [ x.code, x.include ])
       ?? this.columnDefinitions.map(c => [ c.code, false ])
     )
-    let columnDefaults = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-    this.form.setValue({ columnDefaults })
+    let values = this.columnDefinitions.map(c => map.get(c.code) ?? false)
+    this.columnDefaults.clear()
+    for (let x of values) {
+      this.columnDefaults.push(this.formBuilder.control(x))
+    }
   }
 
 
   async saveConfig() {
+    this.saveCircDeskCodeDefaults()
+    this.saveColumnDefaults()
+    await this.configService.save()
+  }
+
+
+  saveCircDeskCodeDefaults() {
+    this.configService.libraryConfigs = (
+      this.circDeskCodeDefaults.value
+      .map((v, i) => [ this.libraryCodes[i], v.trim() ])
+      .filter(x => x[1])
+      .map(x => ({ libraryCode: x[0], defaultCircDeskCode: x[1] }))
+    )
+  }
+
+
+  saveColumnDefaults () {
     let columnDefaults = this.columnDefaults.value
     this.configService.columnDefaults = this.columnDefinitions.map(
       (c, i) => ({ code: c.code, include: columnDefaults[i] })
     )
-    await this.configService.save()
   }
 
+}
+
+
+function flatten1<T>(a: (T | T[])[]): T[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return (a as any).flat(1)
 }
