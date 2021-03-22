@@ -160,6 +160,9 @@ export class MainComponent implements OnInit, OnDestroy {
     let config = this.configService.config
     let lib = options?.libraryCode ?? ''
     let desk = options?.circDeskCode ?? ''
+    if (this.initData?.user?.currentlyAtLibCode) {
+      lib = this.initData?.user?.currentlyAtLibCode
+    }
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
     let includeMap = new Map(flatten1([
       this.columnDefinitions.map(c => [ c.code, false ]),
