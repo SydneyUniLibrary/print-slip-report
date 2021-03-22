@@ -403,45 +403,26 @@ class LastUsedOptionsStorage {
 
   async load() {
     if (!this.loaded) {
+      this.options = {
+        libraryCode: '',
+        circDeskCode: '',
+        columnOptions: [],
+      }
       try {
-        let blob = await this.storeService.get(this.storageKey).toPromise()
-        this.options = this.deserialise(blob)
+        let loadedOptions = await this.storeService.get(this.storageKey).toPromise()
+        this.options = { ...this.options, ...loadedOptions }
       } catch (err) {
-        console.error('Failed to load last used options from storage', err)
-        this.options = null
+        console.warn('Failed to load last used options from storage', err)
       }
     }
   }
 
   async save() {
     if (this.options) {
-      await this.storeService.set(this.storageKey, this.serialize(this.options)).toPromise()
-      // this.storeService.set(this.storageKey, this.serialize(options)).subscribe({
-      //   next: () => console.debug('Saved last used options into storage'),
-      //   error: err => console.error('Failed to save last used options into storage', err, options),
-      // })
+      await this.storeService.set(this.storageKey, this.options).toPromise()
     } else {
       await this.storeService.remove(this.storageKey).toPromise()
-      // this.storeService.remove(this.storageKey).subscribe({
-      //   next: () => console.debug('Removed last used options from storage'),
-      //   error: err => console.error('Failed to remove last used options from storage', err),
-      // })
     }
-  }
-
-  protected deserialise(blob: string | null): PrintSlipReportOptions | null {
-    if (blob) {
-      try {
-        return JSON.parse(blob) as PrintSlipReportOptions
-      } catch (e) {
-        console.error('Failed to restore last used options from storage', e, blob)
-      }
-    }
-    return null
-  }
-
-  protected serialize(options: PrintSlipReportOptions): string {
-    return JSON.stringify(options)
   }
 
 }
