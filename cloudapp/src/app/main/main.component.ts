@@ -310,7 +310,7 @@ class InvalidParameterError {
 function parseInvalidParameterError(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
   const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == "40166410")
   if (error) {
-    const match = error[0].errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
+    const match = error[0]?.errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
     if (match) {
       let parameter = match[1]
       let validOptions = match[2].split(',')
