@@ -1,41 +1,15 @@
-import { Observable  } from 'rxjs';
+import { Observable } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService, RestResponse } from '@exlibris/exl-cloudapp-angular-lib';
+import {
+  CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
+  Entity, RestErrorResponse, AlertService, CloudAppStoreService, InitData,
+} from '@exlibris/exl-cloudapp-angular-lib'
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 import { escape } from 'html-escaper'
-
-
-class ColumnDefinition {
-
-  constructor(
-    public name: string,
-    public mapFn: (requestedResource: any) => string
-  ) {}
-
-}
-
-
-const COLUMNS_DEFINITIONS = [
-  new ColumnDefinition('Title', x => x?.resource_metadata?.title),
-  new ColumnDefinition('Location', x => x?.location?.shelving_location),
-  new ColumnDefinition('Call Number', x => x?.location?.call_number),
-  new ColumnDefinition('Author', x => x?.resource_metadata?.author),
-  new ColumnDefinition('ISBN', x => x?.resource_metadata?.isbn),
-  new ColumnDefinition('ISSN', x => x?.resource_metadata?.issn),
-  new ColumnDefinition('Publisher', x => x?.resource_metadata?.publisher),
-  new ColumnDefinition('Publication Date', x => x?.resource_metadata?.publication_year),
-  new ColumnDefinition('Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
-  new ColumnDefinition('Requested For', x => x?.request?.[0]?.requester?.desc),
-  new ColumnDefinition('Request ID', x => x?.request?.[0]?.id),
-  new ColumnDefinition('Barcode', x => x?.location?.copy?.[0]?.barcode),
-  new ColumnDefinition('Pickup Location', x => x?.request?.[0]?.destination?.desc),
-  new ColumnDefinition('Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
-  new ColumnDefinition('Request Note', x => x?.request?.[0]?.comment),
-  new ColumnDefinition('Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
-]
+import { ConfigService } from '../config/config.service'
+import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
 
 
 @Component({
@@ -49,14 +23,17 @@ export class MainComponent implements OnInit, OnDestroy {
   selectedEntity: Entity;
   apiResult: any;
   columnDefinitions = COLUMNS_DEFINITIONS
+  lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
+  ready = false
+  initData: InitData
+  libraryCodeIsFromInitData: boolean = false
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
     circDeskCode: [ '', Validators.required ],
     columns: this.formBuilder.array(
-      this.columnDefinitions.map(_ => this.formBuilder.control(false)),
-      atLeastOneIsSelected,
-    ),
+      this.columnDefinitions.map(() => this.formBuilder.control(false)),
+      atLeastOneIsSelected),
   })
 
   entities$: Observable<Entity[]> = this.eventsService.entities$
@@ -67,15 +44,19 @@ export class MainComponent implements OnInit, OnDestroy {
     private eventsService: CloudAppEventsService,
     private alert: AlertService,
     private formBuilder: FormBuilder,
+    private storeService: CloudAppStoreService,
+    private configService: ConfigService,
   ) { }
 
-  ngOnInit() {
+  async ngOnInit() {
+    await this.restoreOptions()
+    this.ready = true
   }
 
   ngOnDestroy(): void {
   }
 
-  print() {
+  async print() {
     this.alert.clear()
     this.loading = true
     // Open the popup window early to prevent it being blocked.
@@ -83,6 +64,7 @@ export class MainComponent implements OnInit, OnDestroy {
     let popupWindow = window.open('', 'PrintSlipReport', 'status=0')
     if (popupWindow) {
       popupWindow.document.write('<!HTML>')
+      popupWindow.document.write('<head><style>@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); table, th, td { border: 1px solid; border-collapse: collapse; } table { font: 14px "Roboto", sans-serif; } th, td { padding: 0.2rem; }</style></head>')
       popupWindow.document.write('<body>')
       popupWindow.document.write('<h1 id="please-wait">Please wait...</h1>')
     } else {
@@ -95,41 +77,41 @@ export class MainComponent implements OnInit, OnDestroy {
     this.libraryCode.setValue(libraryCode)
     const circDeskCode = this.circDeskCode.value.trim()
     this.circDeskCode.setValue(circDeskCode)
-    this.restService.call({
-      url: '/task-lists/requested-resources',
-      method: HttpMethod.GET,
-      queryParams: {
-        library: libraryCode,
-        circ_desk: circDeskCode,
-        limit: 100, // TODO: Handle more than 100 requested resources
-      },
-    }).subscribe({
-      next: resp => {
-        if (resp?.requested_resource) {
-          this.generatePrint(resp.requested_resource, popupWindow)
-        } else {
-          popupWindow.close()
-          this.alert.info('There are no requested resources to print.')
-        }
-        this.loading = false
-      },
-      error: (err: RestErrorResponse) => {
+    try {
+      let resp = await (
+        this.restService.call({
+          url: '/task-lists/requested-resources',
+          method: HttpMethod.GET,
+          queryParams: {
+            library: libraryCode,
+            circ_desk: circDeskCode,
+            limit: 100, // TODO: Handle more than 100 requested resources
+          },
+        }).toPromise()
+      )
+      await this.saveOptions()
+      if (resp?.requested_resource) {
+        this.generatePrint(resp.requested_resource, popupWindow)
+      } else {
         popupWindow.close()
-        console.error("REST API Error", err)
-        const invalidParameterError = parseInvalidParameterError(err)
-        if (invalidParameterError) {
-          this.onInvalidParameterError(invalidParameterError)
-        } else {
-          let msg = err.message || "See the console in your browser's developer tools for more information."
-          this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
-        }
-        this.loading = false
+        this.alert.info('There are no requested resources to print.')
       }
-    })
+      this.loading = false
+    } catch (err) {
+      popupWindow.close()
+      console.error("REST API Error", err)
+      const invalidParameterError = parseInvalidParameterError(err)
+      if (invalidParameterError) {
+        this.onInvalidParameterError(invalidParameterError)
+      } else {
+        let msg = err.message || "See the console in your browser's developer tools for more information."
+        this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
+      }
+      this.loading = false
+    }
   }
 
   private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
-    let msg: string
     switch (invalidParameterError.parameter) {
       case 'library':
         this.libraryCode.setErrors({ 'invalidCode': true })
@@ -160,6 +142,54 @@ export class MainComponent implements OnInit, OnDestroy {
     popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
+  }
+
+  async resetOptions() {
+    await this.configService.load()
+    let config = this.configService.config
+    let includeMap = new Map(flatten1([
+      this.columnDefinitions.map(c => [ c.code, false ]),
+      config?.columnDefaults?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+    ]))
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
+    let lib = this.libraryCodeIsFromInitData ? this.libraryCode.value : '';
+    this.form.setValue({ libraryCode: lib, circDeskCode: '', columns: checkboxValues })
+  }
+
+  async restoreOptions() {
+    await Promise.all([ this.lastUsedOptionsStorage.load(), this.configService.load(), this.getInitData() ])
+    let options = this.lastUsedOptionsStorage.options
+    let config = this.configService.config
+    let lib = options?.libraryCode ?? ''
+    let desk = options?.circDeskCode ?? ''
+    if (this.initData?.user?.currentlyAtLibCode) {
+      this.libraryCodeIsFromInitData = true
+      lib = this.initData?.user?.currentlyAtLibCode
+    }
+    // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
+    let includeMap = new Map(flatten1([
+      this.columnDefinitions.map(c => [ c.code, false ]),
+      config?.columnDefaults?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+      options?.columnOptions?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
+    ]))
+    let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code))
+    this.form.setValue({ libraryCode: lib, circDeskCode: desk, columns: checkboxValues })
+  }
+
+  async saveOptions() {
+    let checkboxValues = this.columns.value
+    this.lastUsedOptionsStorage.options = {
+      libraryCode: this.libraryCode.value,
+      circDeskCode: this.circDeskCode.value,
+      columnOptions: this.columnDefinitions.map(
+        (c, i) => ({ code: c.code, include: checkboxValues[i] })
+      )
+    }
+    await this.lastUsedOptionsStorage.save()
+  }
+
+  async getInitData() {
+    this.initData = await this.eventsService.getInitData().toPromise()
   }
 
   get columns(): FormArray {
@@ -281,7 +311,7 @@ class InvalidParameterError {
 function parseInvalidParameterError(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
   const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == "40166410")
   if (error) {
-    const match = error[0].errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
+    const match = error[0]?.errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
     if (match) {
       let parameter = match[1]
       let validOptions = match[2].split(',')
@@ -312,8 +342,8 @@ class ReportGenerator {
   ) { }
 
   generate(): string {
-    return flatten([
-      '<table border="1">',
+    return flatten2([
+      '<table>',
       this.thead(),
       '<tbody>',
       this.values.map(r => this.tr(r)),
@@ -338,7 +368,80 @@ class ReportGenerator {
 }
 
 
-function flatten(a: any): string[] {
+function flatten1<T>(a: (T | T[])[]): T[] {
   // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
-  return a.flat(2)
+  return (a as any).flat(1)
+}
+
+function flatten2<T>(a: (T | T[] | T[][])[]): T[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return (a as any).flat(2)
+}
+
+
+type PrintSlipReportOptions = {
+  libraryCode: string
+  circDeskCode: string
+  columnOptions: PrintSlipReportColumnOption[]
+}
+
+type PrintSlipReportColumnOption = {
+  code: string
+  include: boolean
+}
+
+
+class LastUsedOptionsStorage {
+
+  options: PrintSlipReportOptions | null = null
+  loaded = false
+
+  constructor(
+    private storeService: CloudAppStoreService,
+    public storageKey: string = 'last-used-options'
+  ) { }
+
+  async load() {
+    if (!this.loaded) {
+      try {
+        let blob = await this.storeService.get(this.storageKey).toPromise()
+        this.options = this.deserialise(blob)
+      } catch (err) {
+        console.error('Failed to load last used options from storage', err)
+        this.options = null
+      }
+    }
+  }
+
+  async save() {
+    if (this.options) {
+      await this.storeService.set(this.storageKey, this.serialize(this.options)).toPromise()
+      // this.storeService.set(this.storageKey, this.serialize(options)).subscribe({
+      //   next: () => console.debug('Saved last used options into storage'),
+      //   error: err => console.error('Failed to save last used options into storage', err, options),
+      // })
+    } else {
+      await this.storeService.remove(this.storageKey).toPromise()
+      // this.storeService.remove(this.storageKey).subscribe({
+      //   next: () => console.debug('Removed last used options from storage'),
+      //   error: err => console.error('Failed to remove last used options from storage', err),
+      // })
+    }
+  }
+
+  protected deserialise(blob: string | null): PrintSlipReportOptions | null {
+    if (blob) {
+      try {
+        return JSON.parse(blob) as PrintSlipReportOptions
+      } catch (e) {
+        console.error('Failed to restore last used options from storage', e, blob)
+      }
+    }
+    return null
+  }
+
+  protected serialize(options: PrintSlipReportOptions): string {
+    return JSON.stringify(options)
+  }
+
 }

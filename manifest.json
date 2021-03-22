@@ -11,6 +11,7 @@
       }
    },
    "pages": {
+      "config": "/#/config",
       "help": "https://github.com/SydneyUniLibrary/print-slip-report/wiki/Print-Slip-Report-help"
    },
    "icon": {
