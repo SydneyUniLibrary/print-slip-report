@@ -19,9 +19,7 @@ export class ConfigComponent implements OnInit {
   saving = false
 
   form = this.formBuilder.group({
-    columnDefaults: this.formBuilder.array(
-      this.columnDefinitions.map(() => this.formBuilder.control(false)),
-    ),
+    columnDefaults: this.formBuilder.array([]),  // Initialised properly in restoreConfig()
   })
 
 
@@ -63,22 +61,41 @@ export class ConfigComponent implements OnInit {
 
   async restoreConfig() {
     await Promise.all([ this.configService.load(), this.librariesService.load() ])
-    let columnDefaultsConfig = this.configService.columnDefaults
-    let includeMap = new Map(
-      columnDefaultsConfig?.map(x => [ x.code, x.include ])
+    this.restoreColumnDefaults()
+  }
+
+
+  restoreColumnDefaults() {
+    let config = this.configService.columnDefaults
+    let map = new Map(
+      config?.map(x => [ x.code, x.include ])
       ?? this.columnDefinitions.map(c => [ c.code, false ])
     )
-    let columnDefaults = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-    this.form.setValue({ columnDefaults })
+    let values = this.columnDefinitions.map(c => map.get(c.code) ?? false)
+    this.columnDefaults.clear()
+    for (let x of values) {
+      this.columnDefaults.push(this.formBuilder.control(x))
+    }
   }
 
 
   async saveConfig() {
+    this.saveColumnDefaults()
+    await this.configService.save()
+  }
+
+
+  saveColumnDefaults () {
     let columnDefaults = this.columnDefaults.value
     this.configService.columnDefaults = this.columnDefinitions.map(
       (c, i) => ({ code: c.code, include: columnDefaults[i] })
     )
-    await this.configService.save()
   }
 
+}
+
+
+function flatten1<T>(a: (T | T[])[]): T[] {
+  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
+  return (a as any).flat(1)
 }
