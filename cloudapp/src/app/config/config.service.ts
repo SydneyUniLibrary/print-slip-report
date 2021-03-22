@@ -55,11 +55,12 @@ export class ConfigService {
 
   async load() {
     if (!this.loaded) {
+      this.config = { columnDefaults: [] }
       try {
-        let blob = await this.configService.get().toPromise()
-        this.config = deserialise(blob)
+        let loadedConfig = await this.configService.get().toPromise()
+        this.config = { ...this.config, ...loadedConfig }
       } catch (err) {
-        this.config = null
+        console.warn('Failed to load the app configuration', err)
       }
       this.loaded = true
     }
@@ -68,27 +69,10 @@ export class ConfigService {
 
   async save() {
     if (this.config) {
-      await this.configService.set(serialize(this.config)).toPromise()
+      await this.configService.set(this.config).toPromise()
     } else {
       await this.configService.remove().toPromise()
     }
   }
 
-}
-
-
-function deserialise(blob: string | null): PrintSlipReportConfig | null {
-  if (blob) {
-    try {
-      return JSON.parse(blob) as PrintSlipReportConfig
-    } catch (e) {
-      console.error('Failed to restore the app configuration from storage', e, blob)
-    }
-  }
-  return null
-}
-
-
-function serialize(config: PrintSlipReportConfig): string {
-  return JSON.stringify(config)
 }
