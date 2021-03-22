@@ -1,8 +1,10 @@
 import { Observable } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService, CloudAppStoreService } from '@exlibris/exl-cloudapp-angular-lib';
+import {
+  CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
+  Entity, RestErrorResponse, AlertService, CloudAppStoreService, InitData,
+} from '@exlibris/exl-cloudapp-angular-lib'
 import { MatRadioChange } from '@angular/material/radio';
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
 import { escape } from 'html-escaper'
@@ -23,6 +25,8 @@ export class MainComponent implements OnInit, OnDestroy {
   columnDefinitions = COLUMNS_DEFINITIONS
   lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
   ready = false
+  initData: InitData
+  libraryCodeIsFromInitData: boolean = false
 
   form = this.formBuilder.group({
     libraryCode: [ '', Validators.required ],
@@ -152,11 +156,15 @@ export class MainComponent implements OnInit, OnDestroy {
   }
 
   async restoreOptions() {
-    await Promise.all([ this.lastUsedOptionsStorage.load(), this.configService.load() ])
+    await Promise.all([ this.lastUsedOptionsStorage.load(), this.configService.load(), this.getInitData() ])
     let options = this.lastUsedOptionsStorage.options
     let config = this.configService.config
     let lib = options?.libraryCode ?? ''
     let desk = options?.circDeskCode ?? ''
+    if (this.initData?.user?.currentlyAtLibCode) {
+      this.libraryCodeIsFromInitData = true
+      lib = this.initData?.user?.currentlyAtLibCode
+    }
     // TODO: Reset this.columnDefinitions to align with what's in options.columnOptions
     let includeMap = new Map(flatten1([
       this.columnDefinitions.map(c => [ c.code, false ]),
@@ -177,6 +185,10 @@ export class MainComponent implements OnInit, OnDestroy {
       )
     }
     await this.lastUsedOptionsStorage.save()
+  }
+
+  async getInitData() {
+    this.initData = await this.eventsService.getInitData().toPromise()
   }
 
   get columns(): FormArray {
