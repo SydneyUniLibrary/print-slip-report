@@ -4,7 +4,13 @@ import { CloudAppConfigService } from '@exlibris/exl-cloudapp-angular-lib'
 
 
 export type PrintSlipReportConfig = {
+  libraryConfigs: PrintSlipReportLibraryConfig[]
   columnDefaults: PrintSlipReportColumnConfig[]
+}
+
+export type PrintSlipReportLibraryConfig = {
+  libraryCode: string
+  defaultCircDeskCode: string
 }
 
 export type PrintSlipReportColumnConfig = {
@@ -34,6 +40,16 @@ export class ConfigService {
 
   set columnDefaults(v) {
     this.config = { ...this.config, columnDefaults: v }
+  }
+
+
+  get libraryConfigs() {
+    return this.config?.libraryConfigs
+  }
+
+
+  set libraryConfigs(v) {
+    this.config = { ...this.config, libraryConfigs: v }
   }
 
 

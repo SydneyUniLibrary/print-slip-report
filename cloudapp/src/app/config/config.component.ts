@@ -15,11 +15,13 @@ import { LibrariesService } from './libraries.service'
 export class ConfigComponent implements OnInit {
 
   columnDefinitions = COLUMNS_DEFINITIONS
+  libraryCodes: string []  // Initialised properly in restoreConfig()
   ready = false
   saving = false
 
   form = this.formBuilder.group({
     columnDefaults: this.formBuilder.array([]),  // Initialised properly in restoreConfig()
+    circDeskCodeDefaults: this.formBuilder.array([])  // Initialised properly in restoreConfig()
   })
 
 
@@ -36,12 +38,23 @@ export class ConfigComponent implements OnInit {
   }
 
 
+  get circDeskCodeDefaults(): FormArray {
+    return this.form.get('circDeskCodeDefaults') as FormArray
+  }
+
+
   async ngOnInit() {
     try {
       await this.restoreConfig()
     } finally {
       this.ready = true
     }
+  }
+
+
+  copyCircDeskCodeDefaults() {
+    let c = this.circDeskCodeDefaults.value[0]
+    this.circDeskCodeDefaults.setValue(this.circDeskCodeDefaults.value.map(() => c))
   }
 
 
@@ -61,7 +74,23 @@ export class ConfigComponent implements OnInit {
 
   async restoreConfig() {
     await Promise.all([ this.configService.load(), this.librariesService.load() ])
+    this.restoreCircDeskCodeDefaults()
     this.restoreColumnDefaults()
+  }
+
+
+  restoreCircDeskCodeDefaults() {
+    this.libraryCodes = this.librariesService.sortedCodes
+    let config = this.configService.libraryConfigs
+    let map = new Map(flatten1([
+      this.libraryCodes.map(c => [ c, '' ]),
+      config?.map(x => [ x.libraryCode, x.defaultCircDeskCode ]) ?? [],
+    ]))
+    let values = this.libraryCodes.map(c => map.get(c) ?? '')
+    this.circDeskCodeDefaults.clear()
+    for (let x of values) {
+      this.circDeskCodeDefaults.push(this.formBuilder.control(x))
+    }
   }
 
 
@@ -80,8 +109,19 @@ export class ConfigComponent implements OnInit {
 
 
   async saveConfig() {
+    this.saveCircDeskCodeDefaults()
     this.saveColumnDefaults()
     await this.configService.save()
+  }
+
+
+  saveCircDeskCodeDefaults() {
+    this.configService.libraryConfigs = (
+      this.circDeskCodeDefaults.value
+      .map((v, i) => [ this.libraryCodes[i], v.trim() ])
+      .filter(x => x[1])
+      .map(x => ({ libraryCode: x[0], defaultCircDeskCode: x[1] }))
+    )
   }
 
 

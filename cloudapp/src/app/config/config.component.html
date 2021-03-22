@@ -8,19 +8,43 @@
 <mat-tab-group>
 
 <mat-tab label="Columns">
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Default columns</mat-card-title>
-    <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
-  </mat-card-header>
-  <mat-card-content>
-    <div formArrayName="columnDefaults">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Default columns</mat-card-title>
+      <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div formArrayName="columnDefaults">
         <div *ngFor="let ctl of columnDefaults.controls; let i=index">
-        <mat-checkbox [formControlName]="i">{{ columnDefinitions[i].name }}</mat-checkbox>
+          <mat-checkbox [formControlName]="i">{{ columnDefinitions[i].name }}</mat-checkbox>
+        </div>
       </div>
-    </div>
-  </mat-card-content>
-</mat-card>
+    </mat-card-content>
+  </mat-card>
+</mat-tab>
+
+<mat-tab label="Libraries">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        Default circulation desk codes
+      </mat-card-title>
+      <mat-card-subtitle>If you set a circulation desk code here, this code will be used by default for that library.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="eca-actions">
+        <button *ngIf="libraryCodes" mat-flat-button color="secondary" (click)="copyCircDeskCodeDefaults()">Copy {{ libraryCodes[0] }} to others</button>
+      </div>
+      <div formArrayName="circDeskCodeDefaults">
+        <div *ngFor="let ctl of circDeskCodeDefaults.controls; let i=index">
+          <mat-form-field appearance="standard">
+            <mat-label>{{ libraryCodes[i] }}</mat-label>
+            <input matInput [formControlName]="i">
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
 </mat-tab>
 
 </mat-tab-group>
