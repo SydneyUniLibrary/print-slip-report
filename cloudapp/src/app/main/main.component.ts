@@ -152,7 +152,8 @@ export class MainComponent implements OnInit, OnDestroy {
       config?.columnDefaults?.filter(x => x.include !== undefined).map(x => [ x.code, x.include ]) ?? [],
     ]))
     let checkboxValues = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-    this.form.setValue({ libraryCode: '', circDeskCode: '', columns: checkboxValues })
+    let lib = this.libraryCodeIsFromInitData ? this.libraryCode.value : '';
+    this.form.setValue({ libraryCode: lib, circDeskCode: '', columns: checkboxValues })
   }
 
   async restoreOptions() {
