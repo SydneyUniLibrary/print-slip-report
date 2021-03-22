@@ -91,8 +91,10 @@ export class MainComponent implements OnInit, OnDestroy {
       this.loading = false
       return
     }
-    const libraryCode = this.form.get('libraryCode').value
-    const circDeskCode = this.form.get('circDeskCode').value
+    const libraryCode = this.libraryCode.value.trim()
+    this.libraryCode.setValue(libraryCode)
+    const circDeskCode = this.circDeskCode.value.trim()
+    this.circDeskCode.setValue(circDeskCode)
     this.restService.call({
       url: '/task-lists/requested-resources',
       method: HttpMethod.GET,
