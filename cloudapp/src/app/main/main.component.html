@@ -7,7 +7,7 @@
 
   <div>
 
-    <mat-form-field appearance="standard" [style.margin-right.px]="8" hideRequiredMarker="true">
+    <mat-form-field class="library-code-form-field" [style.margin-right.px]="8" hideRequiredMarker="true">
       <mat-label>Library code</mat-label>
       <input matInput formControlName="libraryCode" [readonly]="libraryCodeIsFromInitData" required (change)="onLibraryCodeChange()">
       <mat-hint *ngIf="libraryCodeIsFromInitData">Choose another location in Alma's persistent menu to change this</mat-hint>
@@ -15,7 +15,7 @@
       <mat-error *ngIf="libraryCode.invalid">{{ libraryCodeError }}</mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="standard" hideRequiredMarker="true"
+    <mat-form-field class="circ-desk-code-form-field" hideRequiredMarker="true"
                     hintLabel="Enter the desk's code, not its name">
       <mat-label>Circulation desk code</mat-label>
       <input matInput formControlName="circDeskCode" required>
