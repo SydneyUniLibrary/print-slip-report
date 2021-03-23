@@ -37,9 +37,9 @@
       </div>
       <div formArrayName="circDeskCodeDefaults">
         <div *ngFor="let ctl of circDeskCodeDefaults.controls; let i=index">
-          <mat-form-field appearance="standard">
+          <mat-form-field floatLabel="always">
             <mat-label>{{ libraryCodes[i] }}</mat-label>
-            <input matInput [formControlName]="i">
+            <input matInput [formControlName]="i" placeholder="DEFAULT_CIRC_DESK">
           </mat-form-field>
         </div>
       </div>

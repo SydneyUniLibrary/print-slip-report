@@ -158,7 +158,7 @@ export class MainComponent implements OnInit, OnDestroy {
   resetCircDeskCode(libraryCode: string) {
     libraryCode = libraryCode ?? this.libraryCode.value.trim()
     let libConfig = this.configService.config?.libraryConfigs?.filter(x => x.libraryCode == libraryCode)
-    let desk = libConfig ? libConfig[0]?.defaultCircDeskCode ?? '' : ''
+    let desk = libConfig ? libConfig[0]?.defaultCircDeskCode ?? 'DEFAULT_CIRC_DESK' : 'DEFAULT_CIRC_DESK'
     this.circDeskCode.setValue(desk)
     return desk
   }
