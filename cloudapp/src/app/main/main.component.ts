@@ -8,6 +8,7 @@ import { escape } from 'html-escaper'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption, ColumnOptionsListControl, ColumnOptionsListControlValidators } from '../column-options'
 import { ConfigService } from '../config/config.service'
+import { LastUsedOptionsService } from './last-used-options.service'
 
 
 
@@ -24,18 +25,17 @@ export class MainComponent implements OnInit {
     columnOptionsList: new ColumnOptionsListControl([], ColumnOptionsListControlValidators.atLeastOneInclude),
   })
   initData: InitData
-  lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
   libraryCodeIsFromInitData: boolean = false
   loading = false
   ready = false
 
 
   constructor(
-    private restService: CloudAppRestService,
-    private eventsService: CloudAppEventsService,
     private alert: AlertService,
-    private storeService: CloudAppStoreService,
     private configService: ConfigService,
+    private eventsService: CloudAppEventsService,
+    private lastUsedOptionsService: LastUsedOptionsService,
+    private restService: CloudAppRestService,
   ) { }
 
 
@@ -266,14 +266,14 @@ export class MainComponent implements OnInit {
 
 
   async restoreOptions() {
-    await this.lastUsedOptionsStorage.load()
-    if (Object.keys(this.lastUsedOptionsStorage.options).length == 0) {
+    await this.lastUsedOptionsService.load()
+    if (!this.lastUsedOptionsService.hasOptions) {
       // If there are no options to restore, reset them
       return this.resetOptions()
     }
 
     await Promise.all([ this.configService.load(), this.getInitData() ])
-    let options = this.lastUsedOptionsStorage.options
+    let options = this.lastUsedOptionsService.options
 
     let lib = options?.libraryCode ?? ''
     if (this.initData?.user?.currentlyAtLibCode) {
@@ -315,12 +315,12 @@ export class MainComponent implements OnInit {
 
 
   async saveOptions() {
-    this.lastUsedOptionsStorage.options = {
+    this.lastUsedOptionsService.options = {
       libraryCode: this.libraryCodeControl.value,
       circDeskCode: this.circDeskCodeControl.value,
       columnOptions: this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include })),
     }
-    await this.lastUsedOptionsStorage.save()
+    await this.lastUsedOptionsService.save()
   }
 
 }
@@ -405,56 +405,4 @@ function flatten2<T>(a: (T | T[] | T[][])[]): T[] {
   return (
     a as any
   ).flat(2)
-}
-
-
-type PrintSlipReportOptions = {
-  libraryCode: string
-  circDeskCode: string
-  columnOptions: PrintSlipReportColumnOption[]
-}
-
-type PrintSlipReportColumnOption = {
-  code: string
-  include: boolean
-}
-
-
-class LastUsedOptionsStorage {
-
-  options: PrintSlipReportOptions | null = null
-  loaded = false
-
-
-  constructor(
-    private storeService: CloudAppStoreService,
-    public storageKey: string = 'last-used-options',
-  ) { }
-
-
-  async load() {
-    if (!this.loaded) {
-      this.options = {
-        libraryCode: '',
-        circDeskCode: '',
-        columnOptions: [],
-      }
-      try {
-        let loadedOptions = await this.storeService.get(this.storageKey).toPromise()
-        this.options = { ...this.options, ...loadedOptions }
-      } catch (err) {
-        console.warn('Failed to load last used options from storage', err)
-      }
-    }
-  }
-
-
-  async save() {
-    if (this.options) {
-      await this.storeService.set(this.storageKey, this.options).toPromise()
-    } else {
-      await this.storeService.remove(this.storageKey).toPromise()
-    }
-  }
-
 }
