@@ -103,6 +103,12 @@ export class MainComponent implements OnInit, OnDestroy {
       const invalidParameterError = parseInvalidParameterError(err)
       if (invalidParameterError) {
         this.onInvalidParameterError(invalidParameterError)
+      } else if (err?.status == 401) {
+        // Unuathorised
+        this.alert.error(
+          'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
+          + ` for the library ${libraryCode} and the circulation desk ${circDeskCode}.`
+        )
       } else {
         let msg = err.message || "See the console in your browser's developer tools for more information."
         this.alert.error(`Something went wrong trying to get the requests from Alma. ${msg}`)
