@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core'
 import { FormControl, FormGroup, Validators } from '@angular/forms'
-import {
-  AlertService, CloudAppEventsService, CloudAppRestService, HttpMethod, InitData, RestErrorResponse,
-} from '@exlibris/exl-cloudapp-angular-lib'
+import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption, ColumnOptionsListControl, ColumnOptionsListControlValidators } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { LastUsedOptionsService } from './last-used-options.service'
-import { PrintSlipReportService } from './print-slip-report.service'
+import { PrintSlipReport, PrintSlipReportService } from './print-slip-report.service'
+import { InvalidParameterError, RequestedResource, RequestedResourcesService } from './requested-resources.service'
 
 
 
@@ -26,6 +25,7 @@ export class MainComponent implements OnInit {
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
   loading = false
+  popupWindow?: PopupWindow
   ready = false
 
 
@@ -35,7 +35,7 @@ export class MainComponent implements OnInit {
     private eventsService: CloudAppEventsService,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
-    private restService: CloudAppRestService,
+    private requestedResourcesService: RequestedResourcesService,
   ) { }
 
 
@@ -106,85 +106,82 @@ export class MainComponent implements OnInit {
   }
 
 
-  async onPrint() {
-    this.alert.clear()
-    this.loading = true
-    // Open the popup window early to prevent it being blocked.
-    // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
-    let popupWindow = window.open('', 'PrintSlipReport', 'status=0')
-    if (popupWindow) {
-      popupWindow.document.write('<!HTML>')
-      popupWindow.document.write('<head>')
-      popupWindow.document.write(`
-        <style>
-          @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); 
-          table, th, td { border: 1px solid; border-collapse: collapse; } 
-          table { font: 14px "Roboto", sans-serif; } 
-          th, td { padding: 0.2rem; }
-        </style>
-      `)
-      popupWindow.document.write('<body onload="window.print()">')
-      popupWindow.document.write('<h1 id="please-wait">Please wait...</h1>')
-    } else {
-      console.warn('Your browser prevented the popup that has the report from appearing')
-      this.alert.error('Your browser prevented the popup that has the report from appearing')
-      this.loading = false
-      return
+  onLibraryCodeChange() {
+    if (!this.circDeskCodeControl.value) {
+      this.resetCircDeskCode(this.libraryCodeControl.value.trim())
     }
-    const libraryCode = this.libraryCodeControl.value.trim()
-    this.libraryCodeControl.setValue(libraryCode)
-    const circDeskCode = this.circDeskCodeControl.value.trim()
-    this.circDeskCodeControl.setValue(circDeskCode)
-    let resp: { requested_resource?: any }
-    try {
-      resp = await (
-        this.restService.call({
-          url: '/task-lists/requested-resources',
-          method: HttpMethod.GET,
-          queryParams: {
-            library: libraryCode,
-            circ_desk: circDeskCode,
-            limit: 100, // TODO: Handle more than 100 requested resources
-          },
-        }).toPromise()
-      )
-    } catch (err) {
-      popupWindow.close()
-      console.error('REST API Error', err)
-      const invalidParameterError = parseInvalidParameterError(err)
-      if (invalidParameterError) {
-        this.onInvalidParameterError(invalidParameterError)
-      } else if (err?.status == 401) {
-        // Unuathorised
-        this.alert.error(
-          'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
-          + ` for the library ${ libraryCode } and the circulation desk ${ circDeskCode }.`,
-        )
-      } else {
-        let msg = err.message || 'See the console in your browser\'s developer tools for more information.'
-        this.alert.error(`Something went wrong trying to get the requests from Alma. ${ msg }`)
-      }
-      this.loading = false
-      return
-    }
-    await this.saveOptions()
-    if (resp?.requested_resource) {
-      try {
-        this.generatePrint(resp.requested_resource, popupWindow)
-      } catch (err) {
-        console.error(err)
-        popupWindow.close()
-        this.alert.error(`Something went wrong. ${err}`)
-      }
-    } else {
-      popupWindow.close()
-      this.alert.info('There are no requested resources to print.')
-    }
-    this.loading = false
   }
 
 
-  private onInvalidParameterError(invalidParameterError: InvalidParameterError): void {
+  async onPrint() {
+    this.alert.clear()
+    this.loading = true
+    let generated = false
+    try {
+
+      const libraryCode = this.libraryCodeControl.value.trim()
+      this.libraryCodeControl.setValue(libraryCode)
+      const circDeskCode = this.circDeskCodeControl.value.trim()
+      this.circDeskCodeControl.setValue(circDeskCode)
+
+      // Open the popup window early to prevent it from being blocked.
+      // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
+      this.popupWindow = new PopupWindow()
+      if (!this.popupWindow.isOpen) {
+        console.warn('Your browser prevented the popup that has the report from appearing')
+        this.alert.error('Your browser prevented the popup that has the report from appearing')
+        return
+      }
+
+      let requestedResources: RequestedResource[]
+      try {
+        requestedResources = await this.requestedResourcesService.get(libraryCode, circDeskCode)
+      } catch (err) {
+        console.error('REST API Error', err)
+        if (err?.parameter) {
+          this.handleInvalidParameterError(err)
+        } else if (err?.status == 401) {
+          // Unuathorised
+          this.alert.error(
+            'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
+            + ` for the library ${ libraryCode } and the circulation desk ${ circDeskCode }.`,
+          )
+        } else {
+          let msg = err.message || "See the console in your browser's developer tools for more information."
+          this.alert.error(`Something went wrong trying to get the requests. ${ msg }`)
+        }
+        return
+      }
+
+      await this.saveOptions()
+
+      if (requestedResources.length == 0) {
+        this.alert.info('There are no requested resources to print.', { autoClose: false })
+      } else {
+        try {
+          let printSlipReport = this.printSlipReportService.newReport(
+            this.columnOptionsListControl.value, requestedResources
+          )
+          this.popupWindow.print(printSlipReport)
+          this.alert.success('The report popped up in a new window')
+          generated = true
+        } catch (err) {
+          console.error(err)
+          this.alert.error(`Something went wrong. ${err}`)
+        }
+      }
+
+    } finally {
+      this.loading = false
+      if (!generated) {
+        this.popupWindow.close()
+      }
+      this.popupWindow = undefined
+    }
+  }
+
+
+  private handleInvalidParameterError(invalidParameterError: InvalidParameterError): void {
     switch (invalidParameterError.parameter) {
       case 'library':
         this.libraryCodeControl.setErrors({ 'invalidCode': true })
@@ -203,22 +200,6 @@ export class MainComponent implements OnInit {
       default:
         this.alert.error(`The API parameter ${ invalidParameterError.parameter } was invalid`)
     }
-  }
-
-
-  onLibraryCodeChange() {
-    if (!this.circDeskCodeControl.value) {
-      this.resetCircDeskCode(this.libraryCodeControl.value.trim())
-    }
-  }
-
-
-  generatePrint(requestedResources: any[], popupWindow: Window): void {
-    let printSlipReport = this.printSlipReportService.newReport(this.columnOptionsListControl.value, requestedResources)
-    popupWindow.document.write('<style> #please-wait { display: none } </style>')
-    popupWindow.document.write(printSlipReport.html)
-    popupWindow.document.close()
-    this.alert.success('The report popped up in a new window')
   }
 
 
@@ -330,25 +311,42 @@ export class MainComponent implements OnInit {
 }
 
 
-class InvalidParameterError {
+class PopupWindow {
 
-  constructor(
-    public parameter: string,
-    public validOptions: string[],
-  ) {}
+  isOpen: boolean
+  private readonly wnd: Window
 
-}
-
-
-function parseInvalidParameterError(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
-  const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == '40166410')
-  if (error) {
-    const match = error[0]?.errorMessage?.match(/The parameter (\w+) is invalid\..*Valid options are: \[([^\]]*)]/)
-    if (match) {
-      let parameter = match[1]
-      let validOptions = match[2].split(',')
-      return new InvalidParameterError(parameter, validOptions)
+  constructor() {
+    this.wnd = window.open('', '', 'status=0')
+    this.isOpen = !!this.wnd
+    if (this.isOpen) {
+      this.wnd.document.write('<!HTML>')
+      this.wnd.document.write('<head>')
+      this.wnd.document.write(`
+        <style>
+          @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); 
+          table, th, td { border: 1px solid; border-collapse: collapse; } 
+          table { font: 14px "Roboto", sans-serif; } 
+          th, td { padding: 0.2rem; }
+          h1 { font: 24pt "Roboto", sans-serif; font-weight: bolder; }
+        </style>
+      `)
+      this.wnd.document.write('<body onload="window.print()">')
+      this.wnd.document.write('<h1 id="please-wait">Please wait...</h1>')
     }
   }
-  return null
+
+  close() {
+    if (this.isOpen) {
+      this.wnd.close()
+      this.isOpen = false
+    }
+  }
+
+  print(printSlipReport: PrintSlipReport) {
+    this.wnd.document.write('<style> #please-wait { display: none } </style>')
+    this.wnd.document.write(printSlipReport.html)
+    this.wnd.document.close()
+  }
+
 }
