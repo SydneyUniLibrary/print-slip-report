@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core'
-import { FormArray, FormBuilder } from '@angular/forms'
+import { FormArray, FormGroup } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
+import { ColumnOption, ColumnOptionsListControl } from '../column-options'
+import { CircDeskCodeDefault, CircDeskCodeDefaultsListControl } from './circ-desk-code-defaults-control'
 import { ConfigService } from './config.service'
 import { LibrariesService } from './libraries.service'
 
@@ -14,33 +16,20 @@ import { LibrariesService } from './libraries.service'
 })
 export class ConfigComponent implements OnInit {
 
-  columnDefinitions = COLUMNS_DEFINITIONS
-  libraryCodes: string []  // Initialised properly in restoreConfig()
+
+  form = new FormGroup({  // Initialised properly in restoreConfig()
+    columnOptionsList: new ColumnOptionsListControl([]),
+    circDeskCodeDefaults: new CircDeskCodeDefaultsListControl([]),
+  })
   ready = false
   saving = false
 
-  form = this.formBuilder.group({
-    columnDefaults: this.formBuilder.array([]),  // Initialised properly in restoreConfig()
-    circDeskCodeDefaults: this.formBuilder.array([])  // Initialised properly in restoreConfig()
-  })
-
 
   constructor(
-    private alertService: AlertService,
+    private alert: AlertService,
     private configService: ConfigService,
-    private formBuilder: FormBuilder,
     private librariesService: LibrariesService,
   ) { }
-
-
-  get columnDefaults(): FormArray {
-    return this.form.get('columnDefaults') as FormArray
-  }
-
-
-  get circDeskCodeDefaults(): FormArray {
-    return this.form.get('circDeskCodeDefaults') as FormArray
-  }
 
 
   async ngOnInit() {
@@ -52,9 +41,37 @@ export class ConfigComponent implements OnInit {
   }
 
 
+  get columnOptionsListControl(): ColumnOptionsListControl {
+    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  }
+
+
+  set columnOptionsListControl(ctl: ColumnOptionsListControl) {
+    this.form.setControl('columnOptionsList', ctl)
+  }
+
+
+  get circDeskCodeDefaultsControl(): CircDeskCodeDefaultsListControl {
+    return this.form.get('circDeskCodeDefaults') as CircDeskCodeDefaultsListControl
+  }
+
+
+  set circDeskCodeDefaultsControl(ctl: CircDeskCodeDefaultsListControl) {
+    this.form.setControl('circDeskCodeDefaults', ctl)
+  }
+
+
+  get firstLibraryCode(): string | undefined {
+    let values = this.circDeskCodeDefaultsControl.value
+    return (values.length > 0) ? values[0].libraryCode : undefined
+  }
+
+
   copyCircDeskCodeDefaults() {
-    let c = this.circDeskCodeDefaults.value[0]
-    this.circDeskCodeDefaults.setValue(this.circDeskCodeDefaults.value.map(() => c))
+    let p = { defaultCircDeskCode: this.circDeskCodeDefaultsControl.value[0].defaultCircDeskCode }
+    for (let ctl of this.circDeskCodeDefaultsControl.controls) {
+      ctl.patchValue(p)
+    }
   }
 
 
@@ -65,7 +82,7 @@ export class ConfigComponent implements OnInit {
     } catch (err) {
       console.error('Failed to save the configuration', err)
       let msg = err.message || "See the console in your browser's developer tools for more information."
-      this.alertService.error(`Failed to save the configuration. ${msg}`)
+      this.alert.error(`Failed to save the configuration. ${msg}`)
     } finally {
       this.saving = false
     }
@@ -75,67 +92,68 @@ export class ConfigComponent implements OnInit {
   async restoreConfig() {
     await Promise.all([ this.configService.load(), this.librariesService.load() ])
     this.restoreCircDeskCodeDefaults()
-    this.restoreColumnDefaults()
+    this.restoreColumnOptionsList()
   }
 
 
   restoreCircDeskCodeDefaults() {
-    this.libraryCodes = this.librariesService.sortedCodes
-    let config = this.configService.libraryConfigs
-    let map = new Map(flatten1([
-      this.libraryCodes.map(c => [ c, '' ]),
-      config?.map(x => [ x.libraryCode, x.defaultCircDeskCode ]) ?? [],
-    ]))
-    let values = this.libraryCodes.map(c => map.get(c) ?? '')
-    this.circDeskCodeDefaults.clear()
-    for (let x of values) {
-      this.circDeskCodeDefaults.push(this.formBuilder.control(x))
-    }
+    let libraryConfigs = new Map(
+      this.configService.libraryConfigs.map(c => [ c.libraryCode, c ])
+    )
+    let circDeskCodeDefaults: CircDeskCodeDefault[] = (
+      this.librariesService.sortedCodes.map(libraryCode => ({
+        libraryCode,
+        defaultCircDeskCode: libraryConfigs.get(libraryCode)?.defaultCircDeskCode ?? ''
+      }))
+    )
+    this.circDeskCodeDefaultsControl = new CircDeskCodeDefaultsListControl(circDeskCodeDefaults)
   }
 
 
-  restoreColumnDefaults() {
-    let config = this.configService.columnDefaults
-    let map = new Map(
-      config?.map(x => [ x.code, x.include ])
-      ?? this.columnDefinitions.map(c => [ c.code, false ])
-    )
-    let values = this.columnDefinitions.map(c => map.get(c.code) ?? false)
-    this.columnDefaults.clear()
-    for (let x of values) {
-      this.columnDefaults.push(this.formBuilder.control(x))
-    }
+  restoreColumnOptionsList() {
+    let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
+    let columnOptions: ColumnOption[] = [
+      // Start with the columns in the order they are from the app configuration,
+      ...(
+        (this.configService.config?.columnDefaults ?? [])
+        // ... minus any that aren't defined anymore
+        .filter(c => missingColumnDefinitions.has(c.code))
+        .map(c => {
+          let name = missingColumnDefinitions.get(c.code).name
+          missingColumnDefinitions.delete(c.code)
+          return { ...c, name }
+        })
+      ),
+      // Add any columns not in the app configuration, in the order they appear in the column definitions
+      ...(
+        Array.from(missingColumnDefinitions.values())
+             .map(c => ({ code: c.code, name: c.name, include: false }))
+      )
+    ]
+    this.columnOptionsListControl = new ColumnOptionsListControl(columnOptions)
   }
 
 
   async saveConfig() {
     this.saveCircDeskCodeDefaults()
-    this.saveColumnDefaults()
+    this.saveColumnOptionsList()
     await this.configService.save()
   }
 
 
   saveCircDeskCodeDefaults() {
     this.configService.libraryConfigs = (
-      this.circDeskCodeDefaults.value
-      .map((v, i) => [ this.libraryCodes[i], v.trim() ])
-      .filter(x => x[1])
-      .map(x => ({ libraryCode: x[0], defaultCircDeskCode: x[1] }))
+      this.circDeskCodeDefaultsControl.value
+      .map(v => ({ libraryCode: v.libraryCode, defaultCircDeskCode: v.defaultCircDeskCode.trim() }))
+      .filter(v => v.defaultCircDeskCode)
     )
   }
 
 
-  saveColumnDefaults () {
-    let columnDefaults = this.columnDefaults.value
-    this.configService.columnDefaults = this.columnDefinitions.map(
-      (c, i) => ({ code: c.code, include: columnDefaults[i] })
+  saveColumnOptionsList() {
+    this.configService.columnDefaults = (
+      this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include }))
     )
   }
 
-}
-
-
-function flatten1<T>(a: (T | T[])[]): T[] {
-  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
-  return (a as any).flat(1)
 }
