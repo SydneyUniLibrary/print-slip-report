@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core'
-import { FormArray, FormBuilder } from '@angular/forms'
+import { FormArray, FormGroup } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
+import { ColumnOption, ColumnOptionsListControl } from '../column-options'
+import { CircDeskCodeDefault, CircDeskCodeDefaultsListControl } from './circ-desk-code-defaults-control'
 import { ConfigService } from './config.service'
+import { LibrariesService } from './libraries.service'
 
 
 
@@ -13,27 +16,20 @@ import { ConfigService } from './config.service'
 })
 export class ConfigComponent implements OnInit {
 
-  columnDefinitions = COLUMNS_DEFINITIONS
+
+  form = new FormGroup({  // Initialised properly in restoreConfig()
+    columnOptionsList: new ColumnOptionsListControl([]),
+    circDeskCodeDefaults: new CircDeskCodeDefaultsListControl([]),
+  })
   ready = false
   saving = false
 
-  form = this.formBuilder.group({
-    columnDefaults: this.formBuilder.array(
-      this.columnDefinitions.map(() => this.formBuilder.control(false)),
-    ),
-  })
-
 
   constructor(
-    private alertService: AlertService,
+    private alert: AlertService,
     private configService: ConfigService,
-    private formBuilder: FormBuilder,
+    private librariesService: LibrariesService,
   ) { }
-
-
-  get columnDefaults(): FormArray {
-    return this.form.get('columnDefaults') as FormArray
-  }
 
 
   async ngOnInit() {
@@ -45,6 +41,40 @@ export class ConfigComponent implements OnInit {
   }
 
 
+  get columnOptionsListControl(): ColumnOptionsListControl {
+    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  }
+
+
+  set columnOptionsListControl(ctl: ColumnOptionsListControl) {
+    this.form.setControl('columnOptionsList', ctl)
+  }
+
+
+  get circDeskCodeDefaultsControl(): CircDeskCodeDefaultsListControl {
+    return this.form.get('circDeskCodeDefaults') as CircDeskCodeDefaultsListControl
+  }
+
+
+  set circDeskCodeDefaultsControl(ctl: CircDeskCodeDefaultsListControl) {
+    this.form.setControl('circDeskCodeDefaults', ctl)
+  }
+
+
+  get firstLibraryCode(): string | undefined {
+    let values = this.circDeskCodeDefaultsControl.value
+    return (values.length > 0) ? values[0].libraryCode : undefined
+  }
+
+
+  copyCircDeskCodeDefaults() {
+    let p = { defaultCircDeskCode: this.circDeskCodeDefaultsControl.value[0].defaultCircDeskCode }
+    for (let ctl of this.circDeskCodeDefaultsControl.controls) {
+      ctl.patchValue(p)
+    }
+  }
+
+
   async onSave() {
     try {
       this.saving = true
@@ -52,7 +82,7 @@ export class ConfigComponent implements OnInit {
     } catch (err) {
       console.error('Failed to save the configuration', err)
       let msg = err.message || "See the console in your browser's developer tools for more information."
-      this.alertService.error(`Failed to save the configuration. ${msg}`)
+      this.alert.error(`Failed to save the configuration. ${msg}`)
     } finally {
       this.saving = false
     }
@@ -60,23 +90,70 @@ export class ConfigComponent implements OnInit {
 
 
   async restoreConfig() {
-    await this.configService.load()
-    let columnDefaultsConfig = this.configService.columnDefaults
-    let includeMap = new Map(
-      columnDefaultsConfig?.map(x => [ x.code, x.include ])
-      ?? this.columnDefinitions.map(c => [ c.code, false ])
+    await Promise.all([ this.configService.load(), this.librariesService.load() ])
+    this.restoreCircDeskCodeDefaults()
+    this.restoreColumnOptionsList()
+  }
+
+
+  restoreCircDeskCodeDefaults() {
+    let libraryConfigs = new Map(
+      this.configService.libraryConfigs.map(c => [ c.libraryCode, c ])
     )
-    let columnDefaults = this.columnDefinitions.map(c => includeMap.get(c.code) ?? false)
-    this.form.setValue({ columnDefaults })
+    let circDeskCodeDefaults: CircDeskCodeDefault[] = (
+      this.librariesService.sortedCodes.map(libraryCode => ({
+        libraryCode,
+        defaultCircDeskCode: libraryConfigs.get(libraryCode)?.defaultCircDeskCode ?? ''
+      }))
+    )
+    this.circDeskCodeDefaultsControl = new CircDeskCodeDefaultsListControl(circDeskCodeDefaults)
+  }
+
+
+  restoreColumnOptionsList() {
+    let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
+    let columnOptions: ColumnOption[] = [
+      // Start with the columns in the order they are from the app configuration,
+      ...(
+        (this.configService.config?.columnDefaults ?? [])
+        // ... minus any that aren't defined anymore
+        .filter(c => missingColumnDefinitions.has(c.code))
+        .map(c => {
+          let name = missingColumnDefinitions.get(c.code).name
+          missingColumnDefinitions.delete(c.code)
+          return { ...c, name }
+        })
+      ),
+      // Add any columns not in the app configuration, in the order they appear in the column definitions
+      ...(
+        Array.from(missingColumnDefinitions.values())
+             .map(c => ({ code: c.code, name: c.name, include: false }))
+      )
+    ]
+    this.columnOptionsListControl = new ColumnOptionsListControl(columnOptions)
   }
 
 
   async saveConfig() {
-    let columnDefaults = this.columnDefaults.value
-    this.configService.columnDefaults = this.columnDefinitions.map(
-      (c, i) => ({ code: c.code, include: columnDefaults[i] })
-    )
+    this.saveCircDeskCodeDefaults()
+    this.saveColumnOptionsList()
     await this.configService.save()
+  }
+
+
+  saveCircDeskCodeDefaults() {
+    this.configService.libraryConfigs = (
+      this.circDeskCodeDefaultsControl.value
+      .map(v => ({ libraryCode: v.libraryCode, defaultCircDeskCode: v.defaultCircDeskCode.trim() }))
+      .filter(v => v.defaultCircDeskCode)
+    )
+  }
+
+
+  saveColumnOptionsList() {
+    this.configService.columnDefaults = (
+      this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include }))
+    )
   }
 
 }

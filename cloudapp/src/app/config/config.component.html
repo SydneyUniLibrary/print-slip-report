@@ -5,21 +5,49 @@
 <h1>Configuration</h1>
 
 <form [formGroup]="form" *ngIf="ready">
+<mat-tab-group>
 
-<mat-card>
-  <mat-card-header>
-    <mat-card-title>Default columns</mat-card-title>
-    <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
-  </mat-card-header>
-  <mat-card-content>
-    <div formArrayName="columnDefaults">
-      <div *ngFor="let column of columnDefaults.controls; let i=index">
-        <mat-checkbox [formControlName]="i">{{ columnDefinitions[i].name }}</mat-checkbox>
+<mat-tab label="Columns">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Default columns</mat-card-title>
+      <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div formArrayName="columnOptionsList">
+        <div *ngFor="let ctl of columnOptionsListControl.controls; let i=index" [formGroupName]="i">
+          <mat-checkbox formControlName="include">{{ ctl.value.name }}</mat-checkbox>
+        </div>
       </div>
-    </div>
-  </mat-card-content>
-</mat-card>
+    </mat-card-content>
+  </mat-card>
+</mat-tab>
 
+<mat-tab label="Libraries">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        Default circulation desk codes
+      </mat-card-title>
+      <mat-card-subtitle>If you set a circulation desk code here, this code will be used by default for that library.</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="eca-actions">
+        <button *ngIf="firstLibraryCode" mat-flat-button color="secondary" (click)="copyCircDeskCodeDefaults()">Copy {{ firstLibraryCode }} to others</button>
+      </div>
+      <div formArrayName="circDeskCodeDefaults">
+        <div *ngFor="let ctl of circDeskCodeDefaultsControl.controls; let i=index" [formGroupName]="i">
+          <mat-form-field floatLabel="always">
+            <mat-label>{{ ctl.value.libraryCode }}</mat-label>
+            <input matInput formControlName="defaultCircDeskCode" placeholder="DEFAULT_CIRC_DESK">
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</mat-tab>
+
+</mat-tab-group>
 </form>
 
 <div class="loading-shade" *ngIf="saving || !ready">
