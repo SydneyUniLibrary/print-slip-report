@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core'
-import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms'
+import { FormControl, FormGroup, Validators } from '@angular/forms'
 import {
-  AlertService, CloudAppEventsService, CloudAppRestService, CloudAppStoreService, HttpMethod, InitData,
-  RestErrorResponse,
+  AlertService, CloudAppEventsService, CloudAppRestService, HttpMethod, InitData, RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
-import { escape } from 'html-escaper'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption, ColumnOptionsListControl, ColumnOptionsListControlValidators } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { LastUsedOptionsService } from './last-used-options.service'
+import { PrintSlipReportService } from './print-slip-report.service'
 
 
 
@@ -35,6 +34,7 @@ export class MainComponent implements OnInit {
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
     private lastUsedOptionsService: LastUsedOptionsService,
+    private printSlipReportService: PrintSlipReportService,
     private restService: CloudAppRestService,
   ) { }
 
@@ -169,7 +169,13 @@ export class MainComponent implements OnInit {
     }
     await this.saveOptions()
     if (resp?.requested_resource) {
-      this.generatePrint(resp.requested_resource, popupWindow)
+      try {
+        this.generatePrint(resp.requested_resource, popupWindow)
+      } catch (err) {
+        console.error(err)
+        popupWindow.close()
+        this.alert.error(`Something went wrong. ${err}`)
+      }
     } else {
       popupWindow.close()
       this.alert.info('There are no requested resources to print.')
@@ -208,11 +214,9 @@ export class MainComponent implements OnInit {
 
 
   generatePrint(requestedResources: any[], popupWindow: Window): void {
-    let selectedColumns = this.columnOptionsListControl.value.filter(c => c.include)
-    let mappedRequestedResources = requestedResources.map(x => mapColumns(selectedColumns, x))
-    let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
+    let printSlipReport = this.printSlipReportService.newReport(this.columnOptionsListControl.value, requestedResources)
     popupWindow.document.write('<style> #please-wait { display: none } </style>')
-    popupWindow.document.write(generatedReport)
+    popupWindow.document.write(printSlipReport.html)
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
   }
@@ -347,62 +351,4 @@ function parseInvalidParameterError(restErrorResponse: RestErrorResponse): Inval
     }
   }
   return null
-}
-
-
-function mapColumns(selectedColumns: ColumnOption[], requestedResource: any): string[] {
-  return selectedColumns.map(col => {
-    try {
-      return COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
-    } catch (err) {
-      console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
-      return undefined
-    }
-  })
-}
-
-
-class ReportGenerator {
-
-  constructor(
-    private columnNames: string[],
-    private values: string[][],
-  ) { }
-
-
-  generate(): string {
-    return flatten2([
-      '<table>',
-      this.thead(),
-      '<tbody>',
-      this.values.map(r => this.tr(r)),
-      '</table>',
-    ]).join('\n')
-  }
-
-
-  private thead(): string[] {
-    let thList = this.columnNames.map(x => `<th>${ this.t(x) }`)
-    return ['<thead>', '<tr>', ...thList]
-  }
-
-
-  private tr(row: string[]): string[] {
-    let tdList = row.map(x => `<td>${ this.t(x) }`)
-    return ['<tr>', ...tdList]
-  }
-
-
-  private t(value: string): string {
-    return value ? escape(value.toString()) : ''
-  }
-
-}
-
-
-function flatten2<T>(a: (T | T[] | T[][])[]): T[] {
-  // TypeScript doesn't have Array.prototype.flat declared for it so it hack get around it
-  return (
-    a as any
-  ).flat(2)
 }
