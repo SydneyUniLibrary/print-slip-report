@@ -25,7 +25,7 @@
   </div>
 
   <div formArrayName="columns">
-    <div [style.margin-top.px]="24">Columns</div>
+    <div [style.margin-top.px]="48">Columns</div>
     <mat-error *ngIf=" columns.invalid">{{ columnsError }}</mat-error>
     <div [style.margin-top.px]="12">
       <div *ngFor="let column of columns.controls; let i=index">
