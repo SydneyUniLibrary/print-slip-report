@@ -9,7 +9,7 @@ export class ColumnDefinition {
 }
 
 
-export const COLUMNS_DEFINITIONS = [
+export const COLUMNS_DEFINITIONS = to_map([
   new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
   new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
   new ColumnDefinition('call-number', 'Call Number', x => x?.location?.call_number),
@@ -26,4 +26,9 @@ export const COLUMNS_DEFINITIONS = [
   new ColumnDefinition('item-call-number', 'Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
   new ColumnDefinition('request-note', 'Request Note', x => x?.request?.[0]?.comment),
   new ColumnDefinition('storage-location-id', 'Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
-]
+])
+
+
+function to_map(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
+  return new Map(list.map(x => [ x.code, x ]))
+}

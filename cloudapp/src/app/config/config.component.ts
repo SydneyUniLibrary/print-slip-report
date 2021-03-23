@@ -14,7 +14,7 @@ import { LibrariesService } from './libraries.service'
 })
 export class ConfigComponent implements OnInit {
 
-  columnDefinitions = COLUMNS_DEFINITIONS
+  columnDefinitions = Array.from(COLUMNS_DEFINITIONS.values())
   libraryCodes: string []  // Initialised properly in restoreConfig()
   ready = false
   saving = false

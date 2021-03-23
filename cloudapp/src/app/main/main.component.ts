@@ -22,7 +22,7 @@ export class MainComponent implements OnInit, OnDestroy {
   loading = false;
   selectedEntity: Entity;
   apiResult: any;
-  columnDefinitions = COLUMNS_DEFINITIONS
+  columnDefinitions = Array.from(COLUMNS_DEFINITIONS.values())
   lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
   ready = false
   initData: InitData
