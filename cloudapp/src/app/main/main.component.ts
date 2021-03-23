@@ -65,7 +65,7 @@ export class MainComponent implements OnInit, OnDestroy {
     if (popupWindow) {
       popupWindow.document.write('<!HTML>')
       popupWindow.document.write('<head><style>@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); table, th, td { border: 1px solid; border-collapse: collapse; } table { font: 14px "Roboto", sans-serif; } th, td { padding: 0.2rem; }</style></head>')
-      popupWindow.document.write('<body>')
+      popupWindow.document.write('<body onload="window.print()">')
       popupWindow.document.write('<h1 id="please-wait">Please wait...</h1>')
     } else {
       console.warn('Your browser prevented the popup that has the report from appearing')
@@ -139,7 +139,6 @@ export class MainComponent implements OnInit, OnDestroy {
     let generatedReport = new ReportGenerator(selectedColumns.map(x => x.name), mappedRequestedResources).generate()
     popupWindow.document.write('<style>#please-wait { display: none }</style>')
     popupWindow.document.write(generatedReport)
-    popupWindow.document.write('<script>window.print()</script>')
     popupWindow.document.close()
     this.alert.success('The report popped up in a new window')
   }
