@@ -1,15 +1,13 @@
-import { Observable } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-  CloudAppRestService, CloudAppEventsService, Request, HttpMethod,
-  Entity, RestErrorResponse, AlertService, CloudAppStoreService, InitData,
-} from '@exlibris/exl-cloudapp-angular-lib'
-import { MatRadioChange } from '@angular/material/radio';
+import { Component, OnInit } from '@angular/core'
 import { FormArray, FormBuilder, FormControl, ValidationErrors, Validators } from '@angular/forms'
+import {
+  AlertService, CloudAppEventsService, CloudAppRestService, CloudAppStoreService, HttpMethod, InitData,
+  RestErrorResponse,
+} from '@exlibris/exl-cloudapp-angular-lib'
 import { escape } from 'html-escaper'
-import { ConfigService } from '../config/config.service'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
+import { ConfigService } from '../config/config.service'
+
 
 
 @Component({
@@ -17,11 +15,9 @@ import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.scss']
 })
-export class MainComponent implements OnInit, OnDestroy {
+export class MainComponent implements OnInit {
 
   loading = false;
-  selectedEntity: Entity;
-  apiResult: any;
   columnDefinitions = Array.from(COLUMNS_DEFINITIONS.values())
   lastUsedOptionsStorage = new LastUsedOptionsStorage(this.storeService)
   ready = false
@@ -35,9 +31,6 @@ export class MainComponent implements OnInit, OnDestroy {
       this.columnDefinitions.map(() => this.formBuilder.control(false)),
       atLeastOneIsSelected),
   })
-
-  entities$: Observable<Entity[]> = this.eventsService.entities$
-  .pipe(tap(() => this.clear()))
 
   constructor(
     private restService: CloudAppRestService,
@@ -58,9 +51,6 @@ export class MainComponent implements OnInit, OnDestroy {
       this.ready = true
       this.loading = false
     }
-  }
-
-  ngOnDestroy(): void {
   }
 
   async print() {
@@ -263,57 +253,6 @@ export class MainComponent implements OnInit, OnDestroy {
     } else {
       return null
     }
-  }
-
-  entitySelected(event: MatRadioChange) {
-    const value = event.value as Entity;
-    this.loading = true;
-    this.restService.call<any>(value.link)
-    .pipe(finalize(()=>this.loading=false))
-    .subscribe(
-      result => this.apiResult = result,
-      error => this.alert.error('Failed to retrieve entity: ' + error.message)
-    );
-  }
-
-  clear() {
-    this.apiResult = null;
-    this.selectedEntity = null;
-  }
-
-  update(value: any) {
-    const requestBody = this.tryParseJson(value)
-    if (!requestBody) return this.alert.error('Failed to parse json');
-
-    this.loading = true;
-    let request: Request = {
-      url: this.selectedEntity.link,
-      method: HttpMethod.PUT,
-      requestBody
-    };
-    this.restService.call(request)
-    .pipe(finalize(()=>this.loading=false))
-    .subscribe({
-      next: result => {
-        this.apiResult = result;
-        this.eventsService.refreshPage().subscribe(
-          ()=>this.alert.success('Success!')
-        );
-      },
-      error: (e: RestErrorResponse) => {
-        this.alert.error('Failed to update data: ' + e.message);
-        console.error(e);
-      }
-    });
-  }
-
-  private tryParseJson(value: any) {
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      console.error(e);
-    }
-    return undefined;
   }
 
 }
