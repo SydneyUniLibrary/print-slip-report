@@ -55,7 +55,7 @@ export class ConfigService {
 
   async load() {
     if (!this.loaded) {
-      this.config = { columnDefaults: [] }
+      this.config = { columnDefaults: [], libraryConfigs: [] }
       try {
         let loadedConfig = await this.configService.get().toPromise()
         this.config = { ...this.config, ...loadedConfig }
