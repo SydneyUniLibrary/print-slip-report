@@ -331,7 +331,7 @@ class PopupWindow {
           h1 { font: 24pt "Roboto", sans-serif; font-weight: bolder; }
         </style>
       `)
-      this.wnd.document.write('<body onload="window.print()">')
+      this.wnd.document.write('<body>')
       this.wnd.document.write('<h1 id="please-wait">Please wait...</h1>')
     }
   }
@@ -346,6 +346,7 @@ class PopupWindow {
   print(printSlipReport: PrintSlipReport) {
     this.wnd.document.write('<style> #please-wait { display: none } </style>')
     this.wnd.document.write(printSlipReport.html)
+    this.wnd.document.write('<script>window.print()</script>')
     this.wnd.document.close()
   }
 
