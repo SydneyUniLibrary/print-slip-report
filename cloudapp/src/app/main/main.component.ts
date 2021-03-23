@@ -49,8 +49,15 @@ export class MainComponent implements OnInit, OnDestroy {
   ) { }
 
   async ngOnInit() {
-    await this.restoreOptions()
-    this.ready = true
+    // Show the spinner if the component does not become ready quickly
+    let timeoutId = setTimeout(() => { this.loading = !this.ready }, 1000)
+    try {
+      await this.restoreOptions()
+    } finally {
+      clearTimeout(timeoutId)
+      this.ready = true
+      this.loading = false
+    }
   }
 
   ngOnDestroy(): void {
