@@ -10,12 +10,16 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { MainComponent } from './main/main.component';
 import { ConfigComponent } from './config/config.component';
+import { ColumnOptionComponent } from './column-options/column-option.component';
+import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     MainComponent,
-    ConfigComponent
+    ConfigComponent,
+    ColumnOptionComponent,
+    ColumnOptionsListComponent,
   ],
   imports: [
     MaterialModule,
@@ -25,7 +29,7 @@ import { ConfigComponent } from './config/config.component';
     HttpClientModule,
     AlertModule,
     FormsModule,
-    ReactiveFormsModule,     
+    ReactiveFormsModule,
     getTranslateModule(),
   ],
   providers: [

@@ -14,11 +14,7 @@
       <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div formArrayName="columnOptionsList">
-        <div *ngFor="let ctl of columnOptionsListControl.controls; let i=index" [formGroupName]="i">
-          <mat-checkbox formControlName="include">{{ ctl.value.name }}</mat-checkbox>
-        </div>
-      </div>
+      <app-column-options-list [listControl]="columnOptionsListControl"></app-column-options-list>
     </mat-card-content>
   </mat-card>
 </mat-tab>
