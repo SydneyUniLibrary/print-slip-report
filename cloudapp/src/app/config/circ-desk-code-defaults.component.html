@@ -1,0 +1,15 @@
+<ng-container [formGroup]="form">
+  <div *ngIf="firstLibraryCode" class="eca-actions">
+    <button (click)="copyCircDeskCodeDefaults()" color="secondary" mat-flat-button>
+      Copy {{ firstLibraryCode }} to others
+    </button>
+  </div>
+  <div formArrayName="list">
+    <div *ngFor="let ctl of listControl.controls; let i=index" [formGroupName]="i">
+      <mat-form-field floatLabel="always">
+        <mat-label>{{ ctl.value.libraryCode }}</mat-label>
+        <input matInput formControlName="defaultCircDeskCode" placeholder="DEFAULT_CIRC_DESK">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>
