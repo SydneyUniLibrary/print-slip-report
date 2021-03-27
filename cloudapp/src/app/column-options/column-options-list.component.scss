@@ -1,0 +1,37 @@
+app-column-option {
+  width: 100%;
+}
+
+
+.cdk-drag-preview {
+  display: none;
+}
+
+
+.drag-indicator {
+
+  cursor: move;
+
+  &.disabled {
+    cursor: default;
+  }
+
+}
+
+
+mat-list-item:not(:hover) .drag-indicator {
+  visibility: hidden;
+}
+
+
+mat-selection-list {
+
+  &:focus {
+    outline: none;
+  }
+
+  &.disabled .drag-indicator {
+    visibility: hidden;
+  }
+
+}

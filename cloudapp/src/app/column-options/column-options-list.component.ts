@@ -45,8 +45,22 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  get disabled(): boolean {
+    return this.form.disabled
+  }
+
+
   get listControl(): FormArray {
     return this.form.get('list') as FormArray
+  }
+
+
+  onDropDropListDropped(event) {
+    let v = [ ...this.value ]
+    let col = v[event.previousIndex]
+    v.splice(event.previousIndex, 1)
+    v.splice(event.currentIndex, 0, col)
+    this.writeValue(v)
   }
 
 

@@ -37,6 +37,26 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
   }
 
 
+  get code(): string {
+    return this.form.value.code
+  }
+
+
+  get disabled(): boolean {
+    return this.form.disabled
+  }
+
+
+  get include(): boolean {
+    return this.form.value.include
+  }
+
+
+  get name(): string {
+    return this.form.value.name
+  }
+
+
   onTouched: Function = () => {}
 
 

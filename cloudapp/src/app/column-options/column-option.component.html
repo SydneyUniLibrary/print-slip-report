@@ -1,5 +1,3 @@
-<ng-container [formGroup]="form">
-  <mat-checkbox (blur)="onTouched()" formControlName="include">
-    {{ form.value.name }}
-  </mat-checkbox>
-</ng-container>
+<mat-list-option (blur)="onTouched()" [disabled]="disabled" [selected]="include">
+  {{ name }}
+</mat-list-option>
