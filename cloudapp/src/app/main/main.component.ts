@@ -311,19 +311,21 @@ export class MainComponent implements OnInit {
 class PopupWindow {
 
   isOpen: boolean
+  private nonce: string
   private readonly wnd: Window
 
   constructor() {
     this.wnd = window.open('', '', 'status=0')
     this.isOpen = !!this.wnd
     if (this.isOpen) {
+      this.setNonce()
       this.wnd.document.write('<!HTML>')
       this.wnd.document.write('<head>')
       // Set a Content-Security-Policy that matches production.
       // See https://github.com/SydneyUniLibrary/print-slip-report/issues/33
       this.wnd.document.write(`
         <meta http-equiv="Content-Security-Policy" 
-              content="default-src 'none'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self'; font-src 'self' fonts.gstatic.com *.ext.exlibrisgroup.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self'">
+              content="default-src 'none'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self' 'nonce-${this.nonce}'; font-src 'self' fonts.gstatic.com *.ext.exlibrisgroup.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self'">
       `)
       this.wnd.document.write(`
         <style>
@@ -349,8 +351,13 @@ class PopupWindow {
   print(printSlipReport: PrintSlipReport) {
     this.wnd.document.write('<style> #please-wait { display: none } </style>')
     this.wnd.document.write(printSlipReport.html)
-    this.wnd.document.write('<script>window.print()</script>')
+    this.wnd.document.write(`<script nonce="${this.nonce}">window.print()</script>`)
     this.wnd.document.close()
+  }
+
+  private setNonce() {
+    const array = window.crypto.getRandomValues(new Uint8Array(16));
+    this.nonce = window.btoa(String.fromCharCode(...array))
   }
 
 }
