@@ -1,5 +1,7 @@
 import { Component, OnDestroy } from '@angular/core'
-import { ControlValueAccessor, FormArray, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms'
+import {
+  ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator, ValidationErrors,
+} from '@angular/forms'
 import { Subscription } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { ColumnOption } from './column-option'
@@ -16,9 +18,14 @@ import { ColumnOption } from './column-option'
       multi: true,
       useExisting: ColumnOptionsListComponent,
     },
+    {
+      provide: NG_VALIDATORS,
+      multi: true,
+      useExisting: ColumnOptionsListComponent,
+    },
   ],
 })
-export class ColumnOptionsListComponent implements ControlValueAccessor, OnDestroy {
+export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy {
 
   changeSubs: Subscription[] = []
   form = this.fb.group({
@@ -28,7 +35,9 @@ export class ColumnOptionsListComponent implements ControlValueAccessor, OnDestr
 
   constructor(
     private fb: FormBuilder
-  ) { }
+  ) {
+    super()
+  }
 
 
   ngOnDestroy(): void {
@@ -42,6 +51,9 @@ export class ColumnOptionsListComponent implements ControlValueAccessor, OnDestr
 
 
   onTouched: Function = () => {}
+
+
+  onValidatorChange: Function = () => {}
 
 
   registerOnChange(onChange: any): void {
@@ -64,6 +76,15 @@ export class ColumnOptionsListComponent implements ControlValueAccessor, OnDestr
     } else {
       this.form.enable()
     }
+  }
+
+
+  validate(control: { value: ColumnOption[] }): ValidationErrors | null {
+    return (
+      (this.required && !control.value.some(x => x.include))
+      ? { 'required': true }
+      : null
+    )
   }
 
 

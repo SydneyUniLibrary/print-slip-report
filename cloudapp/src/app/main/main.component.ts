@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core'
-import { FormBuilder, FormControl, Validators } from '@angular/forms'
+import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption, ColumnOptionsListControlValidators } from '../column-options'
+import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { LastUsedOptionsService } from './last-used-options.service'
 import { PrintSlipReport, PrintSlipReportService } from './print-slip-report.service'
@@ -18,9 +18,9 @@ import { InvalidParameterError, RequestedResource, RequestedResourcesService } f
 export class MainComponent implements OnInit {
 
   form = this.fb.group({
-    libraryCode: [ '', Validators.required ],
-    circDeskCode: [ '', Validators.required ],
-    columnOptionsList: [ [], ColumnOptionsListControlValidators.atLeastOneInclude ],
+    libraryCode: '',
+    circDeskCode: '',
+    columnOptionsList: [ [] ],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
@@ -82,7 +82,7 @@ export class MainComponent implements OnInit {
 
   get columnOptionsListError(): string | null {
     let errors = this.columnOptionsListControl.errors
-    if ('atLeastOneInclude' in errors) {
+    if ('required' in errors) {
       return 'Select at least 1 column to include in the print'
     } else {
       return null
