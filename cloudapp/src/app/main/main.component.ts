@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core'
-import { FormControl, FormGroup, Validators } from '@angular/forms'
+import { FormBuilder, FormControl, Validators } from '@angular/forms'
 import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption, ColumnOptionsListControl, ColumnOptionsListControlValidators } from '../column-options'
+import { ColumnOption, ColumnOptionsListControlValidators } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { LastUsedOptionsService } from './last-used-options.service'
 import { PrintSlipReport, PrintSlipReportService } from './print-slip-report.service'
@@ -17,10 +17,10 @@ import { InvalidParameterError, RequestedResource, RequestedResourcesService } f
 })
 export class MainComponent implements OnInit {
 
-  form = new FormGroup({
-    libraryCode: new FormControl('', Validators.required),
-    circDeskCode: new FormControl('', Validators.required),
-    columnOptionsList: new ColumnOptionsListControl([], ColumnOptionsListControlValidators.atLeastOneInclude),
+  form = this.fb.group({
+    libraryCode: [ '', Validators.required ],
+    circDeskCode: [ '', Validators.required ],
+    columnOptionsList: [ [], ColumnOptionsListControlValidators.atLeastOneInclude ],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
@@ -33,6 +33,7 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
+    private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
     private requestedResourcesService: RequestedResourcesService,
@@ -69,12 +70,12 @@ export class MainComponent implements OnInit {
   }
 
 
-  get columnOptionsListControl(): ColumnOptionsListControl {
-    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  get columnOptionsListControl(): FormControl {
+    return this.form.get('columnOptionsList') as FormControl
   }
 
 
-  set columnOptionsListControl(v: ColumnOptionsListControl) {
+  set columnOptionsListControl(v: FormControl) {
     this.form.setControl('columnOptionsList', v)
   }
 
@@ -244,9 +245,7 @@ export class MainComponent implements OnInit {
         .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(
-      columnOptions, ColumnOptionsListControlValidators.atLeastOneInclude
-    )
+    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 
@@ -293,9 +292,7 @@ export class MainComponent implements OnInit {
         .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(
-      columnOptions, ColumnOptionsListControlValidators.atLeastOneInclude
-    )
+    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 

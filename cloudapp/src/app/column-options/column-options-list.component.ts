@@ -1,5 +1,8 @@
-import { Component, Input } from '@angular/core'
-import { ColumnOptionsListControl } from './column-options-list-control'
+import { Component, OnDestroy } from '@angular/core'
+import { ControlValueAccessor, FormArray, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms'
+import { Subscription } from 'rxjs'
+import { map } from 'rxjs/operators'
+import { ColumnOption } from './column-option'
 
 
 
@@ -7,12 +10,72 @@ import { ColumnOptionsListControl } from './column-options-list-control'
   selector: 'app-column-options-list',
   templateUrl: './column-options-list.component.html',
   styleUrls: [ './column-options-list.component.scss' ],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      multi: true,
+      useExisting: ColumnOptionsListComponent,
+    },
+  ],
 })
-export class ColumnOptionsListComponent {
+export class ColumnOptionsListComponent implements ControlValueAccessor, OnDestroy {
 
-  @Input() listControl: ColumnOptionsListControl
+  changeSubs: Subscription[] = []
+  form = this.fb.group({
+    list: this.fb.array([])
+  })
 
 
-  constructor() { }
+  constructor(
+    private fb: FormBuilder
+  ) { }
+
+
+  ngOnDestroy(): void {
+    this.changeSubs.forEach(s => s.unsubscribe())
+  }
+
+
+  get listControl(): FormArray {
+    return this.form.get('list') as FormArray
+  }
+
+
+  onTouched: Function = () => {}
+
+
+  registerOnChange(onChange: any): void {
+    this.changeSubs.push(
+      this.form.valueChanges.pipe(
+        map(x => x?.list)
+      ).subscribe(onChange)
+    )
+  }
+
+
+  registerOnTouched(fn: Function): void {
+    this.onTouched = fn
+  }
+
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.form.disable()
+    } else {
+      this.form.enable()
+    }
+  }
+
+
+  get value(): ColumnOption[] {
+    return this.form.value.list
+  }
+
+
+  writeValue(value: ColumnOption[]): void {
+    if (value) {
+      this.form.setControl('list', this.fb.array(value))
+    }
+  }
 
 }

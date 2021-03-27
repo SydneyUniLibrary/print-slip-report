@@ -27,7 +27,7 @@
     <div [style.margin-top.px]="48">Columns</div>
     <mat-error *ngIf="columnOptionsListControl.invalid">{{ columnOptionsListError }}</mat-error>
     <div [style.margin-top.px]="12">
-      <app-column-options-list [listControl]="columnOptionsListControl"></app-column-options-list>
+      <app-column-options-list formControlName="columnOptionsList"></app-column-options-list>
     </div>
   </div>
 

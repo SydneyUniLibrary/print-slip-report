@@ -1,3 +1,7 @@
-<div *ngFor="let c of listControl.controls">
-  <app-column-option [control]="c"></app-column-option>
-</div>
+<ng-container [formGroup]="form">
+  <ng-container formArrayName="list">
+    <div *ngFor="let c of listControl.controls; let i = index">
+      <app-column-option [formControlName]="i"></app-column-option>
+    </div>
+  </ng-container>
+</ng-container>

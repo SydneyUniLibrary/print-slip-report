@@ -1,31 +1,12 @@
-import { AsyncValidatorFn, FormArray, ValidationErrors, ValidatorFn } from '@angular/forms'
-import { ColumnOption } from './column-option'
-import { ColumnOptionControl } from './column-option-control'
+import { FormArray, ValidationErrors } from '@angular/forms'
 
-
-
-export class ColumnOptionsListControl extends FormArray {
-
-  readonly controls: ColumnOptionControl[]
-
-
-  constructor(
-    columnOptions: ColumnOption[],
-    validator?: ValidatorFn | ValidatorFn[],
-    asyncValidator?: AsyncValidatorFn | AsyncValidatorFn[],
-  ) {
-    let controls = columnOptions.map(o => new ColumnOptionControl(o))
-    super(controls, validator, asyncValidator)
-  }
-
-}
 
 
 export class ColumnOptionsListControlValidators {
 
-  static atLeastOneInclude(columnsControl: ColumnOptionsListControl): ValidationErrors | null {
+  static atLeastOneInclude(columnsControl: FormArray): ValidationErrors | null {
     return (
-      (!columnsControl.controls.some(c => c.get('include').value))
+      (!columnsControl.value.some(x => x.include))
       ? { 'atLeastOneInclude': true }
       : null
     )

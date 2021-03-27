@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core'
-import { FormArray, FormGroup } from '@angular/forms'
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption, ColumnOptionsListControl } from '../column-options'
+import { ColumnOption } from '../column-options'
 import { CircDeskCodeDefault, CircDeskCodeDefaultsListControl } from './circ-desk-code-defaults-control'
 import { ConfigService } from './config.service'
 import { LibrariesService } from './libraries.service'
@@ -18,7 +18,7 @@ export class ConfigComponent implements OnInit {
 
 
   form = new FormGroup({  // Initialised properly in restoreConfig()
-    columnOptionsList: new ColumnOptionsListControl([]),
+    columnOptionsList: new FormControl([]),
     circDeskCodeDefaults: new CircDeskCodeDefaultsListControl([]),
   })
   ready = false
@@ -28,6 +28,7 @@ export class ConfigComponent implements OnInit {
   constructor(
     private alert: AlertService,
     private configService: ConfigService,
+    private fb: FormBuilder,
     private librariesService: LibrariesService,
   ) { }
 
@@ -41,12 +42,12 @@ export class ConfigComponent implements OnInit {
   }
 
 
-  get columnOptionsListControl(): ColumnOptionsListControl {
-    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  get columnOptionsListControl(): FormControl {
+    return this.form.get('columnOptionsList') as FormControl
   }
 
 
-  set columnOptionsListControl(ctl: ColumnOptionsListControl) {
+  set columnOptionsListControl(ctl: FormControl) {
     this.form.setControl('columnOptionsList', ctl)
   }
 
@@ -130,7 +131,7 @@ export class ConfigComponent implements OnInit {
              .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(columnOptions)
+    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 
@@ -152,7 +153,7 @@ export class ConfigComponent implements OnInit {
 
   saveColumnOptionsList() {
     this.configService.columnDefaults = (
-      this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include }))
+      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include }))
     )
   }
 
