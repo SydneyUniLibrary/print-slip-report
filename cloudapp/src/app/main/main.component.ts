@@ -319,6 +319,12 @@ class PopupWindow {
     if (this.isOpen) {
       this.wnd.document.write('<!HTML>')
       this.wnd.document.write('<head>')
+      // Set a Content-Security-Policy that matches production.
+      // See https://github.com/SydneyUniLibrary/print-slip-report/issues/33
+      this.wnd.document.write(`
+        <meta http-equiv="Content-Security-Policy" 
+              content="default-src 'none'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self'; font-src 'self' fonts.gstatic.com *.ext.exlibrisgroup.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self'">
+      `)
       this.wnd.document.write(`
         <style>
           @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); 
