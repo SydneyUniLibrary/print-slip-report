@@ -28,17 +28,7 @@
       <mat-card-subtitle>If you set a circulation desk code here, this code will be used by default for that library.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <div class="eca-actions">
-        <button *ngIf="firstLibraryCode" mat-flat-button color="secondary" (click)="copyCircDeskCodeDefaults()">Copy {{ firstLibraryCode }} to others</button>
-      </div>
-      <div formArrayName="circDeskCodeDefaults">
-        <div *ngFor="let ctl of circDeskCodeDefaultsControl.controls; let i=index" [formGroupName]="i">
-          <mat-form-field floatLabel="always">
-            <mat-label>{{ ctl.value.libraryCode }}</mat-label>
-            <input matInput formControlName="defaultCircDeskCode" placeholder="DEFAULT_CIRC_DESK">
-          </mat-form-field>
-        </div>
-      </div>
+      <app-circ-desk-code-defaults formControlName="circDeskCodeDefaults"></app-circ-desk-code-defaults>
     </mat-card-content>
   </mat-card>
 </mat-tab>

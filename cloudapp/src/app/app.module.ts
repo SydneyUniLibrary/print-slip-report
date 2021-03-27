@@ -8,18 +8,22 @@ import { MaterialModule, getTranslateModule, AlertModule } from '@exlibris/exl-c
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import { MainComponent } from './main/main.component';
-import { ConfigComponent } from './config/config.component';
+import { CircDeskCodeDefaultsComponent } from './config/circ-desk-code-defaults.component'
 import { ColumnOptionComponent } from './column-options/column-option.component';
 import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
+import { ConfigComponent } from './config/config.component';
+import { MainComponent } from './main/main.component';
+
+
 
 @NgModule({
   declarations: [
     AppComponent,
-    MainComponent,
-    ConfigComponent,
+    CircDeskCodeDefaultsComponent,
     ColumnOptionComponent,
     ColumnOptionsListComponent,
+    ConfigComponent,
+    MainComponent,
   ],
   imports: [
     MaterialModule,

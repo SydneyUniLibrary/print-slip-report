@@ -1,12 +1,14 @@
 
 @import './app/column-options/column-option.component.theme';
 @import './app/column-options/column-options-list.component.theme';
+@import './app/config/circ-desk-code-defaults.component.theme';
 @import './app/config/config.component.theme';
 @import './app/main/main.component.theme';
 
 @mixin themed-styles($theme, $typography) {
     /* Include themed component mixins or theme dependent styles here */
     @include main-component-theme($theme, $typography);
+    @include circ-desk-code-defaults-component-theme($theme, $typography);
     @include config-component-theme($theme, $typography);
     @include column-option-component-theme($theme, $typography);
     @include column-options-list-component-theme($theme, $typography);
