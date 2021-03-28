@@ -1,5 +1,6 @@
-import { Component, OnDestroy } from '@angular/core'
+import { Component, OnDestroy, ViewChild } from '@angular/core'
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms'
+import { MatListOption, MatSelectionListChange } from '@angular/material/list'
 import { Subscription } from 'rxjs'
 import { ColumnOption } from './column-option'
 
@@ -25,6 +26,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
     name: '',
     include: '',
   })
+  selectionChangeSubs: Subscription[] = []
 
 
   constructor(
@@ -34,6 +36,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   ngOnDestroy(): void {
     this.changeSubs.forEach(s => s.unsubscribe())
+    this.selectionChangeSubs.forEach(s => s.unsubscribe())
   }
 
 
@@ -49,6 +52,27 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   get include(): boolean {
     return this.form.value.include
+  }
+
+  set include(v: boolean) {
+    this.form.patchValue({ include: v })
+  }
+
+
+  @ViewChild('listOption')
+  set listOption(matListOption: MatListOption) {
+    // MatListOption doesn't have an output the tell us when it's checkbox changes.
+    // Instead we have to list to selectionChange on the parent selection list
+    // and then determine if it was this MatListOption which changed or another in the list.
+    this.selectionChangeSubs.push(
+      matListOption.selectionList.selectionChange.subscribe(
+        (matSelectionListChange: MatSelectionListChange) => {
+          if (Object.is(matSelectionListChange.option, matListOption)) {
+            this.include = matListOption.selected
+          }
+        }
+      )
+    )
   }
 
 
