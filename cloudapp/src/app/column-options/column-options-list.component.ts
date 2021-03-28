@@ -64,10 +64,10 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
-  onTouched: Function = () => {}
+  onTouched: Function = () => {}  // Replaced by registerOnChange
 
 
-  onValidatorChange: Function = () => {}
+  onValidatorChange: Function = () => {}  // Replaced by registerOnTouched
 
 
   registerOnChange(onChange: any): void {
