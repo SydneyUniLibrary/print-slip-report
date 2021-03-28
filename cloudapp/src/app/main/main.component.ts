@@ -1,19 +1,20 @@
-import { Component, OnInit } from '@angular/core'
+import { Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
-import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
+import { AlertService, CloudAppEventsService, InitData, RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
+import { InvalidParameterError, PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
+import { PrintSlipReportErrorEvent } from '../print-slip-report/print-slip-report.service'
 import { LastUsedOptionsService } from './last-used-options.service'
-import { PrintSlipReport, PrintSlipReportService } from './print-slip-report.service'
-import { InvalidParameterError, RequestedResource, RequestedResourcesService } from './requested-resources.service'
 
 
 
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
-  styleUrls: ['./main.component.scss'],
+  styleUrls: [ './main.component.scss' ],
+  providers: [ PrintSlipReportService ],
 })
 export class MainComponent implements OnInit {
 
@@ -25,7 +26,6 @@ export class MainComponent implements OnInit {
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
   loading = false
-  popupWindow?: PopupWindow
   ready = false
 
 
@@ -36,14 +36,20 @@ export class MainComponent implements OnInit {
     private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
-    private requestedResourcesService: RequestedResourcesService,
-  ) { }
+    private zone: NgZone,
+  ) {
+    this.printSlipReportService.mainComponent = this
+    this.printSlipReportService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
+    this.printSlipReportService.error.subscribe(evt => this.onPrintSlipReportError(evt))
+  }
 
 
   async ngOnInit() {
     // Show the spinner if the component does not become ready quickly
     let timeoutId = setTimeout(() => { this.loading = !this.ready }, 1000)
     try {
+      await this.getInitData()
+      this.printSlipReportService.initData = this.initData
       await this.restoreOptions()
     } finally {
       clearTimeout(timeoutId)
@@ -90,6 +96,13 @@ export class MainComponent implements OnInit {
   }
 
 
+  async getInitData() {
+    if (!this.initData) {
+      this.initData = await this.eventsService.getInitData().toPromise()
+    }
+  }
+
+
   get libraryCodeControl(): FormControl {
     return this.form.get('libraryCode') as FormControl
   }
@@ -114,98 +127,77 @@ export class MainComponent implements OnInit {
   }
 
 
-  async onPrint() {
+  onPrint() {
     this.alert.clear()
-    this.loading = true
-    let generated = false
-    try {
 
-      const libraryCode = this.libraryCodeControl.value.trim()
-      this.libraryCodeControl.setValue(libraryCode)
-      const circDeskCode = this.circDeskCodeControl.value.trim()
-      this.circDeskCodeControl.setValue(circDeskCode)
+    let libraryCode = this.form.value.libraryCode.trim()
+    this.printSlipReportService.libraryCode = libraryCode
+    let circDeskCode = this.form.value.circDeskCode.trim()
+    this.printSlipReportService.circDeskCode = circDeskCode
+    this.printSlipReportService.includedColumnOptions = this.form.value.columnOptionsList.filter(c => c.include)
 
-      // Open the popup window early to prevent it from being blocked.
-      // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
-      this.popupWindow = new PopupWindow()
-      if (!this.popupWindow.isOpen) {
-        console.warn('Your browser prevented the popup that has the report from appearing')
-        this.alert.error('Your browser prevented the popup that has the report from appearing')
-        return
-      }
+    this.form.patchValue({ libraryCode, circDeskCode })
 
-      let requestedResources: RequestedResource[]
-      try {
-        requestedResources = await this.requestedResourcesService.get(libraryCode, circDeskCode)
-      } catch (err) {
-        console.error('REST API Error', err)
-        if (err?.parameter) {
-          this.handleInvalidParameterError(err)
-        } else if (err?.status == 401) {
-          // Unuathorised
-          this.alert.error(
-            'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
-            + ` for the library ${ libraryCode } and the circulation desk ${ circDeskCode }.`,
-          )
-        } else {
-          let msg = err.message || "See the console in your browser's developer tools for more information."
-          this.alert.error(`Something went wrong trying to get the requests. ${ msg }`)
+    // This print slip report has to generate inside the popup window.
+    // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
+    if (!this.printSlipReportService.open()) {
+      console.warn('Your browser prevented the popup that has the report from appearing')
+      this.alert.error('Your browser prevented the popup that has the report from appearing')
+    }
+  }
+
+
+  private async  onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
+    await this.saveOptions()
+    if (event.numRequestedResources == 0) {
+      // This code is run in the popup window's zone.
+      // Need to get back into main component's zone so the main component's UI updates.
+      this.zone.run(() => {
+        this.alert.info('There are no requested resources to print', { autoClose: false })
+      })
+      this.printSlipReportService.close()
+    }
+  }
+
+
+  private onPrintSlipReportError(event: PrintSlipReportErrorEvent) {
+    let err = event.error
+    console.error('Print slip report error', err)
+    // This code is run in the popup window's zone.
+    // Need to get back into main component's zone so the main component's UI updates.
+    this.zone.run(() => {
+      if (PrintSlipReportErrorEvent.isInvalidParameterError(err)) {
+        switch (err.parameter) {
+          case 'library':
+            this.libraryCodeControl.setErrors({ 'invalidCode': true })
+            this.alert.info(
+              `Valid library codes are ${ err.validOptions.join(', ') }`,
+              { autoClose: false },
+            )
+            break
+          case 'circ_desk':
+            this.circDeskCodeControl.setErrors({ 'invalidCode': true })
+            this.alert.info(
+              `Valid circulation desk codes are ${ err.validOptions.join(', ') }`,
+              { autoClose: false },
+            )
+            break
+          default:
+            this.alert.error(`The API parameter ${ err.parameter } was invalid`)
         }
-        return
-      }
-
-      await this.saveOptions()
-
-      if (requestedResources.length == 0) {
-        this.alert.info('There are no requested resources to print.', { autoClose: false })
+      } else if (PrintSlipReportErrorEvent.isRestErrorResponse(err) && err?.status == 401) {
+        // Unuathorised
+        this.alert.error(
+          'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
+          + ` for the library ${ this.form.value.libraryCode } `
+          + ` and the circulation desk ${ this.form.value.circDeskCode }.`,
+        )
       } else {
-        try {
-          let printSlipReport = this.printSlipReportService.newReport(
-            this.columnOptionsListControl.value, requestedResources
-          )
-          this.popupWindow.print(printSlipReport)
-          this.alert.success('The report popped up in a new window')
-          generated = true
-        } catch (err) {
-          console.error(err)
-          this.alert.error(`Something went wrong. ${err}`)
-        }
+        let msg = err.message || "See the console in your browser's developer tools for more information."
+        this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
       }
-
-    } finally {
-      this.loading = false
-      if (!generated) {
-        this.popupWindow.close()
-      }
-      this.popupWindow = undefined
-    }
-  }
-
-
-  private handleInvalidParameterError(invalidParameterError: InvalidParameterError): void {
-    switch (invalidParameterError.parameter) {
-      case 'library':
-        this.libraryCodeControl.setErrors({ 'invalidCode': true })
-        this.alert.info(
-          `Valid library codes are ${ invalidParameterError.validOptions.join(', ') }`,
-          { autoClose: false },
-        )
-        break
-      case 'circ_desk':
-        this.circDeskCodeControl.setErrors({ 'invalidCode': true })
-        this.alert.info(
-          `Valid circulation desk codes are ${ invalidParameterError.validOptions.join(', ') }`,
-          { autoClose: false },
-        )
-        break
-      default:
-        this.alert.error(`The API parameter ${ invalidParameterError.parameter } was invalid`)
-    }
-  }
-
-
-  async getInitData() {
-    this.initData = await this.eventsService.getInitData().toPromise()
+    })
+    this.printSlipReportService.close()
   }
 
 
@@ -218,7 +210,7 @@ export class MainComponent implements OnInit {
 
 
   async resetOptions() {
-    await Promise.all([ this.configService.load(), this.getInitData() ])
+    await this.configService.load()
 
     let lib = this.initData?.user?.currentlyAtLibCode ?? ''
     this.libraryCodeIsFromInitData = !!lib
@@ -303,61 +295,6 @@ export class MainComponent implements OnInit {
       columnOptions: this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include })),
     }
     await this.lastUsedOptionsService.save()
-  }
-
-}
-
-
-class PopupWindow {
-
-  isOpen: boolean
-  private nonce: string
-  private readonly wnd: Window
-
-  constructor() {
-    this.wnd = window.open('', '', 'status=0')
-    this.isOpen = !!this.wnd
-    if (this.isOpen) {
-      this.setNonce()
-      this.wnd.document.write('<!HTML>')
-      this.wnd.document.write('<head>')
-      // Set a Content-Security-Policy that matches production.
-      // See https://github.com/SydneyUniLibrary/print-slip-report/issues/33
-      this.wnd.document.write(`
-        <meta http-equiv="Content-Security-Policy" 
-              content="default-src 'none'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self' 'nonce-${this.nonce}'; font-src 'self' fonts.gstatic.com *.ext.exlibrisgroup.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self'">
-      `)
-      this.wnd.document.write(`
-        <style>
-          @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); 
-          table, th, td { border: 1px solid; border-collapse: collapse; } 
-          table { font: 14px "Roboto", sans-serif; } 
-          th, td { padding: 0.2rem; }
-          h1 { font: 24pt "Roboto", sans-serif; font-weight: bolder; }
-        </style>
-      `)
-      this.wnd.document.write('<body>')
-      this.wnd.document.write('<h1 id="please-wait">Please wait...</h1>')
-    }
-  }
-
-  close() {
-    if (this.isOpen) {
-      this.wnd.close()
-      this.isOpen = false
-    }
-  }
-
-  print(printSlipReport: PrintSlipReport) {
-    this.wnd.document.write('<style> #please-wait { display: none } </style>')
-    this.wnd.document.write(printSlipReport.html)
-    this.wnd.document.write(`<script nonce="${this.nonce}">window.print()</script>`)
-    this.wnd.document.close()
-  }
-
-  private setNonce() {
-    const array = window.crypto.getRandomValues(new Uint8Array(16));
-    this.nonce = window.btoa(String.fromCharCode(...array))
   }
 
 }
