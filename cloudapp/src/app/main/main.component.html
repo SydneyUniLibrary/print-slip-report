@@ -26,10 +26,8 @@
   <div>
     <div [style.margin-top.px]="48">Columns</div>
     <mat-error *ngIf="columnOptionsListControl.invalid">{{ columnOptionsListError }}</mat-error>
-    <div formArrayName="columnOptionsList" [style.margin-top.px]="12">
-      <div *ngFor="let columnOptionControl of columnOptionsListControl.controls; let i=index" [formGroupName]="i">
-        <mat-checkbox formControlName="include">{{ columnOptionControl.value.name }}</mat-checkbox>
-      </div>
+    <div [style.margin-top.px]="12">
+      <app-column-options-list formControlName="columnOptionsList" required></app-column-options-list>
     </div>
   </div>
 

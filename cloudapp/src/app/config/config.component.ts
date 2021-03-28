@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core'
-import { FormArray, FormGroup } from '@angular/forms'
+import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption, ColumnOptionsListControl } from '../column-options'
-import { CircDeskCodeDefault, CircDeskCodeDefaultsListControl } from './circ-desk-code-defaults-control'
+import { ColumnOption } from '../column-options'
+import { CircDeskCodeDefault } from './circ-desk-code-defaults.component'
 import { ConfigService } from './config.service'
 import { LibrariesService } from './libraries.service'
 
@@ -17,9 +17,9 @@ import { LibrariesService } from './libraries.service'
 export class ConfigComponent implements OnInit {
 
 
-  form = new FormGroup({  // Initialised properly in restoreConfig()
-    columnOptionsList: new ColumnOptionsListControl([]),
-    circDeskCodeDefaults: new CircDeskCodeDefaultsListControl([]),
+  form = this.fb.group({  // Initialised properly in restoreConfig()
+    circDeskCodeDefaults: [ [] ],
+    columnOptionsList: [ [] ],
   })
   ready = false
   saving = false
@@ -28,6 +28,7 @@ export class ConfigComponent implements OnInit {
   constructor(
     private alert: AlertService,
     private configService: ConfigService,
+    private fb: FormBuilder,
     private librariesService: LibrariesService,
   ) { }
 
@@ -41,37 +42,13 @@ export class ConfigComponent implements OnInit {
   }
 
 
-  get columnOptionsListControl(): ColumnOptionsListControl {
-    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  get columnOptionsListControl(): FormControl {
+    return this.form.get('columnOptionsList') as FormControl
   }
 
 
-  set columnOptionsListControl(ctl: ColumnOptionsListControl) {
-    this.form.setControl('columnOptionsList', ctl)
-  }
-
-
-  get circDeskCodeDefaultsControl(): CircDeskCodeDefaultsListControl {
-    return this.form.get('circDeskCodeDefaults') as CircDeskCodeDefaultsListControl
-  }
-
-
-  set circDeskCodeDefaultsControl(ctl: CircDeskCodeDefaultsListControl) {
-    this.form.setControl('circDeskCodeDefaults', ctl)
-  }
-
-
-  get firstLibraryCode(): string | undefined {
-    let values = this.circDeskCodeDefaultsControl.value
-    return (values.length > 0) ? values[0].libraryCode : undefined
-  }
-
-
-  copyCircDeskCodeDefaults() {
-    let p = { defaultCircDeskCode: this.circDeskCodeDefaultsControl.value[0].defaultCircDeskCode }
-    for (let ctl of this.circDeskCodeDefaultsControl.controls) {
-      ctl.patchValue(p)
-    }
+  get circDeskCodeDefaultsControl(): FormControl {
+    return this.form.get('circDeskCodeDefaults') as FormControl
   }
 
 
@@ -91,12 +68,14 @@ export class ConfigComponent implements OnInit {
 
   async restoreConfig() {
     await Promise.all([ this.configService.load(), this.librariesService.load() ])
-    this.restoreCircDeskCodeDefaults()
-    this.restoreColumnOptionsList()
+    this.form.setValue({
+      circDeskCodeDefaults: this.restoreCircDeskCodeDefaults(),
+      columnOptionsList: this.restoreColumnOptionsList(),
+    })
   }
 
 
-  restoreCircDeskCodeDefaults() {
+  private restoreCircDeskCodeDefaults() {
     let libraryConfigs = new Map(
       this.configService.libraryConfigs.map(c => [ c.libraryCode, c ])
     )
@@ -106,11 +85,11 @@ export class ConfigComponent implements OnInit {
         defaultCircDeskCode: libraryConfigs.get(libraryCode)?.defaultCircDeskCode ?? ''
       }))
     )
-    this.circDeskCodeDefaultsControl = new CircDeskCodeDefaultsListControl(circDeskCodeDefaults)
+    return circDeskCodeDefaults
   }
 
 
-  restoreColumnOptionsList() {
+  private restoreColumnOptionsList() {
     let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
     let columnOptions: ColumnOption[] = [
       // Start with the columns in the order they are from the app configuration,
@@ -130,7 +109,7 @@ export class ConfigComponent implements OnInit {
              .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(columnOptions)
+    return columnOptions
   }
 
 
@@ -141,18 +120,18 @@ export class ConfigComponent implements OnInit {
   }
 
 
-  saveCircDeskCodeDefaults() {
+  private saveCircDeskCodeDefaults() {
     this.configService.libraryConfigs = (
-      this.circDeskCodeDefaultsControl.value
+      this.form.value.circDeskCodeDefaults
       .map(v => ({ libraryCode: v.libraryCode, defaultCircDeskCode: v.defaultCircDeskCode.trim() }))
       .filter(v => v.defaultCircDeskCode)
     )
   }
 
 
-  saveColumnOptionsList() {
+  private saveColumnOptionsList() {
     this.configService.columnDefaults = (
-      this.columnOptionsListControl.value.map(c => ({ code: c.code, include: c.include }))
+      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include }))
     )
   }
 

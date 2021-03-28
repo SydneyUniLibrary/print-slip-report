@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core'
-import { FormControl, FormGroup, Validators } from '@angular/forms'
+import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption, ColumnOptionsListControl, ColumnOptionsListControlValidators } from '../column-options'
+import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { LastUsedOptionsService } from './last-used-options.service'
 import { PrintSlipReport, PrintSlipReportService } from './print-slip-report.service'
@@ -17,10 +17,10 @@ import { InvalidParameterError, RequestedResource, RequestedResourcesService } f
 })
 export class MainComponent implements OnInit {
 
-  form = new FormGroup({
-    libraryCode: new FormControl('', Validators.required),
-    circDeskCode: new FormControl('', Validators.required),
-    columnOptionsList: new ColumnOptionsListControl([], ColumnOptionsListControlValidators.atLeastOneInclude),
+  form = this.fb.group({
+    libraryCode: '',
+    circDeskCode: '',
+    columnOptionsList: [ [] ],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
@@ -33,6 +33,7 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
+    private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
     private requestedResourcesService: RequestedResourcesService,
@@ -69,19 +70,19 @@ export class MainComponent implements OnInit {
   }
 
 
-  get columnOptionsListControl(): ColumnOptionsListControl {
-    return this.form.get('columnOptionsList') as ColumnOptionsListControl
+  get columnOptionsListControl(): FormControl {
+    return this.form.get('columnOptionsList') as FormControl
   }
 
 
-  set columnOptionsListControl(v: ColumnOptionsListControl) {
+  set columnOptionsListControl(v: FormControl) {
     this.form.setControl('columnOptionsList', v)
   }
 
 
   get columnOptionsListError(): string | null {
     let errors = this.columnOptionsListControl.errors
-    if ('atLeastOneInclude' in errors) {
+    if ('required' in errors) {
       return 'Select at least 1 column to include in the print'
     } else {
       return null
@@ -244,9 +245,7 @@ export class MainComponent implements OnInit {
         .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(
-      columnOptions, ColumnOptionsListControlValidators.atLeastOneInclude
-    )
+    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 
@@ -293,9 +292,7 @@ export class MainComponent implements OnInit {
         .map(c => ({ code: c.code, name: c.name, include: false }))
       )
     ]
-    this.columnOptionsListControl = new ColumnOptionsListControl(
-      columnOptions, ColumnOptionsListControlValidators.atLeastOneInclude
-    )
+    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 
@@ -314,14 +311,22 @@ export class MainComponent implements OnInit {
 class PopupWindow {
 
   isOpen: boolean
+  private nonce: string
   private readonly wnd: Window
 
   constructor() {
     this.wnd = window.open('', '', 'status=0')
     this.isOpen = !!this.wnd
     if (this.isOpen) {
+      this.setNonce()
       this.wnd.document.write('<!HTML>')
       this.wnd.document.write('<head>')
+      // Set a Content-Security-Policy that matches production.
+      // See https://github.com/SydneyUniLibrary/print-slip-report/issues/33
+      this.wnd.document.write(`
+        <meta http-equiv="Content-Security-Policy" 
+              content="default-src 'none'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; script-src 'self' 'nonce-${this.nonce}'; font-src 'self' fonts.gstatic.com *.ext.exlibrisgroup.com; img-src 'self' data: https:; connect-src 'self'; frame-src 'self'">
+      `)
       this.wnd.document.write(`
         <style>
           @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap"); 
@@ -346,8 +351,13 @@ class PopupWindow {
   print(printSlipReport: PrintSlipReport) {
     this.wnd.document.write('<style> #please-wait { display: none } </style>')
     this.wnd.document.write(printSlipReport.html)
-    this.wnd.document.write('<script>window.print()</script>')
+    this.wnd.document.write(`<script nonce="${this.nonce}">window.print()</script>`)
     this.wnd.document.close()
+  }
+
+  private setNonce() {
+    const array = window.crypto.getRandomValues(new Uint8Array(16));
+    this.nonce = window.btoa(String.fromCharCode(...array))
   }
 
 }
