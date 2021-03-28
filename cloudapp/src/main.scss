@@ -4,6 +4,7 @@
 @import './app/config/circ-desk-code-defaults.component.theme';
 @import './app/config/config.component.theme';
 @import './app/main/main.component.theme';
+@import './app/print-slip-report/print-slip-report.component.theme';
 
 @mixin themed-styles($theme, $typography) {
     /* Include themed component mixins or theme dependent styles here */
@@ -12,6 +13,7 @@
     @include config-component-theme($theme, $typography);
     @include column-option-component-theme($theme, $typography);
     @include column-options-list-component-theme($theme, $typography);
+    @include print-slip-report-component-theme($theme, $typography);
 }
 
 @mixin global-styles {

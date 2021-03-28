@@ -1,0 +1,20 @@
+<ng-container *ngIf="!loading">
+
+  <table>
+    <thead>
+      <tr>
+        <td *ngFor="let c of includedColumnOptions">{{ c.name }}</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of mappedRequestedResources">
+        <td *ngFor="let v of r">{{ v }}</td>
+      </tr>
+    </tbody>
+  </table>
+</ng-container>
+
+<div class="loading-shade" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <div class="loading-msg">Finding the requests for {{ circDeskCode }} at {{ libraryCode }}…</div>
+</div>

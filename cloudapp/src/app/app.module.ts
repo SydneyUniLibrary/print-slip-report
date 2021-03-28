@@ -13,6 +13,7 @@ import { ColumnOptionComponent } from './column-options/column-option.component'
 import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
 import { ConfigComponent } from './config/config.component';
 import { MainComponent } from './main/main.component';
+import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.component';
 
 
 
@@ -24,6 +25,7 @@ import { MainComponent } from './main/main.component';
     ColumnOptionsListComponent,
     ConfigComponent,
     MainComponent,
+    PrintSlipReportComponent,
   ],
   imports: [
     MaterialModule,
