@@ -228,13 +228,13 @@ export class MainComponent implements OnInit {
         .map(c => {
           let name = missingColumnDefinitions.get(c.code).name
           missingColumnDefinitions.delete(c.code)
-          return { ...c, name }
+          return { include: false, limit: 0, ...c, name }
         })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false }))
+        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0 }))
       )
     ]
     this.columnOptionsListControl.setValue(columnOptions)
@@ -275,13 +275,13 @@ export class MainComponent implements OnInit {
         .map(c => {
           let name = missingColumnDefinitions.get(c.code).name
           missingColumnDefinitions.delete(c.code)
-          return { ...c, name }
+          return { include: false, limit: 0, ...c, name }
         })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false }))
+        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0 }))
       )
     ]
     this.columnOptionsListControl.setValue(columnOptions)
