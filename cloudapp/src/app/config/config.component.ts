@@ -131,7 +131,7 @@ export class ConfigComponent implements OnInit {
 
   private saveColumnOptionsList() {
     this.configService.columnDefaults = (
-      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include }))
+      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include, limit: c.limit }))
     )
   }
 
