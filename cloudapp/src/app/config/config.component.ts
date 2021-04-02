@@ -100,13 +100,13 @@ export class ConfigComponent implements OnInit {
         .map(c => {
           let name = missingColumnDefinitions.get(c.code).name
           missingColumnDefinitions.delete(c.code)
-          return { ...c, name }
+          return { include: false, limit: 0, ...c, name }
         })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-             .map(c => ({ code: c.code, name: c.name, include: false }))
+             .map(c => ({ code: c.code, name: c.name, include: false, limit: 0 }))
       )
     ]
     return columnOptions
@@ -131,7 +131,7 @@ export class ConfigComponent implements OnInit {
 
   private saveColumnOptionsList() {
     this.configService.columnDefaults = (
-      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include }))
+      this.form.value.columnOptionsList.map(c => ({ code: c.code, include: c.include, limit: c.limit }))
     )
   }
 
