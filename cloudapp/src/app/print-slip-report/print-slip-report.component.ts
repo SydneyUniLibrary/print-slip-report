@@ -73,7 +73,12 @@ export class PrintSlipReportComponent implements OnInit {
   private mapColumns(requestedResource: object): string[] {
     return this.includedColumnOptions.map(col => {
       try {
-        return COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
+        let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
+        return (
+          (col.limit && v.length > col.limit)
+          ? `${v.substring(0, col.limit)}…`
+          : v
+        )
       } catch (err) {
         console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
         return undefined

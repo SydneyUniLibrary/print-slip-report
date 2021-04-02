@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CloudAppConfigService } from '@exlibris/exl-cloudapp-angular-lib'
+import * as _ from 'lodash'
 
 
 
@@ -16,6 +17,7 @@ export type PrintSlipReportLibraryConfig = {
 export type PrintSlipReportColumnConfig = {
   code: string
   include: boolean
+  limit: number
 }
 
 
@@ -57,7 +59,8 @@ export class ConfigService {
     if (!this.loaded) {
       this.config = { columnDefaults: [], libraryConfigs: [] }
       try {
-        let loadedConfig = await this.configService.get().toPromise()
+        let loadedConfig: PrintSlipReportConfig | { } = await this.configService.get().toPromise()
+        _.defaultsDeep(loadedConfig, { columnDefaults: [ { include: false, limit: 0 } ] })
         this.config = { ...this.config, ...loadedConfig }
       } catch (err) {
         console.warn('Failed to load the app configuration', err)

@@ -19,18 +19,24 @@ app-column-option {
 }
 
 
-mat-list-item:not(:hover) .drag-indicator {
-  visibility: hidden;
-}
-
-
-mat-selection-list {
+.options-list {
 
   &:focus {
     outline: none;
   }
 
   &.disabled .drag-indicator {
+    visibility: hidden;
+  }
+
+}
+
+
+.options-list-item {
+
+  padding: 0;
+
+  &:not(:hover) .drag-indicator {
     visibility: hidden;
   }
 

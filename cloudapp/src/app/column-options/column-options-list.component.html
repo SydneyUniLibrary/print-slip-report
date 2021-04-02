@@ -1,15 +1,16 @@
 <ng-container [formGroup]="form">
 
-  <mat-selection-list *ngIf="disabled; else enabled" class="disabled" formArrayName="list">
-    <mat-list-item *ngFor="let c of listControl.controls; let i = index">
+  <mat-selection-list *ngIf="disabled; else enabled" class="disabled options-list" formArrayName="list">
+    <mat-list-item *ngFor="let c of listControl.controls; let i = index" class="options-list-item">
       <mat-icon class="drag-indicator disabled" matListIcon>drag_indicator</mat-icon>
       <app-column-option [formControlName]="i"></app-column-option>
     </mat-list-item>
   </mat-selection-list>
 
   <ng-template #enabled>
-    <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" formArrayName="list">
-      <mat-list-item *ngFor="let c of listControl.controls; let i = index" cdkDrag>
+    <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" class="options-list"
+                        formArrayName="list">
+      <mat-list-item *ngFor="let c of listControl.controls; let i = index" cdkDrag class="options-list-item">
         <mat-icon class="drag-indicator" matListIcon>drag_indicator</mat-icon>
         <app-column-option [formControlName]="i"></app-column-option>
       </mat-list-item>

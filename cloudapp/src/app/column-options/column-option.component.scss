@@ -1,3 +1,25 @@
+.chips {
+  align-items: flex-end;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+
+.container {
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+
+mat-chip-list {
+
+  &:focus {
+    outline: none;
+  }
+
+}
+
+
 mat-list-option {
 
   &.mat-focus-indicator {
@@ -8,4 +30,18 @@ mat-list-option {
     background: inherit;
   }
 
+}
+
+
+.more-options {
+  align-items: flex-end;
+  display: flex;
+  flex-flow: column nowrap;
+}
+
+
+.options {
+  align-items: center;
+  display: flex;
+  flex-flow: row nowrap;
 }

@@ -1,3 +1,35 @@
-<mat-list-option #listOption (blur)="onTouched()" [disabled]="disabled" [selected]="include" [value]="code">
-  {{ name }}
-</mat-list-option>
+<div class="container">
+
+  <div class="options">
+    <mat-list-option #listOption (blur)="onTouched()" [disabled]="disabled" [selected]="include" [value]="code">
+      {{ name }}
+    </mat-list-option>
+    <button (click)="expanded = !expanded" [disabled]="disabled" mat-icon-button>
+      <mat-icon *ngIf="expanded">expand_less</mat-icon>
+      <mat-icon *ngIf="!expanded">expand_more</mat-icon>
+    </button>
+  </div>
+
+  <div *ngIf="include && !expanded && chips" class="chips">
+    <mat-chip-list disabled="true">
+      <mat-chip *ngFor="let c of chips">{{ c }}</mat-chip>
+    </mat-chip-list>
+  </div>
+
+  <div *ngIf="expanded" class="more-options">
+    <div class="limit-options">
+      <mat-form-field class="limit-form-field" floatLabel="always">
+        <mat-label>Limit</mat-label>
+        <input (blur)="onTouched()" matInput max="999" min="0" [(ngModel)]="limit" type="number"/>
+        <mat-hint *ngIf="limit">
+          Truncate {{ name }} after {{ limit }} characters
+        </mat-hint>
+        <mat-hint *ngIf="!limit">
+          Don't truncate {{ name }}
+        </mat-hint>
+      </mat-form-field>
+      <button (click)="limit = 0" [disabled]="!limit" mat-icon-button><mat-icon>highlight_off</mat-icon></button>
+    </div>
+  </div>
+
+</div>
