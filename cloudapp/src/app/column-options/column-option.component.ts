@@ -21,10 +21,12 @@ import { ColumnOption } from './column-option'
 export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   changeSubs: Subscription[] = []
+  expanded = false
   form = this.fb.group({
     code: '',
     name: '',
     include: '',
+    limit: 0,
   })
   selectionChangeSubs: Subscription[] = []
 
@@ -40,8 +42,17 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
   }
 
 
+  get chips(): string[] {
+    let c: string[] = [ ]
+    if (this.limit) {
+      c.splice(c.length, 0, `limit to ${this.limit}`)
+    }
+    return c
+  }
+
+
   get code(): string {
-    return this.form.value.code
+    return this.value.code
   }
 
 
@@ -51,11 +62,24 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
 
   get include(): boolean {
-    return this.form.value.include
+    return this.value.include
   }
 
   set include(v: boolean) {
     this.form.patchValue({ include: v })
+  }
+
+
+  get limit(): number | undefined {
+    let v = this.value.limit
+    v = v || undefined          // Prefer undefined to 0 or NaN
+    return v
+  }
+
+  set limit(v: number | undefined) {
+    v = Math.abs(v) % 1000      // Keep the limit between 0 and 999
+    v = v || 0                  // Prefer 0 to undefined or NaN
+    this.form.patchValue({ limit: v })
   }
 
 
@@ -77,7 +101,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
 
   get name(): string {
-    return this.form.value.name
+    return this.value.name
   }
 
 
@@ -111,9 +135,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
 
   writeValue(value: ColumnOption): void {
-    if (value) {
-      this.form.setValue(value, { emitEvent: false })
-    }
+    this.form.patchValue(value, { emitEvent: false })
   }
 
 }
