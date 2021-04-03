@@ -17,7 +17,12 @@
   </div>
 
   <div *ngIf="expanded" class="more-options">
-    <div class="limit-options">
+    <div class="boolean-more-options">
+      <mat-selection-list (selectionChange)="onBooleanOptionsChanged($event.option.value, $event.option.selected)">
+        <mat-list-option [selected]="hidden" value="hidden">Hidden</mat-list-option>
+      </mat-selection-list>
+    </div>
+    <div class="limit-option">
       <mat-form-field class="limit-form-field" floatLabel="always">
         <mat-label>Limit</mat-label>
         <input (blur)="onTouched()" matInput max="999" min="0" [(ngModel)]="limit" type="number"/>

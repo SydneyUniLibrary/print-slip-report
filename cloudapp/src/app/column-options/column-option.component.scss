@@ -11,6 +11,16 @@
 }
 
 
+.boolean-more-options {
+
+  display: flex;
+  flex-flow: column nowrap;
+  margin-right: 24px;
+  width: 212px;
+
+}
+
+
 mat-chip-list {
 
   &:focus {

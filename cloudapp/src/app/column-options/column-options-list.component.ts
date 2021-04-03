@@ -1,6 +1,7 @@
 import { Component, OnDestroy } from '@angular/core'
 import {
-  ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator, ValidationErrors,
+  AbstractControl, ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
+  ValidationErrors,
 } from '@angular/forms'
 import { Subscription } from 'rxjs'
 import { map } from 'rxjs/operators'
@@ -104,6 +105,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
   get value(): ColumnOption[] {
     return this.form.value.list
+  }
+
+
+  get visibleControls(): AbstractControl[] {
+    return this.listControl.controls.filter(c => !c.value.hidden)
   }
 
 

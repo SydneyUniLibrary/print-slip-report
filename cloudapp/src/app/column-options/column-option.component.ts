@@ -27,6 +27,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
     name: '',
     include: '',
     limit: 0,
+    hidden: false,
   })
   selectionChangeSubs: Subscription[] = []
 
@@ -44,8 +45,11 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   get chips(): string[] {
     let c: string[] = [ ]
+    if (this.hidden) {
+      c.push('hidden')
+    }
     if (this.limit) {
-      c.splice(c.length, 0, `limit to ${this.limit}`)
+      c.push(`limit to ${this.limit}`)
     }
     return c
   }
@@ -58,6 +62,11 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   get disabled(): boolean {
     return this.form.disabled
+  }
+
+
+  get hidden(): boolean {
+    return this.value.hidden
   }
 
 
@@ -102,6 +111,14 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
   get name(): string {
     return this.value.name
+  }
+
+
+  onBooleanOptionsChanged(value: string, selected: boolean) {
+    this.form.patchValue({ [value]: selected })
+    if (value == 'hidden' && selected) {
+      this.include = false
+    }
   }
 
 
