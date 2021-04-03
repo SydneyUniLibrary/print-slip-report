@@ -46,7 +46,6 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
 
   ngOnInit() {
-    this.hadHidden = this.hasHidden
     this.registerOnChange(() => {
       if (this.showingHidden && !this.hasHidden) {
         this.showingHidden = false
@@ -165,6 +164,10 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   writeValue(value: ColumnOption[]): void {
     if (value) {
       this.form.setControl('list', this.fb.array(value))
+      this.hadHidden = this.hasHidden
+      if (this.hadHidden) {
+        this.highlightShowHiddenButton = false
+      }
     }
   }
 
