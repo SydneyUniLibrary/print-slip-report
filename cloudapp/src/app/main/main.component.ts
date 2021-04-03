@@ -293,7 +293,7 @@ export class MainComponent implements OnInit {
       libraryCode: this.libraryCodeControl.value,
       circDeskCode: this.circDeskCodeControl.value,
       columnOptions: this.columnOptionsListControl.value.map(c => ({
-        code: c.code, include: c.include, limit: c.limit
+        code: c.code, include: c.include, limit: c.limit, hidden: c.hidden
       })),
     }
     await this.lastUsedOptionsService.save()
