@@ -62,6 +62,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  get allIncluded(): boolean {
+    return this.value.every(c => c.include)
+  }
+
+
   get disabled(): boolean {
     return this.form.disabled
   }
@@ -72,8 +77,27 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  includeAll() {
+    this.writeValue(
+      this.value.map(c => ({ ...c, include: true }))
+    )
+  }
+
+
+  includeNone() {
+    this.writeValue(
+      this.value.map(c => ({ ...c, include: false }))
+    )
+  }
+
+
   get listControl(): FormArray {
     return this.form.get('list') as FormArray
+  }
+
+
+  get noneIncluded(): boolean {
+    return !this.value.some(c => c.include)
   }
 
 

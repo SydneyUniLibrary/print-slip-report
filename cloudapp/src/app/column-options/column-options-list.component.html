@@ -19,6 +19,14 @@
               mat-icon-button matTooltip="Hide hidden columns">
         <mat-icon>visibility_off</mat-icon>
       </button>
+      <button *ngIf="!allIncluded" (click)="includeAll()"
+              mat-icon-button matTooltip="Include all columns">
+        <mat-icon>done_all</mat-icon>
+      </button>
+      <button *ngIf="!noneIncluded" (click)="includeNone()"
+              mat-icon-button matTooltip="Include no columns">
+        <mat-icon>remove_done</mat-icon>
+      </button>
     </mat-toolbar>
     <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" class="options-list"
                         formArrayName="list">
