@@ -10,7 +10,7 @@
     </button>
   </div>
 
-  <div *ngIf="include && !expanded && chips" class="chips">
+  <div *ngIf="!expanded && chips" class="chips">
     <mat-chip-list disabled="true">
       <mat-chip *ngFor="let c of chips">{{ c }}</mat-chip>
     </mat-chip-list>

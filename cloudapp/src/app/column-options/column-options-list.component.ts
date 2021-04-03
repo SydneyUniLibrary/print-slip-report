@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core'
+import { Component, OnDestroy, OnInit } from '@angular/core'
 import {
   AbstractControl, ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
   ValidationErrors,
@@ -26,18 +26,34 @@ import { ColumnOption } from './column-option'
     },
   ],
 })
-export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy {
+export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy, OnInit {
 
   changeSubs: Subscription[] = []
   form = this.fb.group({
     list: this.fb.array([])
   })
+  hadHidden = false
+  highlightShowHiddenButton = false
+  showingHidden = false
+  usedShowHiddenButton = false
 
 
   constructor(
     private fb: FormBuilder
   ) {
     super()
+  }
+
+
+  ngOnInit() {
+    this.hadHidden = this.hasHidden
+    this.registerOnChange(() => {
+      if (this.showingHidden && !this.hasHidden) {
+        this.showingHidden = false
+      } else if (!this.showingHidden && !this.hadHidden && this.hasHidden) {
+        this.highlightShowHiddenButton = true
+      }
+    })
   }
 
 
@@ -48,6 +64,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
   get disabled(): boolean {
     return this.form.disabled
+  }
+
+
+  get hasHidden(): boolean {
+    return this.value.some(c => c.hidden)
   }
 
 
@@ -109,7 +130,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
 
   get visibleControls(): AbstractControl[] {
-    return this.listControl.controls.filter(c => !c.value.hidden)
+    return (
+      this.showingHidden
+      ? this.listControl.controls
+      : this.listControl.controls.filter(c => !c.value.hidden)
+    )
   }
 
 

@@ -48,7 +48,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
     if (this.hidden) {
       c.push('hidden')
     }
-    if (this.limit) {
+    if (this.include && this.limit) {
       c.push(`limit to ${this.limit}`)
     }
     return c
