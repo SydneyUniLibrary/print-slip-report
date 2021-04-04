@@ -108,7 +108,7 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
     let col = v[event.previousIndex]
     v.splice(event.previousIndex, 1)
     v.splice(event.currentIndex, 0, col)
-    this.form.setControl('list', this.fb.array(v))
+    this.writeValue(v)
   }
 
 
