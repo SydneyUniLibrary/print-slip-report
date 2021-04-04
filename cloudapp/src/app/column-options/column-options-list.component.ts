@@ -71,7 +71,7 @@ export class ColumnOptionsListComponent
 
 
   get allIncluded(): boolean {
-    return this.value.every(c => c.include)
+    return this.value.filter(c => !c.hidden).every(c => c.include)
   }
 
 
@@ -87,7 +87,7 @@ export class ColumnOptionsListComponent
 
   includeAll() {
     this.writeValue(
-      this.value.map(c => ({ ...c, include: true }))
+      this.value.map(c => ({ ...c, include: !c.hidden }))
     )
   }
 
