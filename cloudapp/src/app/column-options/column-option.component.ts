@@ -1,4 +1,4 @@
-import { Component, OnDestroy, ViewChild } from '@angular/core'
+import { Component, Input, OnDestroy, ViewChild } from '@angular/core'
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR } from '@angular/forms'
 import { MatListOption, MatSelectionListChange } from '@angular/material/list'
 import { Subscription } from 'rxjs'
@@ -20,6 +20,7 @@ import { ColumnOption } from './column-option'
 })
 export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
 
+  @Input() alwaysShowChips = false
   changeSubs: Subscription[] = []
   expanded = false
   form = this.fb.group({
@@ -48,7 +49,7 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
     if (this.hidden) {
       c.push('hidden')
     }
-    if (this.include && this.limit) {
+    if ((this.alwaysShowChips || this.include) && this.limit) {
       c.push(`limit to ${this.limit}`)
     }
     return c

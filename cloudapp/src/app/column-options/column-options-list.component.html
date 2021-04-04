@@ -10,12 +10,14 @@
   <ng-template #enabled>
     <mat-toolbar class="toolbar">
       <span class="spacer"></span>
-      <button *ngIf="hasHidden && !showingHidden" (click)="showingHidden = true; usedShowHiddenButton = true"
+      <button *ngIf="!alwaysShowHidden && hasHidden && !showingHidden"
+              (click)="showingHidden = true; usedShowHiddenButton = true"
               [color]="highlightShowHiddenButton && !usedShowHiddenButton ? 'accent' : undefined"
               mat-icon-button matTooltip="Show hidden columns">
         <mat-icon>visibility</mat-icon>
       </button>
-      <button *ngIf="hasHidden && showingHidden" (click)="showingHidden = false"
+      <button *ngIf="!alwaysShowHidden && hasHidden && showingHidden"
+              (click)="showingHidden = false"
               mat-icon-button matTooltip="Hide hidden columns">
         <mat-icon>visibility_off</mat-icon>
       </button>
@@ -31,7 +33,7 @@
     <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" class="options-list">
       <mat-list-item *ngFor="let c of visibleControls; trackBy: trackByFn" cdkDrag class="options-list-item">
         <mat-icon class="drag-indicator" matListIcon>drag_indicator</mat-icon>
-        <app-column-option [formControl]="c"></app-column-option>
+        <app-column-option [alwaysShowChips]="alwaysShowChips" [formControl]="c"></app-column-option>
       </mat-list-item>
     </mat-selection-list>
   </ng-template>

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core'
+import { Component, Input, OnDestroy, OnInit } from '@angular/core'
 import {
   AbstractControl, ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR,
   RequiredValidator,
@@ -29,6 +29,8 @@ import { ColumnOption } from './column-option'
 })
 export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy, OnInit {
 
+  @Input() alwaysShowChips = false
+  @Input() alwaysShowHidden = false
   changeSubs: Subscription[] = []
   form = this.fb.group({
     list: this.fb.array([])
@@ -160,7 +162,7 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
   get visibleControls(): FormControl[] {
     return (
-      this.showingHidden
+      this.alwaysShowHidden || this.showingHidden
       ? this.listControl.controls
       : this.listControl.controls.filter(c => !c.value.hidden)
     ) as FormControl[]
