@@ -70,6 +70,10 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
     return this.value.hiddenInApp
   }
 
+  set hiddenInApp(v: boolean) {
+    this.form.patchValue({ 'hiddenInApp': v })
+  }
+
 
   get include(): boolean {
     return this.value.include
@@ -102,7 +106,9 @@ export class ColumnOptionComponent implements ControlValueAccessor, OnDestroy {
       matListOption.selectionList.selectionChange.subscribe(
         (matSelectionListChange: MatSelectionListChange) => {
           if (Object.is(matSelectionListChange.option, matListOption)) {
-            this.include = matListOption.selected
+            let selected = matListOption.selected
+            this.include = selected
+            this.hiddenInApp = selected ? false : this.hiddenInApp
           }
         }
       )
