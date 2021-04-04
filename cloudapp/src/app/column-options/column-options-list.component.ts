@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core'
 import {
-  AbstractControl, ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
+  AbstractControl, ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR,
+  RequiredValidator,
   ValidationErrors,
 } from '@angular/forms'
 import { Subscription } from 'rxjs'
@@ -138,6 +139,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  trackByFn(index: number, item) {
+    return item.value.code
+  }
+
+
   validate(control: { value: ColumnOption[] }): ValidationErrors | null {
     return (
       (this.required && !control.value.some(x => x.include))
@@ -152,12 +158,12 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
-  get visibleControls(): AbstractControl[] {
+  get visibleControls(): FormControl[] {
     return (
       this.showingHidden
       ? this.listControl.controls
       : this.listControl.controls.filter(c => !c.value.hidden)
-    )
+    ) as FormControl[]
   }
 
 
