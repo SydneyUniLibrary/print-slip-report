@@ -10,14 +10,19 @@
     </button>
   </div>
 
-  <div *ngIf="include && !expanded && chips" class="chips">
+  <div *ngIf="!expanded && chips" class="chips">
     <mat-chip-list disabled="true">
       <mat-chip *ngFor="let c of chips">{{ c }}</mat-chip>
     </mat-chip-list>
   </div>
 
   <div *ngIf="expanded" class="more-options">
-    <div class="limit-options">
+    <div class="boolean-more-options">
+      <mat-selection-list (selectionChange)="onBooleanOptionsChanged($event.option.value, $event.option.selected)">
+        <mat-list-option [selected]="hiddenInApp" value="hiddenInApp">Hidden in app</mat-list-option>
+      </mat-selection-list>
+    </div>
+    <div class="limit-option">
       <mat-form-field class="limit-form-field" floatLabel="always">
         <mat-label>Limit</mat-label>
         <input (blur)="onTouched()" matInput max="999" min="0" [(ngModel)]="limit" type="number"/>

@@ -228,13 +228,13 @@ export class MainComponent implements OnInit {
         .map(c => {
           let name = missingColumnDefinitions.get(c.code).name
           missingColumnDefinitions.delete(c.code)
-          return { include: false, limit: 0, ...c, name }
+          return { include: false, limit: 0, hiddenInApp: false, ...c, name }
         })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0 }))
+        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
       )
     ]
     this.columnOptionsListControl.setValue(columnOptions)
@@ -275,13 +275,13 @@ export class MainComponent implements OnInit {
         .map(c => {
           let name = missingColumnDefinitions.get(c.code).name
           missingColumnDefinitions.delete(c.code)
-          return { include: false, limit: 0, ...c, name }
+          return { include: false, limit: 0, hiddenInApp: false, ...c, name }
         })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0 }))
+        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
       )
     ]
     this.columnOptionsListControl.setValue(columnOptions)
@@ -293,7 +293,7 @@ export class MainComponent implements OnInit {
       libraryCode: this.libraryCodeControl.value,
       circDeskCode: this.circDeskCodeControl.value,
       columnOptions: this.columnOptionsListControl.value.map(c => ({
-        code: c.code, include: c.include, limit: c.limit
+        code: c.code, include: c.include, limit: c.limit, hiddenInApp: c.hiddenInApp
       })),
     }
     await this.lastUsedOptionsService.save()
