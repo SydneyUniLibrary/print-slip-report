@@ -1,7 +1,6 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core'
+import { AfterContentInit, Component, Input, OnDestroy, OnInit } from '@angular/core'
 import {
-  AbstractControl, ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR,
-  RequiredValidator,
+  ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
   ValidationErrors,
 } from '@angular/forms'
 import { Subscription } from 'rxjs'
@@ -27,7 +26,10 @@ import { ColumnOption } from './column-option'
     },
   ],
 })
-export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy, OnInit {
+export class ColumnOptionsListComponent
+  extends RequiredValidator
+  implements AfterContentInit, ControlValueAccessor, OnDestroy, OnInit
+{
 
   @Input() alwaysShowChips = false
   @Input() alwaysShowHidden = false
@@ -35,7 +37,6 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   form = this.fb.group({
     list: this.fb.array([])
   })
-  hadHidden = false
   highlightShowHiddenButton = false
   showingHidden = false
   usedShowHiddenButton = false
@@ -52,10 +53,15 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
     this.registerOnChange(() => {
       if (this.showingHidden && !this.hasHidden) {
         this.showingHidden = false
-      } else if (!this.showingHidden && !this.hadHidden && this.hasHidden) {
-        this.highlightShowHiddenButton = true
+      } else if (!this.showingHidden && this.hasHidden) {
+        this.highlightShowHiddenButton = !this.usedShowHiddenButton
       }
     })
+  }
+
+
+  ngAfterContentInit() {
+    this.usedShowHiddenButton = this.hasHidden
   }
 
 
@@ -170,13 +176,7 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
 
 
   writeValue(value: ColumnOption[]): void {
-    if (value) {
-      this.form.setControl('list', this.fb.array(value))
-      this.hadHidden = this.hasHidden
-      if (this.hadHidden) {
-        this.highlightShowHiddenButton = false
-      }
-    }
+    this.form.setControl('list', this.fb.array(value))
   }
 
 }
