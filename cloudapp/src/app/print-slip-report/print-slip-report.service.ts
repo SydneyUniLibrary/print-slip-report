@@ -94,9 +94,13 @@ export class PrintSlipReportService {
       )
     } catch (err) {
       let invalidParameterError = InvalidParameterError.from(err)
-      throw invalidParameterError ?? err
+      err = invalidParameterError ?? err
+      this.error.emit(new PrintSlipReportErrorEvent(err))
+      throw err
     }
-    return resp?.requested_resource ?? []
+    let requestedResources = resp?.requested_resource ?? []
+    this.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
+    return requestedResources
   }
 
 

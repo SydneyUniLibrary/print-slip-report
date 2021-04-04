@@ -2,10 +2,9 @@ import { Platform } from '@angular/cdk/platform'
 import { DOCUMENT } from '@angular/common'
 import { Component, Inject, NgZone, OnInit, Renderer2 } from '@angular/core'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
-import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '.'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
-import { PrintSlipReportErrorEvent } from './print-slip-report.service'
+import { PrintSlipReportService } from './print-slip-report.service'
 
 
 
@@ -38,13 +37,15 @@ export class PrintSlipReportComponent implements OnInit {
     try {
       let requestedResources = await this.printSlipReportService.findRequestedResources()
       this.mappedRequestedResources = requestedResources.map(x => this.mapColumns(x))
-      this.loading = false
-      this.printSlipReportService.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
       if (requestedResources.length > 0) {
         this.print()
       }
+    /*
     } catch (err) {
-      return this.printSlipReportService.error.emit(new PrintSlipReportErrorEvent(err))
+      MainComponent will take care of surfacing the error in the UI via PrintSlipReportService's error event.
+    */
+    } finally {
+      this.loading = false
     }
   }
 
