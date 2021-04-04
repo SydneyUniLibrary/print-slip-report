@@ -19,7 +19,7 @@
   <div *ngIf="expanded" class="more-options">
     <div class="boolean-more-options">
       <mat-selection-list (selectionChange)="onBooleanOptionsChanged($event.option.value, $event.option.selected)">
-        <mat-list-option [selected]="hidden" value="hidden">Hidden</mat-list-option>
+        <mat-list-option [selected]="hiddenInApp" value="hiddenInApp">Hidden in app</mat-list-option>
       </mat-selection-list>
     </div>
     <div class="limit-option">

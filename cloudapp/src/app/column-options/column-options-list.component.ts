@@ -72,7 +72,7 @@ export class ColumnOptionsListComponent
 
 
   get allIncluded(): boolean {
-    return this.value.filter(c => !c.hidden).every(c => c.include)
+    return this.value.filter(c => !c.hiddenInApp).every(c => c.include)
   }
 
 
@@ -82,13 +82,13 @@ export class ColumnOptionsListComponent
 
 
   get hasHidden(): boolean {
-    return this.value.some(c => c.hidden)
+    return this.value.some(c => c.hiddenInApp)
   }
 
 
   includeAll() {
     this.writeValue(
-      this.value.map(c => ({ ...c, include: !c.hidden }))
+      this.value.map(c => ({ ...c, include: !c.hiddenInApp }))
     )
   }
 
@@ -185,7 +185,7 @@ export class ColumnOptionsListComponent
     return (
       this.alwaysShowHidden || this.showingHidden
       ? this.listControl.controls
-      : this.listControl.controls.filter(c => !c.value.hidden)
+      : this.listControl.controls.filter(c => !c.value.hiddenInApp)
     ) as FormControl[]
   }
 

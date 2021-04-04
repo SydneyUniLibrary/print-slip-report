@@ -18,7 +18,7 @@ export type PrintSlipReportColumnConfig = {
   code: string
   include: boolean
   limit: number
-  hidden: boolean
+  hiddenInApp: boolean
 }
 
 
