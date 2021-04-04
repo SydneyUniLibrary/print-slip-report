@@ -1,3 +1,4 @@
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop'
 import { AfterContentInit, Component, Input, OnDestroy, OnInit } from '@angular/core'
 import {
   ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
@@ -109,12 +110,26 @@ export class ColumnOptionsListComponent
   }
 
 
-  onDropDropListDropped(event) {
-    let v = [ ...this.value ]
-    let col = v[event.previousIndex]
-    v.splice(event.previousIndex, 1)
-    v.splice(event.currentIndex, 0, col)
-    this.writeValue(v)
+  onDropDropListDropped(event: CdkDragDrop<CdkDropList, CdkDropList>) {
+
+    if (event.container == event.previousContainer && event.currentIndex != event.previousIndex) {
+
+      let v = [ ...this.value ]
+
+      // The indexes in the event are indexes into this.visibleControls and not this.value...
+      const visibleControls = this.visibleControls
+      let col = visibleControls[event.previousIndex].value
+
+      // ... so map them into index into this.value
+      let previousIndex = v.indexOf(col)
+      let currentIndex = v.indexOf(visibleControls[event.currentIndex].value)
+
+      v.splice(previousIndex, 1)
+      v.splice(currentIndex, 0, col)
+      this.writeValue(v)
+
+    }
+
   }
 
 
