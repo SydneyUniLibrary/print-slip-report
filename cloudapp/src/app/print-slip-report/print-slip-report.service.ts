@@ -4,6 +4,7 @@ import { Router } from '@angular/router'
 import {
   CloudAppRestService, HttpMethod, InitData, Request as CloudAppRestServiceRequest, RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
+import * as _ from 'lodash'
 import { ColumnOption } from '../column-options'
 import { MainComponent } from '../main/main.component'
 
@@ -89,6 +90,41 @@ export class PrintSlipReportService {
     try {
 
       let totalRecordCount = await pages[0].fetchPage()
+      if (totalRecordCount > 0) {
+        pages = this.setupPages(pages[0], totalRecordCount)
+        let pagesIterator: Iterator<Page> = pages.values()
+
+        type PendingPromiseValue = PageFetchValue | void
+        let pendingPromises: Promise<PendingPromiseValue>[] = [ ]
+
+        const addToPendingPromises = (additionalPendingPromises: Promise<PendingPromiseValue>[]) => {
+          pendingPromises = pendingPromises.concat(
+            additionalPendingPromises.map(p => {
+              // Remove the promise from pendingPromises when it resolves
+              let p2 = p.then(x => {
+                let i = pendingPromises.indexOf(p2)
+                pendingPromises.splice(i, 1)
+                return x
+              })
+              return p2
+            })
+          )
+        }
+
+        addToPendingPromises([ pagesIterator.next().value.fetch() ])
+
+        while (pendingPromises.length > 0) {
+          let ret = await Promise.race(pendingPromises)
+          if (ret && 'additionalPendingPromises' in ret) {
+            addToPendingPromises(ret.additionalPendingPromises)
+            let n = pagesIterator.next()
+            if (n.value) {
+              addToPendingPromises([ n.value.fetch() ])
+            }
+          }
+        }
+
+      }
 
     } catch (err) {
       this.error.emit(new PrintSlipReportErrorEvent(err))
@@ -112,6 +148,17 @@ export class PrintSlipReportService {
       })
     }
     return !!this.popupWindow
+  }
+
+
+  private setupPages(page0: Page, totalRecordCount: number): Page[] {
+    let numPages = Math.ceil(totalRecordCount / this.pageSize)
+    let pages = new Array<Page>(numPages)
+    pages[0] = page0
+    for (let i = 1; i < numPages; i++) {
+      pages[i] = new Page(this.circDeskCode, this.libraryCode, i, this.pageSize, this.restService)
+    }
+    return pages
   }
 
 }
@@ -151,6 +198,9 @@ interface RequestedResourcesResponse {
 }
 
 
+type PageFetchValue = { additionalPendingPromises: Promise<void>[] }
+
+
 class Page {
 
   readonly offset: number
@@ -164,16 +214,17 @@ class Page {
     private readonly restService: CloudAppRestService,
   ) {
     this.offset = this.pageNumber * this.pageSize
+    console.log('Page constructor pageNumber', this)
   }
 
 
   /**
-   * @returns An array of additional promises. The additional promises are for the enrichment tasks.
+   * @returns Additional promises for the enrichment tasks.
    *          They settle when the enrichment tasks completes and progress has been made.
    */
-  async fetch(): Promise<Promise<void>[]> {
+  async fetch(): Promise<PageFetchValue> {
     await this.fetchPage()
-    return []
+    return { additionalPendingPromises: [] }
   }
 
 
