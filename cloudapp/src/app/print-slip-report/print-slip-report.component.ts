@@ -5,7 +5,7 @@ import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
-import { PrintSlipReportService } from './print-slip-report.service'
+import { PrintSlipReportService, RequestedResource } from './print-slip-report.service'
 
 
 
@@ -95,7 +95,7 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  private mapColumns(requestedResource: object): string[] {
+  private mapColumns(requestedResource: RequestedResource): string[] {
     return this.includedColumnOptions.map(col => {
       try {
         let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
