@@ -4,6 +4,7 @@ import { Router } from '@angular/router'
 import {
   CloudAppRestService, HttpMethod, InitData, Request as CloudAppRestServiceRequest, RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
+import { v4 as uuid4 } from 'uuid'
 import { ColumnOption } from '../column-options'
 import { MainComponent } from '../main/main.component'
 
@@ -99,7 +100,7 @@ export class PrintSlipReportService {
   pageSize = 100
   popupWindow?: Window
   progressChange = new EventEmitter<number>(true)
-  readonly target = `print-slip-report-${nonce()}`  // TODO: Use a uuid instead of a nonce and then delete the nonce function
+  readonly target = uuid4()
   readonly url: string
 
 
@@ -316,10 +317,4 @@ class Page {
     }
   }
 
-}
-
-
-function nonce() {
-  let data = window.crypto.getRandomValues(new Uint8Array(16));
-  return window.btoa(String.fromCharCode(...data))
 }
