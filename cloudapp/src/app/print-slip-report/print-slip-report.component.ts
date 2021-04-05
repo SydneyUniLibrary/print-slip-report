@@ -1,11 +1,11 @@
 import { Platform } from '@angular/cdk/platform'
 import { DOCUMENT } from '@angular/common'
-import { Component, Inject, NgZone, OnInit, Renderer2 } from '@angular/core'
+import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
-import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '.'
+import { Subscription } from 'rxjs'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
-import { PrintSlipReportErrorEvent } from './print-slip-report.service'
+import { PrintSlipReportService, RequestedResource } from './print-slip-report.service'
 
 
 
@@ -14,11 +14,13 @@ import { PrintSlipReportErrorEvent } from './print-slip-report.service'
   templateUrl: './print-slip-report.component.html',
   styleUrls: [ './print-slip-report.component.scss' ],
 })
-export class PrintSlipReportComponent implements OnInit {
+export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   loading = true
   mappedRequestedResources: string[][]
   printAlertTimoutId?: number
+  progress?: number
+  progressChangeSub?: Subscription
 
 
   constructor(
@@ -36,15 +38,38 @@ export class PrintSlipReportComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
+      this.progressChangeSub = this.printSlipReportService.progressChange.subscribe(
+        progress => {
+          this.zone.run(() => {
+            this.progress = progress || 0
+            console.log('PrintSlipReportComponent ngOnInit progressChange progress', progress)
+          })
+        }
+      )
       let requestedResources = await this.printSlipReportService.findRequestedResources()
-      this.mappedRequestedResources = requestedResources.map(x => this.mapColumns(x))
-      this.loading = false
-      this.printSlipReportService.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
+      // Delay slightly so that the user perceives the progress spinner showing 100%
+      // but only if the mapping happens too quickly.
+      let x = await Promise.all([
+        new Promise( resolve => resolve(requestedResources.map(x => this.mapColumns(x)))),
+        new Promise(resolve => setTimeout(resolve, 500)),
+      ])
+      this.mappedRequestedResources = x[0] as string[][]
       if (requestedResources.length > 0) {
         this.print()
       }
+    /*
     } catch (err) {
-      return this.printSlipReportService.error.emit(new PrintSlipReportErrorEvent(err))
+      MainComponent will take care of surfacing the error in the UI via PrintSlipReportService's error event.
+    */
+    } finally {
+      this.loading = false
+    }
+  }
+
+
+  ngOnDestroy() {
+    if (this.progressChangeSub) {
+      this.progressChangeSub.unsubscribe()
     }
   }
 
@@ -70,7 +95,7 @@ export class PrintSlipReportComponent implements OnInit {
   }
 
 
-  private mapColumns(requestedResource: object): string[] {
+  private mapColumns(requestedResource: RequestedResource): string[] {
     return this.includedColumnOptions.map(col => {
       try {
         let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)

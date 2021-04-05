@@ -1,10 +1,10 @@
 import { Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
-import { AlertService, CloudAppEventsService, InitData, RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
+import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
-import { InvalidParameterError, PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
+import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
 import { PrintSlipReportErrorEvent } from '../print-slip-report/print-slip-report.service'
 import { LastUsedOptionsService } from './last-used-options.service'
 

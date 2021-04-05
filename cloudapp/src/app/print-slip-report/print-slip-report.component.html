@@ -15,6 +15,6 @@
 </ng-container>
 
 <div class="loading-shade" *ngIf="loading">
-  <mat-spinner></mat-spinner>
+  <mat-progress-spinner [mode]="progress === undefined ? 'indeterminate' : 'determinate'" [value]="progress"></mat-progress-spinner>
   <div class="loading-msg">Finding the requests for {{ circDeskCode }} at {{ libraryCode }}…</div>
 </div>

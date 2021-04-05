@@ -1,9 +1,13 @@
+import { RequestedResource } from './print-slip-report'
+
+
+
 export class ColumnDefinition {
 
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: any) => string
+    public mapFn: (requestedResource: RequestedResource) => string
   ) {}
 
 }
