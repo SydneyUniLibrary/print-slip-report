@@ -4,7 +4,6 @@ import { Router } from '@angular/router'
 import {
   CloudAppRestService, HttpMethod, InitData, Request as CloudAppRestServiceRequest, RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
-import * as _ from 'lodash'
 import { ColumnOption } from '../column-options'
 import { MainComponent } from '../main/main.component'
 
