@@ -1,7 +1,9 @@
 import { Location as LocationService } from '@angular/common'
 import { EventEmitter, Injectable } from '@angular/core'
 import { Router } from '@angular/router'
-import { CloudAppRestService, HttpMethod, InitData, RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
+import {
+  CloudAppRestService, HttpMethod, InitData, Request as CloudAppRestServiceRequest, RestErrorResponse,
+} from '@exlibris/exl-cloudapp-angular-lib'
 import { ColumnOption } from '../column-options'
 import { MainComponent } from '../main/main.component'
 
@@ -48,6 +50,7 @@ export class PrintSlipReportService {
   initData?: InitData
   libraryCode?: string
   mainComponent?: MainComponent
+  pageSize = 100
   popupWindow?: Window
   readonly target = `print-slip-report-${nonce()}`  // TODO: Use a uuid instead of a nonce and then delete the nonce function
   readonly url: string
@@ -79,26 +82,23 @@ export class PrintSlipReportService {
 
 
   async findRequestedResources(): Promise<RequestedResource[]> {
-    let resp: { requested_resource?: any }
+    let pages: Page[] = [
+      new Page(this.circDeskCode, this.libraryCode, 0, this.pageSize, this.restService)
+    ]
+
     try {
-      resp = await (
-        this.restService.call({
-          url: '/task-lists/requested-resources',
-          method: HttpMethod.GET,
-          queryParams: {
-            library: this.libraryCode,
-            circ_desk: this.circDeskCode,
-            limit: 100, // TODO: Handle more than 100 requested resources
-          },
-        }).toPromise()
-      )
+
+      let totalRecordCount = await pages[0].fetchPage()
+
     } catch (err) {
-      let invalidParameterError = InvalidParameterError.from(err)
-      err = invalidParameterError ?? err
       this.error.emit(new PrintSlipReportErrorEvent(err))
       throw err
     }
-    let requestedResources = resp?.requested_resource ?? []
+
+    let requestedResources = pages.reduce<RequestedResource[]>(
+      (acc, v) => acc.concat(v.requests),
+      []
+    )
     this.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
     return requestedResources
   }
@@ -119,6 +119,8 @@ export class PrintSlipReportService {
 
 export class InvalidParameterError extends Error {
 
+  // TODO: Make instanceof InvalidParameterError work and the change PrintSlipReportErrorEvent.isInvalidParameterError
+
   static from(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
     const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == '40166410')
     if (error) {
@@ -138,6 +140,76 @@ export class InvalidParameterError extends Error {
     public validOptions: string[],
   ) {
     super(`The parameter ${ parameter } is invalid`)
+  }
+
+}
+
+
+interface RequestedResourcesResponse {
+  requested_resource?: RequestedResource[]
+  total_record_count?: number
+}
+
+
+class Page {
+
+  readonly offset: number
+  requests: RequestedResource[] = []
+
+  constructor(
+    private readonly circDeskCode: string,
+    private readonly libraryCode: string,
+    public readonly pageNumber: number,
+    public readonly pageSize: number,
+    private readonly restService: CloudAppRestService,
+  ) {
+    this.offset = this.pageNumber * this.pageSize
+  }
+
+
+  /**
+   * @returns An array of additional promises. The additional promises are for the enrichment tasks.
+   *          They settle when the enrichment tasks completes and progress has been made.
+   */
+  async fetch(): Promise<Promise<void>[]> {
+    await this.fetchPage()
+    return []
+  }
+
+
+  /**
+   * @returns The total number requests available across all the pages.
+   */
+  async fetchPage(): Promise<number> {
+    // Skip this if the page was already pre-fetched.
+    if (this.requests.length == 0) {
+      try {
+        let resp = await this.restService.call<RequestedResourcesResponse>(this.request).toPromise()
+        this.requests = resp?.requested_resource ?? []
+        return resp?.total_record_count ?? 0
+      } catch (err) {
+        throw InvalidParameterError.from(err) ?? err
+      }
+    }
+  }
+
+
+  get request(): CloudAppRestServiceRequest {
+    return {
+      url: '/task-lists/requested-resources',
+      method: HttpMethod.GET,
+      queryParams: this.queryParams,
+    }
+  }
+
+
+  get queryParams(): { [param: string]: any } {
+    return {
+      library: this.libraryCode,
+      circ_desk: this.circDeskCode,
+      limit: this.pageSize,
+      offset: this.offset
+    }
   }
 
 }
