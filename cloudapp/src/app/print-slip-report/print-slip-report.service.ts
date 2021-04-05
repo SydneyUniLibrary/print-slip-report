@@ -91,6 +91,7 @@ export class PrintSlipReportService {
     try {
 
       let totalRecordCount = await pages[0].fetchPage()
+      this.progressChange.emit(0)   // Force the progress spinner animation to start at 0
       if (totalRecordCount > 0) {
         pages = this.setupPages(pages[0], totalRecordCount)
         let pagesIterator: Iterator<Page> = pages.values()
@@ -139,7 +140,7 @@ export class PrintSlipReportService {
       (acc, v) => acc.concat(v.requests),
       []
     )
-    this.progressChange.emit(100)
+    this.progressChange.emit(100)   // Force the progress spinner animation to end at 100
     this.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
     return requestedResources
   }
