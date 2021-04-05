@@ -53,6 +53,7 @@ export class PrintSlipReportService {
   mainComponent?: MainComponent
   pageSize = 100
   popupWindow?: Window
+  progressChange = new EventEmitter<number>(true)
   readonly target = `print-slip-report-${nonce()}`  // TODO: Use a uuid instead of a nonce and then delete the nonce function
   readonly url: string
 
@@ -114,6 +115,9 @@ export class PrintSlipReportService {
         addToPendingPromises([ pagesIterator.next().value.fetch() ])
 
         while (pendingPromises.length > 0) {
+          let progress = pages.reduce<number>((acc, page) => acc + page.progress, 0) / pages.length
+          this.progressChange.emit(progress)
+
           let ret = await Promise.race(pendingPromises)
           if (ret && 'additionalPendingPromises' in ret) {
             addToPendingPromises(ret.additionalPendingPromises)
@@ -135,6 +139,7 @@ export class PrintSlipReportService {
       (acc, v) => acc.concat(v.requests),
       []
     )
+    this.progressChange.emit(100)
     this.complete.emit(new PrintSlipReportCompleteEvent(requestedResources.length))
     return requestedResources
   }
@@ -204,6 +209,7 @@ type PageFetchValue = { additionalPendingPromises: Promise<void>[] }
 class Page {
 
   readonly offset: number
+  progress: number = 0  // Between 0 and 100 inclusive
   requests: RequestedResource[] = []
 
   constructor(
@@ -224,6 +230,7 @@ class Page {
    */
   async fetch(): Promise<PageFetchValue> {
     await this.fetchPage()
+    this.progress = 100
     return { additionalPendingPromises: [] }
   }
 
