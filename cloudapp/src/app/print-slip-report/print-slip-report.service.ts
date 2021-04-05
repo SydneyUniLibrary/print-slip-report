@@ -22,7 +22,7 @@ export type PrintSlipReportError = Error | InvalidParameterError | RestErrorResp
 export class PrintSlipReportErrorEvent {
 
   static isInvalidParameterError(err: PrintSlipReportError): err is InvalidParameterError {
-    return 'parameter' in err
+    return err instanceof InvalidParameterError
   }
 
 
@@ -218,8 +218,6 @@ export class PrintSlipReportService {
 
 export class InvalidParameterError extends Error {
 
-  // TODO: Make instanceof InvalidParameterError work and the change PrintSlipReportErrorEvent.isInvalidParameterError
-
   static from(restErrorResponse: RestErrorResponse): InvalidParameterError | null {
     const error = restErrorResponse?.error?.errorList?.error?.filter(e => e?.errorCode == '40166410')
     if (error) {
@@ -239,6 +237,7 @@ export class InvalidParameterError extends Error {
     public validOptions: string[],
   ) {
     super(`The parameter ${ parameter } is invalid`)
+    Object.setPrototypeOf(this, InvalidParameterError.prototype) // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#extending-built-ins-like-error-array-and-map-may-no-longer-work
   }
 
 }
