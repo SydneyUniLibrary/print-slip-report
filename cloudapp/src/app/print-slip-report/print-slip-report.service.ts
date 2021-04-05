@@ -41,15 +41,15 @@ export interface RequestedResource { }
 @Injectable()
 export class PrintSlipReportService {
 
-  includedColumnOptions?: ColumnOption[]
   circDeskCode?: string
+  complete = new EventEmitter<PrintSlipReportCompleteEvent>(true)
+  error = new EventEmitter<PrintSlipReportErrorEvent>(true)
+  includedColumnOptions?: ColumnOption[]
   initData?: InitData
   libraryCode?: string
   mainComponent?: MainComponent
-  complete = new EventEmitter<PrintSlipReportCompleteEvent>(true)
-  error = new EventEmitter<PrintSlipReportErrorEvent>(true)
   popupWindow?: Window
-  readonly target = `print-slip-report-${nonce()}`
+  readonly target = `print-slip-report-${nonce()}`  // TODO: Use a uuid instead of a nonce and then delete the nonce function
   readonly url: string
 
 
