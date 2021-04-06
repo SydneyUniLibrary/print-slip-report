@@ -1,4 +1,4 @@
-import { RequestedResource } from './print-slip-report'
+import { RequestedResource } from "./requested-resources-service/requested-resources-service"
 
 
 
