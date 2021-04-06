@@ -1,9 +1,9 @@
 
 import { EventEmitter, Injectable } from '@angular/core'
 import {
-  CloudAppRestService, 
-  HttpMethod, 
-  Request as CloudAppRestServiceRequest, 
+  CloudAppRestService,
+  HttpMethod,
+  Request as CloudAppRestServiceRequest,
   RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
 
@@ -83,7 +83,9 @@ export class RequestedResourcesService {
     try {
 
       let totalRecordCount = await pages[0].fetchPage()
-      progressChange.emit(0)   // Force the progress spinner animation to start at 0
+      if (progressChange) {
+        progressChange.emit(0)   // Force the progress spinner animation to start at 0
+      }
       if (totalRecordCount > 0) {
         pages = this.setupPages(circDeskCode, libraryCode, pageSize, pages[0], totalRecordCount)
         let pagesIterator: Iterator<Page> = pages.values()
@@ -109,7 +111,9 @@ export class RequestedResourcesService {
 
         while (pendingPromises.length > 0) {
           let progress = pages.reduce<number>((acc, page) => acc + page.progress, 0) / pages.length
-          progressChange.emit(progress)
+          if (progressChange) {
+            progressChange.emit(progress)
+          }
 
           let ret = await Promise.race(pendingPromises)
           if (ret && 'additionalPendingPromises' in ret) {
@@ -132,7 +136,9 @@ export class RequestedResourcesService {
       (acc, v) => acc.concat(v.requests),
       []
     )
-    progressChange.emit(100)   // Force the progress spinner animation to end at 100
+    if (progressChange) {
+      progressChange.emit(100)   // Force the progress spinner animation to end at 100
+    }
     completeFn(requestedResources.length)
     return requestedResources
   }
@@ -199,7 +205,7 @@ class Page {
         return resp?.total_record_count ?? 0
       } catch (err) {
         throw InvalidParameterError.from(err) ?? err
-      
+
       }
     }
   }

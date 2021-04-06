@@ -4,6 +4,7 @@ import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-clo
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
+import { ExcelExportService } from '../excel-export/excel-export-service'
 import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
 import { PrintSlipReportErrorEvent } from '../print-slip-report/print-slip-report.service'
 import { LastUsedOptionsService } from './last-used-options.service'
@@ -37,6 +38,7 @@ export class MainComponent implements OnInit {
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
     private zone: NgZone,
+    private excelExportService: ExcelExportService,
   ) {
     this.printSlipReportService.mainComponent = this
     this.printSlipReportService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
@@ -124,6 +126,19 @@ export class MainComponent implements OnInit {
     if (!this.circDeskCodeControl.value) {
       this.resetCircDeskCode(this.libraryCodeControl.value.trim())
     }
+  }
+
+
+  onExcel() {
+    this.alert.clear()
+    this.saveOptions()
+
+    let libraryCode:string = this.form.value.libraryCode.trim()
+    let circDeskCode:string = this.form.value.circDeskCode.trim()
+    let columnOptions:ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
+    this.loading = true
+    this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
+    this.loading = false
   }
 
 
