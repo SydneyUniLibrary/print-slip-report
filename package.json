@@ -19,6 +19,7 @@
     "@exlibris/exl-cloudapp-angular-lib": "^0.5.0",
     "@exlibris/exl-cloudapp-base": "^0.5.0",
     "@ngx-translate/core": "^12.1.0",
+    "file-saver": "^2.0.5",
     "lodash": "^4.17.15",
     "ngx-toastr": "^12.0.0",
     "rxjs": "^6.5.5",
