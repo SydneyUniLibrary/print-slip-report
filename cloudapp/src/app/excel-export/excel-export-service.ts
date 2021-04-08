@@ -1,12 +1,11 @@
 import { EventEmitter, Injectable } from '@angular/core'
+import * as FileSaver from 'file-saver'
+import * as XLSX from 'sheetjs-style'
 
 import { ColumnOption } from '../column-options'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
-
-import * as XLSX from 'sheetjs-style'
-import * as FileSaver from 'file-saver'
-import { RequestedResource, RequestedResourcesService } from '../requested-resources-service/requested-resources-service'
 import { PrintSlipReportError } from '../print-slip-report/print-slip-report.service'
+import { RequestedResource, RequestedResourcesService } from '../requested-resources-service/requested-resources-service'
 
 
 
