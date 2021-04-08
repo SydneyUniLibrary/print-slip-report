@@ -14,15 +14,15 @@ import { LastUsedOptionsService } from './last-used-options.service'
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
-  styleUrls: ['./main.component.scss'],
-  providers: [PrintSlipReportService],
+  styleUrls: [ './main.component.scss' ],
+  providers: [ PrintSlipReportService ],
 })
 export class MainComponent implements OnInit {
 
   form = this.fb.group({
     libraryCode: '',
     circDeskCode: '',
-    columnOptionsList: [[]],
+    columnOptionsList: [ [ ] ],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
