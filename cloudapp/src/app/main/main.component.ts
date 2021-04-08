@@ -34,11 +34,11 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
+    private excelExportService: ExcelExportService,
     private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
     private zone: NgZone,
-    private excelExportService: ExcelExportService,
   ) {
     this.printSlipReportService.mainComponent = this
     this.printSlipReportService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
@@ -129,7 +129,7 @@ export class MainComponent implements OnInit {
   }
 
 
-  onExcel() {
+  async onExcel() {
     this.alert.clear()
     this.saveOptions()
 
@@ -138,7 +138,7 @@ export class MainComponent implements OnInit {
     let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
     this.loading = true
     try {
-    this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
+      await this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
     } catch (err) {
       let msg = err.message || "See the console in your browser's developer tools for more information."
       console.error('Error during Excel export', err)

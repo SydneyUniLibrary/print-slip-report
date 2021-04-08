@@ -1,4 +1,4 @@
-import { RequestedResource } from "./requested-resources-service/requested-resources-service"
+import { RequestedResource } from './requested-resources-service/requested-resources-service'
 
 
 

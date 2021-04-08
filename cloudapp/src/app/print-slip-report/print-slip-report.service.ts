@@ -55,14 +55,14 @@ export class PrintSlipReportService {
 
   constructor(
     location: LocationService,
-    router: Router,
     private requestedResourcesService: RequestedResourcesService,
+    router: Router,
   ) {
     // This has only been tested with the hash location strategy
     let routeUrl = (
       location.prepareExternalUrl(
         router.serializeUrl(
-          router.createUrlTree(['print-slip-report'])
+          router.createUrlTree([ 'print-slip-report' ])
         )
       )
     )
@@ -102,5 +102,3 @@ export class PrintSlipReportService {
     return !!this.popupWindow
   }
 }
-
-

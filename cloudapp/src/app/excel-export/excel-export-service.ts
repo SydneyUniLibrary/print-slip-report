@@ -9,6 +9,7 @@ import { RequestedResource, RequestedResourcesService } from '../requested-resou
 import { PrintSlipReportError } from '../print-slip-report/print-slip-report.service'
 
 
+
 @Injectable({
   providedIn: 'root',
 })
@@ -27,32 +28,27 @@ export class ExcelExportService {
   async generateExcel(circDeskCode: string, libraryCode: string, columnOptions: ColumnOption[]) {
 
     const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(columnOptions)
-
-    this.requestedResourcesService.findRequestedResources(
+    const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       circDeskCode,
       libraryCode,
       ExcelExportService.PAGE_SIZE,
       null,
       (count: number) => { console.debug('completed', count) },
-      (err: PrintSlipReportError) => { console.debug('error', err) })
-      .then(resources => {
-        const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
-        const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
-        this.setCellWith(worksheet, columnDefinitions)
-        this.setCellStyles(worksheet)
-        const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
-        const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-        this.saveAsExcelFile(excelBuffer)
-      })
+      (err: PrintSlipReportError) => { console.debug('error', err) }
+    )
+
+    const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
+    const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
+    this.setCellWith(worksheet, columnDefinitions)
+    this.setCellStyles(worksheet)
+    const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
+    const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    this.saveAsExcelFile(excelBuffer)
   }
 
 
   private getColumnDefinitions(columnOptions: ColumnOption[]): ColumnDefinition[] {
-    let columnDefinitions: ColumnDefinition[] = []
-    columnOptions.map(option => {
-      columnDefinitions.push(COLUMNS_DEFINITIONS.get(option.code))
-    })
-    return columnDefinitions
+    return columnOptions.map(option => COLUMNS_DEFINITIONS.get(option.code))
   }
 
 
@@ -80,7 +76,6 @@ export class ExcelExportService {
 
 
   private setCellWith(worksheet: XLSX.WorkSheet, columnDefinitions: ColumnDefinition[]) {
-    //const colsWiths: object[] = columnDefinitions.map(col => { return { wch: col.width } })
     const colsWiths: object[] = columnDefinitions.map(col => { return { wch: 25 } })
     worksheet['!cols'] = colsWiths
   }
