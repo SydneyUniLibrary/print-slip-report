@@ -14,15 +14,15 @@ import { LastUsedOptionsService } from './last-used-options.service'
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
-  styleUrls: [ './main.component.scss' ],
-  providers: [ PrintSlipReportService ],
+  styleUrls: ['./main.component.scss'],
+  providers: [PrintSlipReportService],
 })
 export class MainComponent implements OnInit {
 
   form = this.fb.group({
     libraryCode: '',
     circDeskCode: '',
-    columnOptionsList: [ [] ],
+    columnOptionsList: [[]],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
@@ -133,11 +133,17 @@ export class MainComponent implements OnInit {
     this.alert.clear()
     this.saveOptions()
 
-    let libraryCode:string = this.form.value.libraryCode.trim()
-    let circDeskCode:string = this.form.value.circDeskCode.trim()
-    let columnOptions:ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
+    let libraryCode: string = this.form.value.libraryCode.trim()
+    let circDeskCode: string = this.form.value.circDeskCode.trim()
+    let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
     this.loading = true
+    try {
     this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
+    } catch (err) {
+      let msg = err.message || "See the console in your browser's developer tools for more information."
+      console.error('Error during Excel export', err)
+      this.alert.error(`Excel export failed: ${ msg }`)
+    }
     this.loading = false
   }
 
@@ -162,7 +168,7 @@ export class MainComponent implements OnInit {
   }
 
 
-  private async  onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
+  private async onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
     await this.saveOptions()
     if (event.numRequestedResources == 0) {
       // This code is run in the popup window's zone.

@@ -86,7 +86,7 @@ export class PrintSlipReportService {
       this.pageSize,
       this.progressChange,
       (count: number) => { this.complete.emit(new PrintSlipReportCompleteEvent(count)) },
-      (err: Error) => { this.error.emit(new PrintSlipReportErrorEvent(err)) },
+      (err: PrintSlipReportError) => { this.error.emit(new PrintSlipReportErrorEvent(err)) },
     )
 
   }

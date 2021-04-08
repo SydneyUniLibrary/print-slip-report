@@ -6,6 +6,7 @@ import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
 import * as XLSX from 'sheetjs-style'
 import * as FileSaver from 'file-saver'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources-service/requested-resources-service'
+import { PrintSlipReportError } from '../print-slip-report/print-slip-report.service'
 
 
 @Injectable({
@@ -28,12 +29,12 @@ export class ExcelExportService {
     const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(columnOptions)
 
     this.requestedResourcesService.findRequestedResources(
-		circDeskCode, 
-		libraryCode, 
-		ExcelExportService.PAGE_SIZE, 
-		null, 
-		(count:number) => { console.log('completed', count) }, 
-		(err:Error) => { console.log('error', err) })
+      circDeskCode,
+      libraryCode,
+      ExcelExportService.PAGE_SIZE,
+      null,
+      (count: number) => { console.debug('completed', count) },
+      (err: PrintSlipReportError) => { console.debug('error', err) })
       .then(resources => {
         const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
         const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
@@ -43,7 +44,6 @@ export class ExcelExportService {
         const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
         this.saveAsExcelFile(excelBuffer)
       })
-      .catch(e => console.log(e))
   }
 
 
@@ -66,8 +66,8 @@ export class ExcelExportService {
   private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): string[] {
     return columnDefinitions.map(col => {
       try {
-        let value:string = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
-        if(!value) {
+        let value: string = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
+        if (!value) {
           value = '-'
         }
         return value
@@ -89,7 +89,7 @@ export class ExcelExportService {
   private setCellStyles(worksheet: XLSX.WorkSheet) {
     Object.keys(worksheet).forEach(key => {
       if (worksheet.hasOwnProperty(key)) {
-        if (key.indexOf('!') < 0 && key.indexOf(':') < 0)  {
+        if (key.indexOf('!') < 0 && key.indexOf(':') < 0) {
           let cell = worksheet[key]
           cell['s'] = {
             font: {
@@ -115,7 +115,7 @@ export class ExcelExportService {
   }
 
 
-  private isBold(key:string):boolean {
+  private isBold(key: string): boolean {
     // is header (key ends with '1' liken A1, B1, ...)
     const isHeadRowKeyRegex = /^[A-Z]+1$/
     // is first row (key starts with 'A')

@@ -6,6 +6,7 @@ import {
   Request as CloudAppRestServiceRequest,
   RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
+import { PrintSlipReportError } from '../print-slip-report/print-slip-report.service'
 
 export interface RequestedResource {
   resource_metadata: RequestedResourceResourceMetadata
@@ -56,7 +57,7 @@ export interface RequestedResourceResourceMetadata {
 }
 
 export type CompleteFunction = (count: number) => void
-export type ErrorFunction = (error: Error) => void
+export type ErrorFunction = (error: PrintSlipReportError) => void
 
 @Injectable({
   providedIn: 'root'
