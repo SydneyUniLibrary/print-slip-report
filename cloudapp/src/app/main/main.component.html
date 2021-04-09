@@ -1,13 +1,14 @@
 <form [formGroup]="form" *ngIf="ready">
 
   <div class="eca-actions">
-    <button type="submit" mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
-    <button type="submit" mat-flat-button color="secondary" (click)="onExcel()" [disabled]="!form.valid || loading">Excel</button>
     <button mat-flat-button color="secondary" (click)="resetOptions()">Reset</button>
+    <div class="btn-separator"></div>
+    <button type="submit" mat-flat-button color="secondary" (click)="onExcel()" [disabled]="!form.valid || loading">Download</button>
+    <button type="submit" mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
   </div>
 
   <div>
-
+    
     <mat-form-field class="library-code-form-field" [style.margin-right.px]="8" hideRequiredMarker="true">
       <mat-label>Library code</mat-label>
       <input matInput formControlName="libraryCode" required (change)="onLibraryCodeChange()">
