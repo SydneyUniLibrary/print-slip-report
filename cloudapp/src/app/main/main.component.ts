@@ -5,8 +5,7 @@ import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { ExcelExportService } from '../excel-export/excel-export-service'
-import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
-import { PrintSlipReportErrorEvent } from '../print-slip-report/print-slip-report.service'
+import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
 import { LastUsedOptionsService } from './last-used-options.service'
 
 
