@@ -5,7 +5,7 @@ import { InitData, RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
 import { v4 as uuid4 } from 'uuid'
 import { ColumnOption } from '../column-options'
 import { MainComponent } from '../main/main.component'
-import { InvalidParameterError, RequestedResource, RequestedResourcesService } from '../requested-resources-service/requested-resources-service'
+import { InvalidParameterError, RequestedResource, RequestedResourcesService } from '../requested-resources/requested-resources-service'
 
 
 

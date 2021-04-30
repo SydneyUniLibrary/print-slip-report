@@ -5,7 +5,7 @@ import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
-import { RequestedResource } from '../requested-resources-service/requested-resources-service'
+import { RequestedResource } from '../requested-resources/requested-resources-service'
 import { PrintSlipReportService } from './print-slip-report.service'
 
 
