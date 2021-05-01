@@ -1,4 +1,6 @@
 export {
-  InvalidParameterError, PrintSlipReportCompleteEvent, PrintSlipReportError, PrintSlipReportErrorEvent,
-  PrintSlipReportService, RequestedResource
+  PrintSlipReportCompleteEvent, 
+  PrintSlipReportError, 
+  PrintSlipReportErrorEvent,
+  PrintSlipReportService
 } from './print-slip-report.service'

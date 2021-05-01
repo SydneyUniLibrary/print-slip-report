@@ -4,8 +4,8 @@ import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-clo
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
-import { PrintSlipReportCompleteEvent, PrintSlipReportService } from '../print-slip-report'
-import { PrintSlipReportErrorEvent } from '../print-slip-report/print-slip-report.service'
+import { ExcelExportService } from '../excel-export/excel-export-service'
+import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
 import { LastUsedOptionsService } from './last-used-options.service'
 
 
@@ -21,7 +21,7 @@ export class MainComponent implements OnInit {
   form = this.fb.group({
     libraryCode: '',
     circDeskCode: '',
-    columnOptionsList: [ [] ],
+    columnOptionsList: [ [ ] ],
   })
   initData: InitData
   libraryCodeIsFromInitData: boolean = false
@@ -33,6 +33,7 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
+    private excelExportService: ExcelExportService,
     private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
@@ -120,6 +121,25 @@ export class MainComponent implements OnInit {
   }
 
 
+  async onDownload() {
+    this.alert.clear()
+    this.loading = true
+    try {
+      let libraryCode: string = this.form.value.libraryCode.trim()
+      let circDeskCode: string = this.form.value.circDeskCode.trim()
+      let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
+      await this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
+      await this.saveOptions()
+    } catch (err) {
+      let msg = err.message || "See the console in your browser's developer tools for more information."
+      console.error('Error during Excel export', err)
+      this.alert.error(`Excel export failed: ${ msg }`)
+    } finally {
+      this.loading = false
+    }
+  }
+
+
   onLibraryCodeChange() {
     if (!this.circDeskCodeControl.value) {
       this.resetCircDeskCode(this.libraryCodeControl.value.trim())
@@ -147,7 +167,7 @@ export class MainComponent implements OnInit {
   }
 
 
-  private async  onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
+  private async onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
     await this.saveOptions()
     if (event.numRequestedResources == 0) {
       // This code is run in the popup window's zone.
@@ -186,7 +206,7 @@ export class MainComponent implements OnInit {
             this.alert.error(`The API parameter ${ err.parameter } was invalid`)
         }
       } else if (PrintSlipReportErrorEvent.isRestErrorResponse(err) && err?.status == 401) {
-        // Unuathorised
+        // Unauthorised
         this.alert.error(
           'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
           + ` for the library ${ this.form.value.libraryCode } `

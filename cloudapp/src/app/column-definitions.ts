@@ -1,4 +1,4 @@
-import { RequestedResource } from './print-slip-report'
+import { RequestedResource } from './requested-resources'
 
 
 
@@ -25,6 +25,7 @@ export const COLUMNS_DEFINITIONS = to_map([
   new ColumnDefinition('request-type', 'Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
   new ColumnDefinition('requested-for', 'Requested For', x => x?.request?.[0]?.requester?.desc),
   new ColumnDefinition('request-id', 'Request ID', x => x?.request?.[0]?.id),
+  new ColumnDefinition('request-date', 'Request Date', x => x?.request?.[0]?.request_date),
   new ColumnDefinition('barcode', 'Barcode', x => x?.location?.copy?.[0]?.barcode),
   new ColumnDefinition('pickup-location', 'Pickup Location', x => x?.request?.[0]?.destination?.desc),
   new ColumnDefinition('item-call-number', 'Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
