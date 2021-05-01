@@ -121,14 +121,7 @@ export class MainComponent implements OnInit {
   }
 
 
-  onLibraryCodeChange() {
-    if (!this.circDeskCodeControl.value) {
-      this.resetCircDeskCode(this.libraryCodeControl.value.trim())
-    }
-  }
-
-
-  async onExcel() {
+  async onDownload() {
     this.alert.clear()
     this.saveOptions()
 
@@ -144,6 +137,13 @@ export class MainComponent implements OnInit {
       this.alert.error(`Excel export failed: ${ msg }`)
     }
     this.loading = false
+  }
+
+
+  onLibraryCodeChange() {
+    if (!this.circDeskCodeControl.value) {
+      this.resetCircDeskCode(this.libraryCodeControl.value.trim())
+    }
   }
 
 
