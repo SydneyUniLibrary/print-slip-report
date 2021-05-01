@@ -1,6 +1,7 @@
-export interface ColumnOption {
-  code: string
+import { PrintSlipReportColumnConfig } from '../config'
+
+
+
+export type ColumnOption = PrintSlipReportColumnConfig & {
   name: string
-  include: boolean
-  limit: number
 }

@@ -1,18 +1,39 @@
-<ng-container [formGroup]="form">
+<ng-container>
 
-  <mat-selection-list *ngIf="disabled; else enabled" class="disabled options-list" formArrayName="list">
-    <mat-list-item *ngFor="let c of listControl.controls; let i = index" class="options-list-item">
+  <mat-selection-list *ngIf="disabled; else enabled" class="disabled options-list">
+    <mat-list-item *ngFor="let c of visibleControls; trackBy: trackByFn" class="options-list-item">
       <mat-icon class="drag-indicator disabled" matListIcon>drag_indicator</mat-icon>
-      <app-column-option [formControlName]="i"></app-column-option>
+      <app-column-option [formControl]="c"></app-column-option>
     </mat-list-item>
   </mat-selection-list>
 
   <ng-template #enabled>
-    <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" class="options-list"
-                        formArrayName="list">
-      <mat-list-item *ngFor="let c of listControl.controls; let i = index" cdkDrag class="options-list-item">
+    <mat-toolbar class="toolbar">
+      <span class="spacer"></span>
+      <button *ngIf="!alwaysShowHidden && hasHidden && !showingHidden"
+              (click)="showingHidden = true; usedShowHiddenButton = true"
+              [color]="highlightShowHiddenButton && !usedShowHiddenButton ? 'accent' : undefined"
+              mat-icon-button matTooltip="Show hidden columns">
+        <mat-icon>visibility</mat-icon>
+      </button>
+      <button *ngIf="!alwaysShowHidden && hasHidden && showingHidden"
+              (click)="showingHidden = false"
+              mat-icon-button matTooltip="Hide hidden columns">
+        <mat-icon>visibility_off</mat-icon>
+      </button>
+      <button *ngIf="!allIncluded" (click)="includeAll()"
+              mat-icon-button matTooltip="Include all columns">
+        <mat-icon>done_all</mat-icon>
+      </button>
+      <button *ngIf="!noneIncluded" (click)="includeNone()"
+              mat-icon-button matTooltip="Include no columns">
+        <mat-icon>remove_done</mat-icon>
+      </button>
+    </mat-toolbar>
+    <mat-selection-list cdkDropList (cdkDropListDropped)="onDropDropListDropped($event)" class="options-list">
+      <mat-list-item *ngFor="let c of visibleControls; trackBy: trackByFn" cdkDrag class="options-list-item">
         <mat-icon class="drag-indicator" matListIcon>drag_indicator</mat-icon>
-        <app-column-option [formControlName]="i"></app-column-option>
+        <app-column-option [alwaysShowChips]="alwaysShowChips" [formControl]="c"></app-column-option>
       </mat-list-item>
     </mat-selection-list>
   </ng-template>

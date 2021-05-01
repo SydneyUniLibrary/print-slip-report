@@ -1,6 +1,8 @@
-import { Component, OnDestroy } from '@angular/core'
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop'
+import { AfterContentInit, Component, Input, OnDestroy, OnInit } from '@angular/core'
 import {
-  ControlValueAccessor, FormArray, FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator, ValidationErrors,
+  ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
+  ValidationErrors,
 } from '@angular/forms'
 import { Subscription } from 'rxjs'
 import { map } from 'rxjs/operators'
@@ -25,12 +27,20 @@ import { ColumnOption } from './column-option'
     },
   ],
 })
-export class ColumnOptionsListComponent extends RequiredValidator implements ControlValueAccessor, OnDestroy {
+export class ColumnOptionsListComponent
+  extends RequiredValidator
+  implements AfterContentInit, ControlValueAccessor, OnDestroy, OnInit
+{
 
+  @Input() alwaysShowChips = false
+  @Input() alwaysShowHidden = false
   changeSubs: Subscription[] = []
   form = this.fb.group({
     list: this.fb.array([])
   })
+  highlightShowHiddenButton = false
+  showingHidden = false
+  usedShowHiddenButton = false
 
 
   constructor(
@@ -40,8 +50,29 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  ngOnInit() {
+    this.registerOnChange(() => {
+      if (this.showingHidden && !this.hasHidden) {
+        this.showingHidden = false
+      } else if (!this.showingHidden && this.hasHidden) {
+        this.highlightShowHiddenButton = !this.usedShowHiddenButton
+      }
+    })
+  }
+
+
+  ngAfterContentInit() {
+    this.usedShowHiddenButton = this.hasHidden
+  }
+
+
   ngOnDestroy(): void {
     this.changeSubs.forEach(s => s.unsubscribe())
+  }
+
+
+  get allIncluded(): boolean {
+    return this.value.filter(c => !c.hiddenInApp).every(c => c.include)
   }
 
 
@@ -50,17 +81,55 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  get hasHidden(): boolean {
+    return this.value.some(c => c.hiddenInApp)
+  }
+
+
+  includeAll() {
+    this.writeValue(
+      this.value.map(c => ({ ...c, include: !c.hiddenInApp }))
+    )
+  }
+
+
+  includeNone() {
+    this.writeValue(
+      this.value.map(c => ({ ...c, include: false }))
+    )
+  }
+
+
   get listControl(): FormArray {
     return this.form.get('list') as FormArray
   }
 
 
-  onDropDropListDropped(event) {
-    let v = [ ...this.value ]
-    let col = v[event.previousIndex]
-    v.splice(event.previousIndex, 1)
-    v.splice(event.currentIndex, 0, col)
-    this.writeValue(v)
+  get noneIncluded(): boolean {
+    return !this.value.some(c => c.include)
+  }
+
+
+  onDropDropListDropped(event: CdkDragDrop<CdkDropList, CdkDropList>) {
+
+    if (event.container == event.previousContainer && event.currentIndex != event.previousIndex) {
+
+      let v = [ ...this.value ]
+
+      // The indexes in the event are indexes into this.visibleControls and not this.value...
+      const visibleControls = this.visibleControls
+      let col = visibleControls[event.previousIndex].value
+
+      // ... so map them into index into this.value
+      let previousIndex = v.indexOf(col)
+      let currentIndex = v.indexOf(visibleControls[event.currentIndex].value)
+
+      v.splice(previousIndex, 1)
+      v.splice(currentIndex, 0, col)
+      this.writeValue(v)
+
+    }
+
   }
 
 
@@ -93,6 +162,11 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  trackByFn(index: number, item) {
+    return item.value.code
+  }
+
+
   validate(control: { value: ColumnOption[] }): ValidationErrors | null {
     return (
       (this.required && !control.value.some(x => x.include))
@@ -107,10 +181,17 @@ export class ColumnOptionsListComponent extends RequiredValidator implements Con
   }
 
 
+  get visibleControls(): FormControl[] {
+    return (
+      this.alwaysShowHidden || this.showingHidden
+      ? this.listControl.controls
+      : this.listControl.controls.filter(c => !c.value.hiddenInApp)
+    ) as FormControl[]
+  }
+
+
   writeValue(value: ColumnOption[]): void {
-    if (value) {
-      this.form.setControl('list', this.fb.array(value))
-    }
+    this.form.setControl('list', this.fb.array(value))
   }
 
 }

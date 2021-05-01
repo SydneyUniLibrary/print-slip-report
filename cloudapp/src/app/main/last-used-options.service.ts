@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CloudAppStoreService } from '@exlibris/exl-cloudapp-angular-lib'
+import { PrintSlipReportColumnConfig } from '../config'
 
 
 export type LastUsedOptions = {
@@ -8,10 +9,7 @@ export type LastUsedOptions = {
   columnOptions: LastUsedColumnOption[]
 }
 
-export type LastUsedColumnOption = {
-  code: string
-  include: boolean
-}
+export type LastUsedColumnOption = PrintSlipReportColumnConfig
 
 
 
