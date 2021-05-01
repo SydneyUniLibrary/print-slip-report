@@ -123,20 +123,20 @@ export class MainComponent implements OnInit {
 
   async onDownload() {
     this.alert.clear()
-    this.saveOptions()
-
-    let libraryCode: string = this.form.value.libraryCode.trim()
-    let circDeskCode: string = this.form.value.circDeskCode.trim()
-    let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
     this.loading = true
     try {
+      this.saveOptions()
+      let libraryCode: string = this.form.value.libraryCode.trim()
+      let circDeskCode: string = this.form.value.circDeskCode.trim()
+      let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
       await this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
     } catch (err) {
       let msg = err.message || "See the console in your browser's developer tools for more information."
       console.error('Error during Excel export', err)
       this.alert.error(`Excel export failed: ${ msg }`)
+    } finally {
+      this.loading = false
     }
-    this.loading = false
   }
 
 
@@ -206,7 +206,7 @@ export class MainComponent implements OnInit {
             this.alert.error(`The API parameter ${ err.parameter } was invalid`)
         }
       } else if (PrintSlipReportErrorEvent.isRestErrorResponse(err) && err?.status == 401) {
-        // Unuathorised
+        // Unauthorised
         this.alert.error(
           'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
           + ` for the library ${ this.form.value.libraryCode } `
