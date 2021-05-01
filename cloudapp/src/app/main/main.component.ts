@@ -125,11 +125,11 @@ export class MainComponent implements OnInit {
     this.alert.clear()
     this.loading = true
     try {
-      this.saveOptions()
       let libraryCode: string = this.form.value.libraryCode.trim()
       let circDeskCode: string = this.form.value.circDeskCode.trim()
       let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
       await this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
+      await this.saveOptions()
     } catch (err) {
       let msg = err.message || "See the console in your browser's developer tools for more information."
       console.error('Error during Excel export', err)
