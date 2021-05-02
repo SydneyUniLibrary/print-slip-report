@@ -97,6 +97,12 @@ export class MainComponent implements OnInit {
   }
 
 
+  defaultCircDeskCode(libraryCode: string): string {
+    let libConfig = this.configService.config?.libraryConfigs?.filter(x => x.libraryCode == libraryCode)
+    return libConfig ? libConfig[0]?.defaultCircDeskCode ?? 'DEFAULT_CIRC_DESK' : 'DEFAULT_CIRC_DESK'
+  }
+
+
   async getInitData() {
     if (!this.initData) {
       this.initData = await this.eventsService.getInitData().toPromise()
@@ -154,6 +160,7 @@ export class MainComponent implements OnInit {
     this.printSlipReportService.libraryCode = libraryCode
     let circDeskCode = this.form.value.circDeskCode.trim()
     this.printSlipReportService.circDeskCode = circDeskCode
+    this.printSlipReportService.defaultCircDeskCode = this.defaultCircDeskCode(libraryCode)
     this.printSlipReportService.includedColumnOptions = this.form.value.columnOptionsList.filter(c => c.include)
 
     this.form.patchValue({ libraryCode, circDeskCode })
@@ -223,9 +230,7 @@ export class MainComponent implements OnInit {
 
   resetCircDeskCode(libraryCode: string) {
     libraryCode = libraryCode ?? this.libraryCodeControl.value.trim()
-    let libConfig = this.configService.config?.libraryConfigs?.filter(x => x.libraryCode == libraryCode)
-    let desk = libConfig ? libConfig[0]?.defaultCircDeskCode ?? 'DEFAULT_CIRC_DESK' : 'DEFAULT_CIRC_DESK'
-    this.circDeskCodeControl.setValue(desk)
+    this.circDeskCodeControl.setValue(this.defaultCircDeskCode(libraryCode))
   }
 
 

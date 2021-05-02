@@ -40,6 +40,7 @@ export class PrintSlipReportErrorEvent {
 export class PrintSlipReportService {
 
   circDeskCode?: string
+  defaultCircDeskCode?: string
   complete = new EventEmitter<PrintSlipReportCompleteEvent>(true)
   error = new EventEmitter<PrintSlipReportErrorEvent>(true)
   includedColumnOptions?: ColumnOption[]

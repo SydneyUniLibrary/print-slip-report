@@ -12,6 +12,7 @@ type SlipReportProgressOrientation = 'horizontal' | 'vertical'
 export class SlipReportProgressComponent {
 
   @Input() circDeskCode: string
+  @Input() defaultCircDeskCode: string | undefined
   @Input() libraryCode: string
   @Input() orientation: SlipReportProgressOrientation
   @Input() progress: number | undefined

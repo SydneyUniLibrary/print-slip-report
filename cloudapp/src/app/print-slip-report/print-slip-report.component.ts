@@ -75,6 +75,11 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
+  get defaultCircDeskCode(): string {
+    return this.printSlipReportService.defaultCircDeskCode
+  }
+
+
   get circDeskCode(): string {
     return this.printSlipReportService.circDeskCode
   }
