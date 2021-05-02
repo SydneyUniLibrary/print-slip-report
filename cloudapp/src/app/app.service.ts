@@ -1,13 +1,13 @@
 import { Injectable, OnInit } from '@angular/core'
-import { CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
+import { CloudAppEventsService, CloudAppStoreService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from './column-definitions'
 import { ColumnOption } from './column-options'
 import { ConfigService } from './config/config.service'
-import { LastUsedOptionsService } from './slip-report'
 
 
 
 const FALLBACK_DEFAULT_CIRC_DESK_CODE = 'DEFAULT_CIRC_DESK'
+const STORAGE_KEY = 'last-used-options'
 
 
 @Injectable({
@@ -24,7 +24,7 @@ export class AppService implements OnInit {
   constructor(
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
-    private lastUsedOptionsService: LastUsedOptionsService,
+    private storeService: CloudAppStoreService,
   ) { }
 
 
@@ -93,28 +93,27 @@ export class AppService implements OnInit {
 
 
   async loadLastUsed() {
-    await this.lastUsedOptionsService.load()
-    if (!this.lastUsedOptionsService.hasOptions) {
-      // If there are no options to load, reset them
+    let lastUsedOptions = await this.storeService.get(STORAGE_KEY).toPromise()
+    if (!lastUsedOptions?.columnOptions?.length) {
+      // If there are no last used options saved, reset them
       return this.reset()
     }
 
     await this.configService.load()
-    let options = this.lastUsedOptionsService.options
 
     this.libraryCode = (
       this._initData?.user?.currentlyAtLibCode
       ? this._initData.user.currentlyAtLibCode
-      : options?.libraryCode ?? ''
+      : (lastUsedOptions?.libraryCode ?? '')
     )
 
-    this.circDeskCode = options?.circDeskCode ?? this.defaultCircDeskCode
+    this.circDeskCode = lastUsedOptions?.circDeskCode ?? this.defaultCircDeskCode
 
     let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
     this.columnOptions = [
       // Start with the columns in the order they are from the last used options,
       ...(
-        (options?.columnOptions ?? [])
+        (lastUsedOptions?.columnOptions ?? [])
         // ... minus any that aren't defined anymore
         .filter(c => missingColumnDefinitions.has(c.code))
         .map(c => {
@@ -133,14 +132,14 @@ export class AppService implements OnInit {
 
 
   async saveLastUsed() {
-    this.lastUsedOptionsService.options = {
+    let lastUsedOptions =  {
       libraryCode: this.libraryCode,
       circDeskCode: this.circDeskCode,
       columnOptions: this.columnOptions.map(c => ({
         code: c.code, include: c.include, limit: c.limit, hiddenInApp: c.hiddenInApp
       })),
     }
-    await this.lastUsedOptionsService.save()
+    return this.storeService.set(STORAGE_KEY, lastUsedOptions).toPromise()
   }
 
 }
