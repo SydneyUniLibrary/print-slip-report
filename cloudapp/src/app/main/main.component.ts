@@ -6,7 +6,7 @@ import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
 import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
 import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
-import { LastUsedOptionsService } from './last-used-options.service'
+import { LastUsedOptionsService } from '../slip-report'
 
 
 
