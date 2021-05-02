@@ -1,8 +1,8 @@
-
 @import './app/column-options/column-option.component.theme';
 @import './app/column-options/column-options-list.component.theme';
 @import './app/config/circ-desk-code-defaults.component.theme';
 @import './app/config/config.component.theme';
+@import './app/download-excel-slip-report/download-excel-slip-report.component.theme';
 @import './app/main/main.component.theme';
 @import './app/print-slip-report/print-slip-report.component.theme';
 @import './app/slip-report/progress.component.theme';
@@ -14,6 +14,7 @@
     @include config-component-theme($theme, $typography);
     @include column-option-component-theme($theme, $typography);
     @include column-options-list-component-theme($theme, $typography);
+    @include download-excel-slip-report-component-theme($theme, $typography);
     @include print-slip-report-component-theme($theme, $typography);
     @include slip-report-progress-component-theme($theme, $typography);
 }

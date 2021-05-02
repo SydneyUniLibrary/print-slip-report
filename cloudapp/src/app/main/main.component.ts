@@ -116,21 +116,10 @@ export class MainComponent implements OnInit {
   }
 
 
-  async onDownload() {
+  beforeDownload() {
     this.alert.clear()
-    this.loading = true
-    try {
-      this.syncToAppService()
-      this.syncFromAppService()  // To update the UI with any normalisation
-      await this.downloadExcelSlipReportService.generateExcel()
-      await this.appService.saveLastUsed()
-    } catch (err) {
-      let msg = err.message || "See the console in your browser's developer tools for more information."
-      console.error('Error during Excel export', err)
-      this.alert.error(`Excel export failed: ${ msg }`)
-    } finally {
-      this.loading = false
-    }
+    this.syncToAppService()
+    this.syncFromAppService()  // To update the UI with any normalisation
   }
 
 

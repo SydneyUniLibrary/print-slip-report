@@ -12,6 +12,7 @@ import { CircDeskCodeDefaultsComponent } from './config/circ-desk-code-defaults.
 import { ColumnOptionComponent } from './column-options/column-option.component';
 import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
 import { ConfigComponent } from './config/config.component';
+import { DownloadExcelSlipReportComponent } from './download-excel-slip-report/download-excel-slip-report.component'
 import { MainComponent } from './main/main.component';
 import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.component';
 import { SlipReportProgressComponent } from './slip-report/progress.component';
@@ -25,6 +26,7 @@ import { SlipReportProgressComponent } from './slip-report/progress.component';
     ColumnOptionComponent,
     ColumnOptionsListComponent,
     ConfigComponent,
+    DownloadExcelSlipReportComponent,
     MainComponent,
     PrintSlipReportComponent,
     SlipReportProgressComponent,

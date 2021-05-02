@@ -3,8 +3,8 @@
   <div class="eca-actions">
     <button mat-flat-button color="secondary" (click)="onReset()">Reset</button>
     <div class="btn-separator"></div>
-    <button type="submit" mat-flat-button color="secondary" (click)="onDownload()" [disabled]="!form.valid || loading">Download</button>
-    <button type="submit" mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
+    <button mat-flat-button color="secondary" (click)="beforeDownload()" routerLink="download-excel-slip-report" [disabled]="!form.valid || loading">Download</button>
+    <button mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
   </div>
 
   <div>

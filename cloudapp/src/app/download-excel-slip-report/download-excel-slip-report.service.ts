@@ -2,8 +2,8 @@ import { EventEmitter, Injectable } from '@angular/core'
 import * as FileSaver from 'file-saver'
 import * as XLSX from 'sheetjs-style'
 import { AppService } from '../app.service'
-import { ColumnOption } from '../column-options'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
+import { ColumnOption } from '../column-options'
 import { PrintSlipReportError } from '../print-slip-report'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources'
 
@@ -19,9 +19,13 @@ export class DownloadExcelSlipReportService {
 
   private static readonly PAGE_SIZE: number = 100
 
+
+  progressChange = new EventEmitter<number>()
+
+
   constructor(
     private appService: AppService,
-    private requestedResourcesService: RequestedResourcesService
+    private requestedResourcesService: RequestedResourcesService,
   ) { }
 
 
@@ -29,7 +33,7 @@ export class DownloadExcelSlipReportService {
     const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(this.appService.includedColumnOptions)
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       DownloadExcelSlipReportService.PAGE_SIZE,
-      null,
+      this.progressChange,
       (count: number) => { console.debug('completed', count) },
       (err: PrintSlipReportError) => { console.debug('error', err) }
     )
@@ -125,4 +129,5 @@ export class DownloadExcelSlipReportService {
     const filename = DownloadExcelSlipReportService.FILE_NAME + '_export_' + new Date().getTime() + DownloadExcelSlipReportService.EXCEL_EXTENSION
     FileSaver.saveAs(blob, filename)
   }
+
 }
