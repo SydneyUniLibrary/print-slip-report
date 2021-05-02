@@ -14,7 +14,6 @@ import { LastUsedOptionsService } from '../slip-report'
   selector: 'app-main',
   templateUrl: './main.component.html',
   styleUrls: [ './main.component.scss' ],
-  providers: [ PrintSlipReportService ],
 })
 export class MainComponent implements OnInit {
 

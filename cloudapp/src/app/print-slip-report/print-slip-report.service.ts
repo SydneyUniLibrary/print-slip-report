@@ -36,7 +36,9 @@ export class PrintSlipReportErrorEvent {
 
 }
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class PrintSlipReportService {
 
   circDeskCode?: string
