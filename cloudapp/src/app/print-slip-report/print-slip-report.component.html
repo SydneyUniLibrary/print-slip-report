@@ -1,5 +1,4 @@
-<ng-container *ngIf="!loading">
-
+<ng-container *ngIf="!loading; else progressSpinner">
   <table>
     <thead>
       <tr>
@@ -14,7 +13,12 @@
   </table>
 </ng-container>
 
-<div class="loading-shade" *ngIf="loading">
-  <mat-progress-spinner [mode]="progress === undefined ? 'indeterminate' : 'determinate'" [value]="progress"></mat-progress-spinner>
-  <div class="loading-msg">Finding the requests for {{ circDeskCode }} at {{ libraryCode }}…</div>
-</div>
+<ng-template #progressSpinner>
+  <slip-report-progress
+      [circDeskCode]="circDeskCode"
+      [libraryCode]="libraryCode"
+      [progress]="progress"
+      orientation="horizontal"
+  >
+  </slip-report-progress>
+</ng-template>

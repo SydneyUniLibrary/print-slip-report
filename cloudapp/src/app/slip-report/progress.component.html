@@ -1,0 +1,4 @@
+<div class="loading-shade {{ orientation }}">
+  <mat-progress-spinner [mode]="progress === undefined ? 'indeterminate' : 'determinate'" [value]="progress"></mat-progress-spinner>
+  <div class="loading-msg">Finding the requests for {{ circDeskCode }} at {{ libraryCode }}…</div>
+</div>

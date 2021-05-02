@@ -14,6 +14,7 @@ import { ColumnOptionsListComponent } from './column-options/column-options-list
 import { ConfigComponent } from './config/config.component';
 import { MainComponent } from './main/main.component';
 import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.component';
+import { SlipReportProgressComponent } from './slip-report/progress.component';
 
 
 
@@ -26,6 +27,7 @@ import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.
     ConfigComponent,
     MainComponent,
     PrintSlipReportComponent,
+    SlipReportProgressComponent,
   ],
   imports: [
     MaterialModule,
