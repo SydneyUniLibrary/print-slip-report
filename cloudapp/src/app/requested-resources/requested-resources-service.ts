@@ -6,13 +6,8 @@ import {
   RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppService } from '../app.service'
-import { PrintSlipReportError } from '../print-slip-report'
 import { RequestedResource } from './requested-resources'
 
-
-
-export type CompleteFunction = (count: number) => void
-export type ErrorFunction = (error: PrintSlipReportError) => void
 
 
 @Injectable({
@@ -29,64 +24,56 @@ export class RequestedResourcesService {
   async findRequestedResources(
     pageSize: number,
     progressChange: EventEmitter<number>,
-    completeFn: CompleteFunction,
-    errorFn: ErrorFunction,
   ): Promise<RequestedResource[]> {
 
     let pages: Page[] = [
       new Page(0, pageSize, this.appService, this.restService)
     ]
 
-    try {
+    let totalRecordCount = await pages[0].fetchPage()
+    if (progressChange) {
+      progressChange.emit(0)   // Force the progress spinner animation to start at 0
+    }
+    if (totalRecordCount > 0) {
 
-      let totalRecordCount = await pages[0].fetchPage()
-      if (progressChange) {
-        progressChange.emit(0)   // Force the progress spinner animation to start at 0
-      }
-      if (totalRecordCount > 0) {
-        pages = this.setupPages(pageSize, pages[0], totalRecordCount)
-        let pagesIterator: Iterator<Page> = pages.values()
+      pages = this.setupPages(pageSize, pages[0], totalRecordCount)
+      let pagesIterator: Iterator<Page> = pages.values()
 
-        type PendingPromiseValue = PageFetchValue | void
-        let pendingPromises: Promise<PendingPromiseValue>[] = []
+      type PendingPromiseValue = PageFetchValue | void
+      let pendingPromises: Promise<PendingPromiseValue>[] = []
 
-        const addToPendingPromises = (additionalPendingPromises: Promise<PendingPromiseValue>[]) => {
-          pendingPromises = pendingPromises.concat(
-            additionalPendingPromises.map(p => {
-              // Remove the promise from pendingPromises when it resolves
-              let p2 = p.then(x => {
-                let i = pendingPromises.indexOf(p2)
-                pendingPromises.splice(i, 1)
-                return x
-              })
-              return p2
+      const addToPendingPromises = (additionalPendingPromises: Promise<PendingPromiseValue>[]) => {
+        pendingPromises = pendingPromises.concat(
+          additionalPendingPromises.map(p => {
+            // Remove the promise from pendingPromises when it resolves
+            let p2 = p.then(x => {
+              let i = pendingPromises.indexOf(p2)
+              pendingPromises.splice(i, 1)
+              return x
             })
-          )
-        }
-
-        addToPendingPromises([pagesIterator.next().value.fetch()])
-
-        while (pendingPromises.length > 0) {
-          let progress = pages.reduce<number>((acc, page) => acc + page.progress, 0) / pages.length
-          if (progressChange) {
-            progressChange.emit(progress)
-          }
-
-          let ret = await Promise.race(pendingPromises)
-          if (ret && 'additionalPendingPromises' in ret) {
-            addToPendingPromises(ret.additionalPendingPromises)
-            let n = pagesIterator.next()
-            if (n.value) {
-              addToPendingPromises([n.value.fetch()])
-            }
-          }
-        }
-
+            return p2
+          })
+        )
       }
 
-    } catch (err) {
-      errorFn(err)
-      throw err
+      addToPendingPromises([pagesIterator.next().value.fetch()])
+
+      while (pendingPromises.length > 0) {
+        let progress = pages.reduce<number>((acc, page) => acc + page.progress, 0) / pages.length
+        if (progressChange) {
+          progressChange.emit(progress)
+        }
+
+        let ret = await Promise.race(pendingPromises)
+        if (ret && 'additionalPendingPromises' in ret) {
+          addToPendingPromises(ret.additionalPendingPromises)
+          let n = pagesIterator.next()
+          if (n.value) {
+            addToPendingPromises([n.value.fetch()])
+          }
+        }
+      }
+
     }
 
     let requestedResources = pages.reduce<RequestedResource[]>(
@@ -96,7 +83,6 @@ export class RequestedResourcesService {
     if (progressChange) {
       progressChange.emit(100)   // Force the progress spinner animation to end at 100
     }
-    completeFn(requestedResources.length)
     return requestedResources
   }
 

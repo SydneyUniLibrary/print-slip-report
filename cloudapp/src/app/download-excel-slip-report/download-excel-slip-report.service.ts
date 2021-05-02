@@ -34,17 +34,15 @@ export class DownloadExcelSlipReportService {
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       DownloadExcelSlipReportService.PAGE_SIZE,
       this.progressChange,
-      (count: number) => { console.debug('completed', count) },
-      (err: PrintSlipReportError) => { console.debug('error', err) }
     )
-    const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
-    const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
-    this.setCellWith(worksheet, columnDefinitions)
-    this.setCellStyles(worksheet)
-    const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
-    const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-    this.saveAsExcelFile(excelBuffer)
-  }
+      const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
+      const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
+      this.setCellWith(worksheet, columnDefinitions)
+      this.setCellStyles(worksheet)
+      const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
+      const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+      this.saveAsExcelFile(excelBuffer)
+    }
 
 
   private getColumnDefinitions(columnOptions: ColumnOption[]): ColumnDefinition[] {

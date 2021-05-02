@@ -80,12 +80,16 @@ export class PrintSlipReportService {
 
 
   async findRequestedResources(): Promise<RequestedResource[]> {
-    return this.requestedResourcesService.findRequestedResources(
-      this.pageSize,
-      this.progressChange,
-      (count: number) => { this.complete.emit(new PrintSlipReportCompleteEvent(count)) },
-      (err: PrintSlipReportError) => { this.error.emit(new PrintSlipReportErrorEvent(err)) },
-    )
+    try {
+      let resources = await this.requestedResourcesService.findRequestedResources(
+        this.pageSize,
+        this.progressChange,
+      )
+      this.complete.emit(new PrintSlipReportCompleteEvent(resources.length))
+      return resources
+    } catch (err) {
+      this.error.emit(new PrintSlipReportErrorEvent(err))
+    }
   }
 
 
