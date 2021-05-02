@@ -75,16 +75,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  get defaultCircDeskCode(): string {
-    return this.printSlipReportService.defaultCircDeskCode
-  }
-
-
-  get circDeskCode(): string {
-    return this.printSlipReportService.circDeskCode
-  }
-
-
   get cloudAppThemeClass(): string {
     let color = this.printSlipReportService.initData.color
     return `cloudapp-theme--${ color }`
@@ -93,11 +83,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   get includedColumnOptions(): ColumnOption[] {
     return this.printSlipReportService.includedColumnOptions
-  }
-
-
-  get libraryCode(): string {
-    return this.printSlipReportService.libraryCode
   }
 
 

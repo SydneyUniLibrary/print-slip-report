@@ -3,7 +3,7 @@ import { EventEmitter, Injectable } from '@angular/core'
 import { Router } from '@angular/router'
 import { InitData, RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
 import { v4 as uuid4 } from 'uuid'
-import { ColumnOption } from '../column-options'
+import { AppService } from '../app.service'
 import { MainComponent } from '../main/main.component'
 import { InvalidParameterError, RequestedResource, RequestedResourcesService } from '../requested-resources'
 
@@ -36,18 +36,15 @@ export class PrintSlipReportErrorEvent {
 
 }
 
+
 @Injectable({
   providedIn: 'root'
 })
 export class PrintSlipReportService {
 
-  circDeskCode?: string
-  defaultCircDeskCode?: string
   complete = new EventEmitter<PrintSlipReportCompleteEvent>(true)
   error = new EventEmitter<PrintSlipReportErrorEvent>(true)
-  includedColumnOptions?: ColumnOption[]
   initData?: InitData
-  libraryCode?: string
   mainComponent?: MainComponent
   pageSize = 100
   popupWindow?: Window
@@ -58,6 +55,7 @@ export class PrintSlipReportService {
 
   constructor(
     location: LocationService,
+    private appService: AppService,
     private requestedResourcesService: RequestedResourcesService,
     router: Router,
   ) {
@@ -82,16 +80,17 @@ export class PrintSlipReportService {
 
 
   async findRequestedResources(): Promise<RequestedResource[]> {
-
     return this.requestedResourcesService.findRequestedResources(
-      this.circDeskCode,
-      this.libraryCode,
       this.pageSize,
       this.progressChange,
       (count: number) => { this.complete.emit(new PrintSlipReportCompleteEvent(count)) },
       (err: PrintSlipReportError) => { this.error.emit(new PrintSlipReportErrorEvent(err)) },
     )
+  }
 
+
+  get includedColumnOptions() {
+    return this.appService.includedColumnOptions
   }
 
 
@@ -104,4 +103,5 @@ export class PrintSlipReportService {
     }
     return !!this.popupWindow
   }
+
 }

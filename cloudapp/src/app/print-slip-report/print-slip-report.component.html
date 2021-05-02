@@ -14,12 +14,5 @@
 </ng-container>
 
 <ng-template #progressSpinner>
-  <slip-report-progress
-      [circDeskCode]="circDeskCode"
-      [defaultCircDeskCode]="defaultCircDeskCode"
-      [libraryCode]="libraryCode"
-      [progress]="progress"
-      orientation="horizontal"
-  >
-  </slip-report-progress>
+  <slip-report-progress [progress]="progress" orientation="horizontal"></slip-report-progress>
 </ng-template>

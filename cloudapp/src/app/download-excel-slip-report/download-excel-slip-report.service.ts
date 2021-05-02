@@ -1,7 +1,7 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import * as FileSaver from 'file-saver'
 import * as XLSX from 'sheetjs-style'
-
+import { AppService } from '../app.service'
 import { ColumnOption } from '../column-options'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
 import { PrintSlipReportError } from '../print-slip-report'
@@ -20,22 +20,19 @@ export class DownloadExcelSlipReportService {
   private static readonly PAGE_SIZE: number = 100
 
   constructor(
+    private appService: AppService,
     private requestedResourcesService: RequestedResourcesService
   ) { }
 
 
-  async generateExcel(circDeskCode: string, libraryCode: string, columnOptions: ColumnOption[]) {
-
-    const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(columnOptions)
+  async generateExcel() {
+    const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(this.appService.includedColumnOptions)
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
-      circDeskCode,
-      libraryCode,
       DownloadExcelSlipReportService.PAGE_SIZE,
       null,
       (count: number) => { console.debug('completed', count) },
       (err: PrintSlipReportError) => { console.debug('error', err) }
     )
-
     const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
     const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
     this.setCellWith(worksheet, columnDefinitions)

@@ -5,11 +5,15 @@ import {
   Request as CloudAppRestServiceRequest,
   RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
+import { AppService } from '../app.service'
 import { PrintSlipReportError } from '../print-slip-report'
 import { RequestedResource } from './requested-resources'
 
+
+
 export type CompleteFunction = (count: number) => void
 export type ErrorFunction = (error: PrintSlipReportError) => void
+
 
 @Injectable({
   providedIn: 'root'
@@ -17,12 +21,12 @@ export type ErrorFunction = (error: PrintSlipReportError) => void
 export class RequestedResourcesService {
 
   constructor(
+    private appService: AppService,
     private restService: CloudAppRestService,
   ) { }
 
+
   async findRequestedResources(
-    circDeskCode: string,
-    libraryCode: string,
     pageSize: number,
     progressChange: EventEmitter<number>,
     completeFn: CompleteFunction,
@@ -30,7 +34,7 @@ export class RequestedResourcesService {
   ): Promise<RequestedResource[]> {
 
     let pages: Page[] = [
-      new Page(circDeskCode, libraryCode, 0, pageSize, this.restService)
+      new Page(0, pageSize, this.appService, this.restService)
     ]
 
     try {
@@ -40,7 +44,7 @@ export class RequestedResourcesService {
         progressChange.emit(0)   // Force the progress spinner animation to start at 0
       }
       if (totalRecordCount > 0) {
-        pages = this.setupPages(circDeskCode, libraryCode, pageSize, pages[0], totalRecordCount)
+        pages = this.setupPages(pageSize, pages[0], totalRecordCount)
         let pagesIterator: Iterator<Page> = pages.values()
 
         type PendingPromiseValue = PageFetchValue | void
@@ -96,17 +100,19 @@ export class RequestedResourcesService {
     return requestedResources
   }
 
-  private setupPages(circDeskCode: string, libraryCode: string, pageSize: number, page0: Page, totalRecordCount: number): Page[] {
+
+  private setupPages(pageSize: number, page0: Page, totalRecordCount: number): Page[] {
     let numPages = Math.ceil(totalRecordCount / pageSize)
     let pages = new Array<Page>(numPages)
     pages[0] = page0
     for (let i = 1; i < numPages; i++) {
-      pages[i] = new Page(circDeskCode, libraryCode, i, pageSize, this.restService)
+      pages[i] = new Page(i, pageSize, this.appService, this.restService)
     }
     return pages
   }
 
 }
+
 
 
 interface RequestedResourcesResponse {
@@ -117,21 +123,22 @@ interface RequestedResourcesResponse {
 
 type PageFetchValue = { additionalPendingPromises: Promise<void>[] }
 
+
 class Page {
 
   readonly offset: number
   progress: number = 0  // Between 0 and 100 inclusive
   requests: RequestedResource[] = []
 
+
   constructor(
-    private readonly circDeskCode: string,
-    private readonly libraryCode: string,
     public readonly pageNumber: number,
     public readonly pageSize: number,
+    private readonly appService: AppService,
     private readonly restService: CloudAppRestService,
   ) {
     this.offset = this.pageNumber * this.pageSize
-    console.log('Page constructor pageNumber', this)
+    console.log('Page constructor pageNumber', this.pageNumber)
   }
 
 
@@ -175,13 +182,16 @@ class Page {
 
   get queryParams(): { [param: string]: any } {
     return {
-      library: this.libraryCode,
-      circ_desk: this.circDeskCode,
+      library: this.appService.libraryCode,
+      circ_desk: this.appService.circDeskCode,
       limit: this.pageSize,
       offset: this.offset
     }
   }
+
 }
+
+
 
 export class InvalidParameterError extends Error {
 
@@ -206,4 +216,5 @@ export class InvalidParameterError extends Error {
     super(`The parameter ${parameter} is invalid`)
     Object.setPrototypeOf(this, InvalidParameterError.prototype) // https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#extending-built-ins-like-error-array-and-map-may-no-longer-work
   }
+
 }
