@@ -12,7 +12,7 @@ import { RequestedResource, RequestedResourcesService } from '../requested-resou
 @Injectable({
   providedIn: 'root',
 })
-export class ExcelExportService {
+export class DownloadExcelSlipReportService {
   private static readonly FILE_NAME: string = 'requested-resources'
   private static readonly EXCEL_TYPE: string = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
   private static readonly EXCEL_EXTENSION: string = '.xlsx'
@@ -30,7 +30,7 @@ export class ExcelExportService {
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       circDeskCode,
       libraryCode,
-      ExcelExportService.PAGE_SIZE,
+      DownloadExcelSlipReportService.PAGE_SIZE,
       null,
       (count: number) => { console.debug('completed', count) },
       (err: PrintSlipReportError) => { console.debug('error', err) }
@@ -124,8 +124,8 @@ export class ExcelExportService {
 
 
   private saveAsExcelFile(buffer: any) {
-    const blob: Blob = new Blob([buffer], { type: ExcelExportService.EXCEL_TYPE })
-    const filename = ExcelExportService.FILE_NAME + '_export_' + new Date().getTime() + ExcelExportService.EXCEL_EXTENSION
+    const blob: Blob = new Blob([buffer], { type: DownloadExcelSlipReportService.EXCEL_TYPE })
+    const filename = DownloadExcelSlipReportService.FILE_NAME + '_export_' + new Date().getTime() + DownloadExcelSlipReportService.EXCEL_EXTENSION
     FileSaver.saveAs(blob, filename)
   }
 }

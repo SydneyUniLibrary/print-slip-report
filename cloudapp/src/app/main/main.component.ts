@@ -4,7 +4,7 @@ import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-clo
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { ConfigService } from '../config/config.service'
-import { ExcelExportService } from '../excel-export/excel-export-service'
+import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
 import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
 import { LastUsedOptionsService } from './last-used-options.service'
 
@@ -33,7 +33,7 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
-    private excelExportService: ExcelExportService,
+    private excelExportService: DownloadExcelSlipReportService,
     private fb: FormBuilder,
     private lastUsedOptionsService: LastUsedOptionsService,
     private printSlipReportService: PrintSlipReportService,
