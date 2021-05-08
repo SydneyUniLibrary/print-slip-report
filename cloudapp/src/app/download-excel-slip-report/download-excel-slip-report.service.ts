@@ -4,7 +4,6 @@ import * as XLSX from 'sheetjs-style'
 import { AppService } from '../app.service'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
-import { PrintSlipReportError } from '../print-slip-report'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources'
 
 

@@ -3,7 +3,6 @@ import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppModuleServicesService } from '../app-module-services.service'
 import { AppService } from '../app.service'
-import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
 import {
   PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportWindowService,
 } from '../print-slip-report'
@@ -30,7 +29,6 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private appModuleServicesService: AppModuleServicesService,
     private appService: AppService,
-    private downloadExcelSlipReportService: DownloadExcelSlipReportService,
     private fb: FormBuilder,
     private printSlipReportWindowService: PrintSlipReportWindowService,
     private zone: NgZone,

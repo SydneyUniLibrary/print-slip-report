@@ -1,1 +1,1 @@
-export { DownloadExcelSlipReportService } from './download-excel-slip-report.service'
+export { DownloadExcelSlipReportModule } from './download-excel-slip-report.module'

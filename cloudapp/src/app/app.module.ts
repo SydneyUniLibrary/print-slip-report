@@ -12,10 +12,7 @@ import { CircDeskCodeDefaultsComponent } from './config/circ-desk-code-defaults.
 import { ColumnOptionComponent } from './column-options/column-option.component';
 import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
 import { ConfigComponent } from './config/config.component';
-import { DownloadExcelSlipReportComponent } from './download-excel-slip-report/download-excel-slip-report.component'
 import { MainComponent } from './main/main.component';
-import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.component';
-import { SlipReportModule } from './slip-report'
 
 
 
@@ -26,7 +23,6 @@ import { SlipReportModule } from './slip-report'
     ColumnOptionComponent,
     ColumnOptionsListComponent,
     ConfigComponent,
-    DownloadExcelSlipReportComponent,
     MainComponent,
   ],
   imports: [
@@ -39,7 +35,6 @@ import { SlipReportModule } from './slip-report'
     FormsModule,
     ReactiveFormsModule,
     getTranslateModule(),
-    SlipReportModule,
   ],
   providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'standard' } },
