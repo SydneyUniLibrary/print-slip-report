@@ -4,7 +4,9 @@ import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppModuleServicesService } from '../app-module-services.service'
 import { AppService } from '../app.service'
 import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
-import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
+import {
+  PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportWindowService,
+} from '../print-slip-report'
 
 
 
@@ -30,12 +32,12 @@ export class MainComponent implements OnInit {
     private appService: AppService,
     private downloadExcelSlipReportService: DownloadExcelSlipReportService,
     private fb: FormBuilder,
-    private printSlipReportService: PrintSlipReportService,
+    private printSlipReportWindowService: PrintSlipReportWindowService,
     private zone: NgZone,
   ) {
-    this.printSlipReportService.mainComponent = this
-    this.printSlipReportService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
-    this.printSlipReportService.error.subscribe(evt => this.onPrintSlipReportError(evt))
+    this.printSlipReportWindowService.mainComponent = this
+    this.printSlipReportWindowService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
+    this.printSlipReportWindowService.error.subscribe(evt => this.onPrintSlipReportError(evt))
   }
 
 
@@ -43,7 +45,6 @@ export class MainComponent implements OnInit {
     // Show the spinner if the component does not become ready quickly
     let timeoutId = setTimeout(() => { this.loading = !this.ready }, 1000)
     try {
-      this.printSlipReportService.initData = this.initData
       await this.appService.loadLastUsed()
       await this.syncFromAppService()
     } finally {
@@ -129,7 +130,7 @@ export class MainComponent implements OnInit {
     this.syncFromAppService()  // To update the UI with any normalisation
     // This print slip report has to generate inside the popup window.
     // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
-    if (!this.printSlipReportService.open()) {
+    if (!this.printSlipReportWindowService.open(this.appModuleServicesService)) {
       console.warn('Your browser prevented the popup that has the report from appearing')
       this.alert.error('Your browser prevented the popup that has the report from appearing')
     }
@@ -144,7 +145,7 @@ export class MainComponent implements OnInit {
       this.zone.run(() => {
         this.alert.info('There are no requested resources to print', { autoClose: false })
       })
-      this.printSlipReportService.close()
+      this.printSlipReportWindowService.close()
     }
   }
 
@@ -186,7 +187,7 @@ export class MainComponent implements OnInit {
         this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
       }
     })
-    this.printSlipReportService.close()
+    this.printSlipReportWindowService.close()
   }
 
 
