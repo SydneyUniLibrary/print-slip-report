@@ -29,7 +29,6 @@ import { SlipReportProgressComponent } from './slip-report/progress.component';
     DownloadExcelSlipReportComponent,
     MainComponent,
     PrintSlipReportComponent,
-    SlipReportProgressComponent,
   ],
   imports: [
     MaterialModule,
@@ -41,6 +40,7 @@ import { SlipReportProgressComponent } from './slip-report/progress.component';
     FormsModule,
     ReactiveFormsModule,
     getTranslateModule(),
+    SlipReportModule,
   ],
   providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'standard' } },
