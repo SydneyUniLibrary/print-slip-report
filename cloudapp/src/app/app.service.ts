@@ -1,4 +1,4 @@
-import { Injectable, OnInit } from '@angular/core'
+import { Injectable } from '@angular/core'
 import { CloudAppEventsService, CloudAppStoreService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import { COLUMNS_DEFINITIONS } from './column-definitions'
 import { ColumnOption } from './column-options'
@@ -13,9 +13,9 @@ const STORAGE_KEY = 'last-used-options'
 @Injectable({
   providedIn: 'root',
 })
-export class AppService implements OnInit {
+export class AppService {
 
-  private _initData?: InitData
+  initData?: InitData
   private _libraryCode?: string
   private _circDeskCode?: string
   columnOptions: ColumnOption[] = []
@@ -25,11 +25,8 @@ export class AppService implements OnInit {
     private configService: ConfigService,
     private eventsService: CloudAppEventsService,
     private storeService: CloudAppStoreService,
-  ) { }
-
-
-  async ngOnInit() {
-    this._initData = await this.eventsService.getInitData().toPromise()
+  ) {
+    this.eventsService.getInitData().subscribe(initData => { this.initData = initData })
   }
 
 
@@ -67,7 +64,7 @@ export class AppService implements OnInit {
   async reset() {
     await this.configService.load()
 
-    this.libraryCode = this._initData?.user?.currentlyAtLibCode ?? ''
+    this.libraryCode = this.initData?.user?.currentlyAtLibCode ?? ''
     this.circDeskCode = this.defaultCircDeskCode
 
     let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
@@ -102,8 +99,8 @@ export class AppService implements OnInit {
     await this.configService.load()
 
     this.libraryCode = (
-      this._initData?.user?.currentlyAtLibCode
-      ? this._initData.user.currentlyAtLibCode
+      this.initData?.user?.currentlyAtLibCode
+      ? this.initData.user.currentlyAtLibCode
       : (lastUsedOptions?.libraryCode ?? '')
     )
 

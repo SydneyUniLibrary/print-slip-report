@@ -1,6 +1,6 @@
 import { Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
-import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
+import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppModuleServicesService } from '../app-module-services.service'
 import { AppService } from '../app.service'
 import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
@@ -20,7 +20,6 @@ export class MainComponent implements OnInit {
     circDeskCode: '',
     columnOptionsList: [ [ ] ],
   })
-  initData: InitData
   loading = false
   ready = false
 
@@ -29,7 +28,6 @@ export class MainComponent implements OnInit {
     private alert: AlertService,
     private appModuleServicesService: AppModuleServicesService,
     private appService: AppService,
-    private eventsService: CloudAppEventsService,
     private downloadExcelSlipReportService: DownloadExcelSlipReportService,
     private fb: FormBuilder,
     private printSlipReportService: PrintSlipReportService,
@@ -45,7 +43,6 @@ export class MainComponent implements OnInit {
     // Show the spinner if the component does not become ready quickly
     let timeoutId = setTimeout(() => { this.loading = !this.ready }, 1000)
     try {
-      await this.getInitData()
       this.printSlipReportService.initData = this.initData
       await this.appService.loadLastUsed()
       await this.syncFromAppService()
@@ -90,13 +87,6 @@ export class MainComponent implements OnInit {
       return 'Select at least 1 column to include in the print'
     } else {
       return null
-    }
-  }
-
-
-  async getInitData() {
-    if (!this.initData) {
-      this.initData = await this.eventsService.getInitData().toPromise()
     }
   }
 
