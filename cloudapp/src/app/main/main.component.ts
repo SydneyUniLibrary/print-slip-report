@@ -1,6 +1,7 @@
 import { Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
+import { AppModuleServicesService } from '../app-module-services.service'
 import { AppService } from '../app.service'
 import { DownloadExcelSlipReportService } from '../download-excel-slip-report'
 import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
@@ -26,6 +27,7 @@ export class MainComponent implements OnInit {
 
   constructor(
     private alert: AlertService,
+    private appModuleServicesService: AppModuleServicesService,
     private appService: AppService,
     private eventsService: CloudAppEventsService,
     private downloadExcelSlipReportService: DownloadExcelSlipReportService,
