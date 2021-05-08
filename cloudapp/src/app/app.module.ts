@@ -9,8 +9,6 @@ import { MaterialModule, getTranslateModule, AlertModule } from '@exlibris/exl-c
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { CircDeskCodeDefaultsComponent } from './config/circ-desk-code-defaults.component'
-import { ColumnOptionComponent } from './column-options/column-option.component';
-import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
 import { ConfigComponent } from './config/config.component';
 import { MainComponent } from './main/main.component';
 
@@ -20,8 +18,6 @@ import { MainComponent } from './main/main.component';
   declarations: [
     AppComponent,
     CircDeskCodeDefaultsComponent,
-    ColumnOptionComponent,
-    ColumnOptionsListComponent,
     ConfigComponent,
     MainComponent,
   ],
@@ -35,6 +31,7 @@ import { MainComponent } from './main/main.component';
     FormsModule,
     ReactiveFormsModule,
     getTranslateModule(),
+    ColumnOptionsModule,
   ],
   providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'standard' } },
