@@ -58,3 +58,54 @@ export interface RequestedResourceResourceMetadata {
   publication_place: string
   publication_year: string
 }
+
+
+//---------------------------------------------------------------------------
+
+
+export type ItemEnrichedRequestedResource = RequestedResource & {
+  resource_metadata: RequestedResource['resource_metadata'] & {
+    complete_edition: string
+  }
+  location: RequestedResource['location'] & {
+    copy: Array<RequestedResource['location']['copy'][number] & {
+      description: string
+      physical_material_type: string
+    }>
+  }
+}
+
+
+export type LocationEnrichedRequestedResource = RequestedResource & {
+  location: RequestedResource['location'] & {
+    shelving_location: { code: string, name: string }
+  }
+}
+
+
+export type RequestEnrichedRequestedResource = RequestedResource & {
+  request: Array<RequestedResource['request'] & {
+    volume: string
+    issue: string
+    chapter_or_article_title: string
+    chapter_or_article_author: string
+    required_pages_range: {
+      from_page: string,
+      to_page: string
+    }
+    resource_sharing: {
+      id: string,
+      status: StringWithAttr,
+      link: string | null
+    }
+  }>
+}
+
+
+export type UserEnrichedRequestedResource = RequestedResource & {
+  request: Array<RequestedResource['request'][number] & {
+    requester: StringWithAttr & {
+      user_group: string
+    }
+  }>
+}
