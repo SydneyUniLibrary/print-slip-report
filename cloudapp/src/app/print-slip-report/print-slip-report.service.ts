@@ -1,8 +1,9 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import { AppService } from '../app.service'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources'
+import { SlipReportErrorEvent } from '../slip-report'
 import {
-  PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportWindowService,
+  PrintSlipReportCompleteEvent, PrintSlipReportWindowService,
 } from './window.service'
 
 
@@ -30,7 +31,7 @@ export class PrintSlipReportService {
       this.printSlipReportWindowService.complete.emit(new PrintSlipReportCompleteEvent(resources.length))
       return resources
     } catch (err) {
-      this.printSlipReportWindowService.error.emit(new PrintSlipReportErrorEvent(err))
+      this.printSlipReportWindowService.error.emit(new SlipReportErrorEvent(err))
     }
   }
 

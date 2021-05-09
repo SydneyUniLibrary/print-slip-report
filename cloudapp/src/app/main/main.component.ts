@@ -1,11 +1,10 @@
-import { Component, NgZone, OnInit } from '@angular/core'
+import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppModuleServicesService } from '../app-module-services.service'
 import { AppService } from '../app.service'
-import {
-  PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportWindowService,
-} from '../print-slip-report'
+import { PrintSlipReportCompleteEvent, PrintSlipReportWindowService } from '../print-slip-report'
+import { SlipReportError, SlipReportErrorEvent } from '../slip-report'
 
 
 
@@ -14,7 +13,7 @@ import {
   templateUrl: './main.component.html',
   styleUrls: [ './main.component.scss' ],
 })
-export class MainComponent implements OnInit {
+export class MainComponent implements AfterViewInit, OnInit {
 
   form = this.fb.group({
     libraryCode: '',
@@ -49,6 +48,14 @@ export class MainComponent implements OnInit {
       clearTimeout(timeoutId)
       this.ready = true
       this.loading = false
+    }
+  }
+
+
+  ngAfterViewInit() {
+    let error = this.appService.popLastSlipReportError()
+    if (error) {
+      this.onSlipReportError(error)
     }
   }
 
@@ -148,44 +155,47 @@ export class MainComponent implements OnInit {
   }
 
 
-  private onPrintSlipReportError(event: PrintSlipReportErrorEvent) {
-    let err = event.error
-    console.error('Print slip report error', err)
+  private onPrintSlipReportError(event: SlipReportErrorEvent) {
     // This code is run in the popup window's zone.
     // Need to get back into main component's zone so the main component's UI updates.
     this.zone.run(() => {
-      if (PrintSlipReportErrorEvent.isInvalidParameterError(err)) {
-        switch (err.parameter) {
-          case 'library':
-            this.libraryCodeControl.setErrors({ 'invalidCode': true })
-            this.alert.info(
-              `Valid library codes are ${ err.validOptions.join(', ') }`,
-              { autoClose: false },
-            )
-            break
-          case 'circ_desk':
-            this.circDeskCodeControl.setErrors({ 'invalidCode': true })
-            this.alert.info(
-              `Valid circulation desk codes are ${ err.validOptions.join(', ') }`,
-              { autoClose: false },
-            )
-            break
-          default:
-            this.alert.error(`The API parameter ${ err.parameter } was invalid`)
-        }
-      } else if (PrintSlipReportErrorEvent.isRestErrorResponse(err) && err?.status == 401) {
-        // Unauthorised
-        this.alert.error(
-          'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
-          + ` for the library ${ this.form.value.libraryCode } `
-          + ` and the circulation desk ${ this.form.value.circDeskCode }.`,
-        )
-      } else {
-        let msg = err.message || "See the console in your browser's developer tools for more information."
-        this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
-      }
+      this.onSlipReportError(event.error)
     })
     this.printSlipReportWindowService.close()
+  }
+
+
+  private onSlipReportError(error: SlipReportError) {
+    if (SlipReportErrorEvent.isInvalidParameterError(error)) {
+      switch (error.parameter) {
+        case 'library':
+          this.libraryCodeControl.setErrors({ 'invalidCode': true })
+          this.alert.info(
+            `Valid library codes are ${ error.validOptions.join(', ') }`,
+            { autoClose: false },
+          )
+          break
+        case 'circ_desk':
+          this.circDeskCodeControl.setErrors({ 'invalidCode': true })
+          this.alert.info(
+            `Valid circulation desk codes are ${ error.validOptions.join(', ') }`,
+            { autoClose: false },
+          )
+          break
+        default:
+          this.alert.error(`The API parameter ${ error.parameter } was invalid`)
+      }
+    } else if (SlipReportErrorEvent.isRestErrorResponse(error) && error?.status == 401) {
+      // Unauthorised
+      this.alert.error(
+        'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
+        + ` for the library ${ this.form.value.libraryCode } `
+        + ` and the circulation desk ${ this.form.value.circDeskCode }.`,
+      )
+    } else {
+      let msg = error.message || "See the console in your browser's developer tools for more information."
+      this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
+    }
   }
 
 

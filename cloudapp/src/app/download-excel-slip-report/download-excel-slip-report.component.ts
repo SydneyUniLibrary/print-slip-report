@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, NgZone, OnDestroy } from '@angular/core'
 import { Router } from '@angular/router'
+import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
 import { AppService } from '../app.service'
 import { DownloadExcelSlipReportService } from './download-excel-slip-report.service'
@@ -18,6 +19,7 @@ export class DownloadExcelSlipReportComponent implements AfterViewInit, OnDestro
 
 
   constructor(
+    private alert: AlertService,
     private appService: AppService,
     private reportService: DownloadExcelSlipReportService,
     private router: Router,
@@ -34,16 +36,23 @@ export class DownloadExcelSlipReportComponent implements AfterViewInit, OnDestro
       }
     )
     try {
-      await this.reportService.generateExcel()
+      let downloadFilename = await this.reportService.generateExcel()
       // Delay slightly so that the user perceives the progress spinner showing 100%
       await new Promise(resolve => setTimeout(resolve, 500))
       await this.appService.saveLastUsed()
-      // TODO: Surface a success msg in the main component
-    } catch (err) {
-      console.error(err)
-      // TODO: Surface the alert in the main component
-      // let msg = err.message || "See the console in your browser's developer tools for more information."
-      // this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
+      if (downloadFilename) {
+        this.alert.success(
+          `Downloaded the requested resources as ${ downloadFilename }`,
+          { keepAfterRouteChange: true }
+        )
+      } else {
+        this.alert.info(
+          'There are no requested resources to download',
+          { keepAfterRouteChange: true }
+        )
+      }
+    } catch (error) {
+      this.appService.lastSlipReportError = error
     } finally {
       await this.router.navigateByUrl('/')
     }

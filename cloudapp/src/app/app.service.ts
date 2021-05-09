@@ -3,6 +3,7 @@ import { CloudAppEventsService, CloudAppStoreService, InitData } from '@exlibris
 import { COLUMNS_DEFINITIONS } from './column-definitions'
 import { ColumnOption } from './column-options'
 import { ConfigService } from './config/config.service'
+import { SlipReportError } from './slip-report'
 
 
 
@@ -19,6 +20,7 @@ export class AppService {
   private _libraryCode?: string
   private _circDeskCode?: string
   columnOptions: ColumnOption[] = []
+  lastSlipReportError: SlipReportError | undefined = undefined
 
 
   constructor(
@@ -58,6 +60,13 @@ export class AppService {
 
   set libraryCode(c) {
     this._libraryCode = c.trim()
+  }
+
+
+  popLastSlipReportError(): SlipReportError | undefined {
+    let e = this.lastSlipReportError
+    this.lastSlipReportError = undefined
+    return e
   }
 
 

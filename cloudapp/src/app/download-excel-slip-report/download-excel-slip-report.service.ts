@@ -28,20 +28,22 @@ export class DownloadExcelSlipReportService {
   ) { }
 
 
-  async generateExcel() {
+  async generateExcel(): Promise<string | undefined> {
     const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(this.appService.includedColumnOptions)
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       DownloadExcelSlipReportService.PAGE_SIZE,
       this.progressChange,
     )
+    if (resources.length > 0) {
       const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
       const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
       this.setCellWith(worksheet, columnDefinitions)
       this.setCellStyles(worksheet)
       const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
       const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-      this.saveAsExcelFile(excelBuffer)
+      return this.saveAsExcelFile(excelBuffer)
     }
+  }
 
 
   private getColumnDefinitions(columnOptions: ColumnOption[]): ColumnDefinition[] {
@@ -121,10 +123,11 @@ export class DownloadExcelSlipReportService {
   }
 
 
-  private saveAsExcelFile(buffer: any) {
+  private saveAsExcelFile(buffer: any): string {
     const blob: Blob = new Blob([buffer], { type: DownloadExcelSlipReportService.EXCEL_TYPE })
     const filename = DownloadExcelSlipReportService.FILE_NAME + '_export_' + new Date().getTime() + DownloadExcelSlipReportService.EXCEL_EXTENSION
     FileSaver.saveAs(blob, filename)
+    return filename
   }
 
 }

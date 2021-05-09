@@ -1,11 +1,10 @@
 import { Location as LocationService } from '@angular/common'
 import { EventEmitter, Injectable } from '@angular/core'
 import { Router } from '@angular/router'
-import { RestErrorResponse } from '@exlibris/exl-cloudapp-angular-lib'
 import { v4 as uuid4 } from 'uuid'
 import { AppModuleServicesService } from '../app-module-services.service'
 import { MainComponent } from '../main/main.component'
-import { InvalidParameterError } from '../requested-resources'
+import { SlipReportErrorEvent } from '../slip-report'
 
 
 
@@ -16,27 +15,6 @@ export class PrintSlipReportCompleteEvent {
 }
 
 
-export type PrintSlipReportError = Error | InvalidParameterError | RestErrorResponse
-
-export class PrintSlipReportErrorEvent {
-
-  static isInvalidParameterError(err: PrintSlipReportError): err is InvalidParameterError {
-    return err instanceof InvalidParameterError
-  }
-
-
-  static isRestErrorResponse(err: PrintSlipReportError): err is RestErrorResponse {
-    return 'status' in err
-  }
-
-
-  constructor(
-    public error: PrintSlipReportError
-  ) { }
-
-}
-
-
 
 @Injectable({
   providedIn: 'root'
@@ -44,7 +22,7 @@ export class PrintSlipReportErrorEvent {
 export class PrintSlipReportWindowService {
 
   complete = new EventEmitter<PrintSlipReportCompleteEvent>(true)
-  error = new EventEmitter<PrintSlipReportErrorEvent>(true)
+  error = new EventEmitter<SlipReportErrorEvent>(true)
   mainComponent?: MainComponent
   popupWindow?: Window
   readonly target = uuid4()
