@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CloudAppEventsService, CloudAppStoreService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
-import { COLUMNS_DEFINITIONS } from './column-definitions'
+import { COLUMNS_DEFINITIONS } from './requested-resources/column-definitions'  // Direct to avoid circular dependency
 import { ColumnOption } from './column-options'
 import { ConfigService } from './config/config.service'
 import { SlipReportError } from './slip-report'

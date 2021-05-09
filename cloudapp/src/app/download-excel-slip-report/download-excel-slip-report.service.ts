@@ -2,7 +2,7 @@ import { EventEmitter, Injectable } from '@angular/core'
 import * as FileSaver from 'file-saver'
 import * as XLSX from 'sheetjs-style'
 import { AppService } from '../app.service'
-import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
+import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../requested-resources'
 import { ColumnOption } from '../column-options'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources'
 

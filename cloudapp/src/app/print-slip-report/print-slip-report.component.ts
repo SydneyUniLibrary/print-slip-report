@@ -4,7 +4,7 @@ import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angula
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
 import { AppService } from '../app.service'
-import { COLUMNS_DEFINITIONS } from '../column-definitions'
+import { COLUMNS_DEFINITIONS } from '../requested-resources/column-definitions'
 import { ColumnOption } from '../column-options'
 import { RequestedResource } from '../requested-resources'
 import { PrintSlipReportService } from './print-slip-report.service'
