@@ -70,7 +70,7 @@ export type ItemEnrichedRequestedResource = RequestedResource & {
   location: RequestedResource['location'] & {
     copy: Array<RequestedResource['location']['copy'][number] & {
       description: string
-      physical_material_type: string
+      physical_material_type: StringWithAttr
     }>
   }
 }
