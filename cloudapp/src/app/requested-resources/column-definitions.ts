@@ -13,7 +13,7 @@ export class ColumnDefinition {
 }
 
 
-export const COLUMNS_DEFINITIONS = to_map([
+export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
   new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
   new ColumnDefinition('call-number', 'Call Number', x => x?.location?.call_number),
@@ -34,6 +34,6 @@ export const COLUMNS_DEFINITIONS = to_map([
 ])
 
 
-function to_map(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
+function toMap(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
   return new Map(list.map(x => [ x.code, x ]))
 }
