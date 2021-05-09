@@ -5,10 +5,22 @@ import { MainComponent } from './main/main.component'
 
 
 const routes: Routes = [
-  { path: '', component: MainComponent },
-  { path: 'config', loadChildren: _loadConfig },
-  { path: 'download-excel-slip-report', loadChildren: _loadDownloadExcelSlipReport },
-  { path: 'print-slip-report', loadChildren: _loadPrintSlipReport },
+  {
+    path: '',
+    component: MainComponent
+  },
+  {
+    path: 'config',
+    loadChildren: () => import('./config/config.module').then(m => m.PrintSlipReportConfigModule),
+  },
+  {
+    path: 'download-excel-slip-report',
+    loadChildren: () =>  import('./download-excel-slip-report/download-excel-slip-report.module').then(m => m.DownloadExcelSlipReportModule)
+  },
+  {
+    path: 'print-slip-report',
+    loadChildren: () => import('./print-slip-report/print-slip-report.module').then(m => m.PrintSlipReportModule)
+  },
 ]
 
 
@@ -17,21 +29,3 @@ const routes: Routes = [
   exports: [ RouterModule ],
 })
 export class AppRoutingModule { }
-
-
-async function _loadConfig() {
-  let { PrintSlipReportConfigModule } = await import('./config/config.module')
-  return PrintSlipReportConfigModule
-}
-
-
-async function _loadDownloadExcelSlipReport() {
-  let { DownloadExcelSlipReportModule } = await import('./download-excel-slip-report/download-excel-slip-report.module')
-  return DownloadExcelSlipReportModule
-}
-
-
-async function _loadPrintSlipReport() {
-  let { PrintSlipReportModule } = await import('./print-slip-report/print-slip-report.module')
-  return PrintSlipReportModule
-}
