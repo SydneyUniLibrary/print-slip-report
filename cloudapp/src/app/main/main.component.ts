@@ -1,12 +1,10 @@
-import { Component, NgZone, OnInit } from '@angular/core'
+import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
-import { AlertService, CloudAppEventsService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
-import { COLUMNS_DEFINITIONS } from '../column-definitions'
-import { ColumnOption } from '../column-options'
-import { ConfigService } from '../config/config.service'
-import { ExcelExportService } from '../excel-export/excel-export-service'
-import { PrintSlipReportCompleteEvent, PrintSlipReportErrorEvent, PrintSlipReportService } from '../print-slip-report'
-import { LastUsedOptionsService } from './last-used-options.service'
+import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
+import { AppModuleServicesService } from '../app-module-services.service'
+import { AppService } from '../app.service'
+import { PrintSlipReportCompleteEvent, PrintSlipReportWindowService } from '../print-slip-report'
+import { SlipReportError, SlipReportErrorEvent } from '../slip-report'
 
 
 
@@ -14,34 +12,29 @@ import { LastUsedOptionsService } from './last-used-options.service'
   selector: 'app-main',
   templateUrl: './main.component.html',
   styleUrls: [ './main.component.scss' ],
-  providers: [ PrintSlipReportService ],
 })
-export class MainComponent implements OnInit {
+export class MainComponent implements AfterViewInit, OnInit {
 
   form = this.fb.group({
     libraryCode: '',
     circDeskCode: '',
     columnOptionsList: [ [ ] ],
   })
-  initData: InitData
-  libraryCodeIsFromInitData: boolean = false
   loading = false
   ready = false
 
 
   constructor(
     private alert: AlertService,
-    private configService: ConfigService,
-    private eventsService: CloudAppEventsService,
-    private excelExportService: ExcelExportService,
+    private appModuleServicesService: AppModuleServicesService,
+    private appService: AppService,
     private fb: FormBuilder,
-    private lastUsedOptionsService: LastUsedOptionsService,
-    private printSlipReportService: PrintSlipReportService,
+    private printSlipReportWindowService: PrintSlipReportWindowService,
     private zone: NgZone,
   ) {
-    this.printSlipReportService.mainComponent = this
-    this.printSlipReportService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
-    this.printSlipReportService.error.subscribe(evt => this.onPrintSlipReportError(evt))
+    this.printSlipReportWindowService.mainComponent = this
+    this.printSlipReportWindowService.complete.subscribe(evt => this.onPrintSlipReportComplete(evt))
+    this.printSlipReportWindowService.error.subscribe(evt => this.onPrintSlipReportError(evt))
   }
 
 
@@ -49,13 +42,20 @@ export class MainComponent implements OnInit {
     // Show the spinner if the component does not become ready quickly
     let timeoutId = setTimeout(() => { this.loading = !this.ready }, 1000)
     try {
-      await this.getInitData()
-      this.printSlipReportService.initData = this.initData
-      await this.restoreOptions()
+      await this.appService.loadLastUsed()
+      await this.syncFromAppService()
     } finally {
       clearTimeout(timeoutId)
       this.ready = true
       this.loading = false
+    }
+  }
+
+
+  ngAfterViewInit() {
+    let error = this.appService.popLastSlipReportError()
+    if (error) {
+      this.onSlipReportError(error)
     }
   }
 
@@ -97,13 +97,6 @@ export class MainComponent implements OnInit {
   }
 
 
-  async getInitData() {
-    if (!this.initData) {
-      this.initData = await this.eventsService.getInitData().toPromise()
-    }
-  }
-
-
   get libraryCodeControl(): FormControl {
     return this.form.get('libraryCode') as FormControl
   }
@@ -121,46 +114,28 @@ export class MainComponent implements OnInit {
   }
 
 
-  async onDownload() {
+  beforeDownload() {
     this.alert.clear()
-    this.loading = true
-    try {
-      let libraryCode: string = this.form.value.libraryCode.trim()
-      let circDeskCode: string = this.form.value.circDeskCode.trim()
-      let columnOptions: ColumnOption[] = this.form.value.columnOptionsList.filter(c => c.include)
-      await this.excelExportService.generateExcel(circDeskCode, libraryCode, columnOptions)
-      await this.saveOptions()
-    } catch (err) {
-      let msg = err.message || "See the console in your browser's developer tools for more information."
-      console.error('Error during Excel export', err)
-      this.alert.error(`Excel export failed: ${ msg }`)
-    } finally {
-      this.loading = false
-    }
+    this.syncToAppService()
+    this.syncFromAppService()  // To update the UI with any normalisation
   }
 
 
   onLibraryCodeChange() {
     if (!this.circDeskCodeControl.value) {
-      this.resetCircDeskCode(this.libraryCodeControl.value.trim())
+      this.appService.libraryCode = this.libraryCodeControl.value
+      this.circDeskCodeControl.setValue(this.appService.defaultCircDeskCode)
     }
   }
 
 
   onPrint() {
     this.alert.clear()
-
-    let libraryCode = this.form.value.libraryCode.trim()
-    this.printSlipReportService.libraryCode = libraryCode
-    let circDeskCode = this.form.value.circDeskCode.trim()
-    this.printSlipReportService.circDeskCode = circDeskCode
-    this.printSlipReportService.includedColumnOptions = this.form.value.columnOptionsList.filter(c => c.include)
-
-    this.form.patchValue({ libraryCode, circDeskCode })
-
+    this.syncToAppService()
+    this.syncFromAppService()  // To update the UI with any normalisation
     // This print slip report has to generate inside the popup window.
     // See https://github.com/SydneyUniLibrary/print-slip-report/issues/28
-    if (!this.printSlipReportService.open()) {
+    if (!this.printSlipReportWindowService.open(this.appModuleServicesService)) {
       console.warn('Your browser prevented the popup that has the report from appearing')
       this.alert.error('Your browser prevented the popup that has the report from appearing')
     }
@@ -168,155 +143,79 @@ export class MainComponent implements OnInit {
 
 
   private async onPrintSlipReportComplete(event: PrintSlipReportCompleteEvent) {
-    await this.saveOptions()
+    await this.appService.saveLastUsed()
     if (event.numRequestedResources == 0) {
       // This code is run in the popup window's zone.
       // Need to get back into main component's zone so the main component's UI updates.
       this.zone.run(() => {
         this.alert.info('There are no requested resources to print', { autoClose: false })
       })
-      this.printSlipReportService.close()
+      this.printSlipReportWindowService.close()
     }
   }
 
 
-  private onPrintSlipReportError(event: PrintSlipReportErrorEvent) {
-    let err = event.error
-    console.error('Print slip report error', err)
+  private onPrintSlipReportError(event: SlipReportErrorEvent) {
     // This code is run in the popup window's zone.
     // Need to get back into main component's zone so the main component's UI updates.
     this.zone.run(() => {
-      if (PrintSlipReportErrorEvent.isInvalidParameterError(err)) {
-        switch (err.parameter) {
-          case 'library':
-            this.libraryCodeControl.setErrors({ 'invalidCode': true })
-            this.alert.info(
-              `Valid library codes are ${ err.validOptions.join(', ') }`,
-              { autoClose: false },
-            )
-            break
-          case 'circ_desk':
-            this.circDeskCodeControl.setErrors({ 'invalidCode': true })
-            this.alert.info(
-              `Valid circulation desk codes are ${ err.validOptions.join(', ') }`,
-              { autoClose: false },
-            )
-            break
-          default:
-            this.alert.error(`The API parameter ${ err.parameter } was invalid`)
-        }
-      } else if (PrintSlipReportErrorEvent.isRestErrorResponse(err) && err?.status == 401) {
-        // Unauthorised
-        this.alert.error(
-          'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
-          + ` for the library ${ this.form.value.libraryCode } `
-          + ` and the circulation desk ${ this.form.value.circDeskCode }.`,
-        )
-      } else {
-        let msg = err.message || "See the console in your browser's developer tools for more information."
-        this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
-      }
+      this.onSlipReportError(event.error)
     })
-    this.printSlipReportService.close()
+    this.printSlipReportWindowService.close()
   }
 
 
-  resetCircDeskCode(libraryCode: string) {
-    libraryCode = libraryCode ?? this.libraryCodeControl.value.trim()
-    let libConfig = this.configService.config?.libraryConfigs?.filter(x => x.libraryCode == libraryCode)
-    let desk = libConfig ? libConfig[0]?.defaultCircDeskCode ?? 'DEFAULT_CIRC_DESK' : 'DEFAULT_CIRC_DESK'
-    this.circDeskCodeControl.setValue(desk)
-  }
-
-
-  async resetOptions() {
-    await this.configService.load()
-
-    let lib = this.initData?.user?.currentlyAtLibCode ?? ''
-    this.libraryCodeIsFromInitData = !!lib
-    this.libraryCodeControl.setValue(lib)
-
-    this.resetCircDeskCode(lib)
-
-    let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
-    let columnOptions: ColumnOption[] = [
-      // Start with the columns in the order they are from the app configuration,
-      ...(
-        (this.configService.config?.columnDefaults ?? [])
-        // ... minus any that aren't defined anymore
-        .filter(c => missingColumnDefinitions.has(c.code))
-        .map(c => {
-          let name = missingColumnDefinitions.get(c.code).name
-          missingColumnDefinitions.delete(c.code)
-          return { include: false, limit: 0, hiddenInApp: false, ...c, name }
-        })
-      ),
-      // Add any columns not in the app configuration, in the order they appear in the column definitions
-      ...(
-        Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
+  private onSlipReportError(error: SlipReportError) {
+    if (SlipReportErrorEvent.isInvalidParameterError(error)) {
+      switch (error.parameter) {
+        case 'library':
+          this.libraryCodeControl.setErrors({ 'invalidCode': true })
+          this.alert.info(
+            `Valid library codes are ${ error.validOptions.join(', ') }`,
+            { autoClose: false },
+          )
+          break
+        case 'circ_desk':
+          this.circDeskCodeControl.setErrors({ 'invalidCode': true })
+          this.alert.info(
+            `Valid circulation desk codes are ${ error.validOptions.join(', ') }`,
+            { autoClose: false },
+          )
+          break
+        default:
+          this.alert.error(`The API parameter ${ error.parameter } was invalid`)
+      }
+    } else if (SlipReportErrorEvent.isRestErrorResponse(error) && error?.status == 401) {
+      // Unauthorised
+      this.alert.error(
+        'You are not authorised. Your Alma user needs a Circulation Desk Operator role'
+        + ` for the library ${ this.form.value.libraryCode } `
+        + ` and the circulation desk ${ this.form.value.circDeskCode }.`,
       )
-    ]
-    this.columnOptionsListControl.setValue(columnOptions)
-  }
-
-
-  async restoreOptions() {
-    await this.lastUsedOptionsService.load()
-    if (!this.lastUsedOptionsService.hasOptions) {
-      // If there are no options to restore, reset them
-      return this.resetOptions()
-    }
-
-    await Promise.all([ this.configService.load(), this.getInitData() ])
-    let options = this.lastUsedOptionsService.options
-
-    let lib = options?.libraryCode ?? ''
-    if (this.initData?.user?.currentlyAtLibCode) {
-      this.libraryCodeIsFromInitData = true
-      lib = this.initData.user.currentlyAtLibCode
-    }
-    this.libraryCodeControl.setValue(lib)
-
-    let desk = options?.circDeskCode ?? ''
-    if (lib && !desk) {
-      this.resetCircDeskCode(lib)
     } else {
-      this.circDeskCodeControl.setValue(desk)
+      let msg = error.message || "See the console in your browser's developer tools for more information."
+      this.alert.error(`Something went wrong trying to find the requests. ${ msg }`)
     }
-
-    let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
-    let columnOptions: ColumnOption[] = [
-      // Start with the columns in the order they are from the last used options,
-      ...(
-        (options?.columnOptions ?? [])
-        // ... minus any that aren't defined anymore
-        .filter(c => missingColumnDefinitions.has(c.code))
-        .map(c => {
-          let name = missingColumnDefinitions.get(c.code).name
-          missingColumnDefinitions.delete(c.code)
-          return { include: false, limit: 0, hiddenInApp: false, ...c, name }
-        })
-      ),
-      // Add any columns not in the app configuration, in the order they appear in the column definitions
-      ...(
-        Array.from(missingColumnDefinitions.values())
-        .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
-      )
-    ]
-    this.columnOptionsListControl.setValue(columnOptions)
   }
 
 
-  async saveOptions() {
-    this.lastUsedOptionsService.options = {
-      libraryCode: this.libraryCodeControl.value,
-      circDeskCode: this.circDeskCodeControl.value,
-      columnOptions: this.columnOptionsListControl.value.map(c => ({
-        code: c.code, include: c.include, limit: c.limit, hiddenInApp: c.hiddenInApp
-      })),
-    }
-    await this.lastUsedOptionsService.save()
+  async onReset() {
+    await this.appService.reset()
+    this.syncFromAppService()
+  }
+
+
+  syncFromAppService() {
+    this.libraryCodeControl.setValue(this.appService.libraryCode)
+    this.circDeskCodeControl.setValue(this.appService.defaultCircDeskCode)
+    this.columnOptionsListControl.setValue(this.appService.columnOptions)
+  }
+
+
+  syncToAppService() {
+    this.appService.libraryCode = this.form.value.libraryCode
+    this.appService.circDeskCode = this.form.value.circDeskCode
+    this.appService.columnOptions = this.form.value.columnOptionsList
   }
 
 }

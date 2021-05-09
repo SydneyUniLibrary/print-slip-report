@@ -1,0 +1,11 @@
+<div class="loading-shade {{ orientation }}">
+  <mat-progress-spinner [mode]="progress === undefined ? 'indeterminate' : 'determinate'" [value]="progress"></mat-progress-spinner>
+  <div class="loading-msg" [ngSwitch]="circDeskCode">
+    <ng-container *ngSwitchCase="defaultCircDeskCode">
+      Finding the requests for {{ libraryCode }}…
+    </ng-container>
+    <ng-container *ngSwitchDefault>
+      Finding the requests for {{ libraryCode }} at {{ circDeskCode }}…
+    </ng-container>
+  </div>
+</div>

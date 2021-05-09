@@ -3,6 +3,7 @@ import { DOCUMENT } from '@angular/common'
 import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
+import { AppService } from '../app.service'
 import { COLUMNS_DEFINITIONS } from '../column-definitions'
 import { ColumnOption } from '../column-options'
 import { RequestedResource } from '../requested-resources'
@@ -26,8 +27,10 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   constructor(
     private alert: AlertService,
+    private appService: AppService,
     @Inject(DOCUMENT) private document: Document,
     private platform: Platform,
+    private printSlipReportService: PrintSlipReportService,
     private renderer: Renderer2,
     private zone: NgZone,
   ) {
@@ -75,24 +78,13 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  get circDeskCode(): string {
-    return this.printSlipReportService.circDeskCode
-  }
-
-
   get cloudAppThemeClass(): string {
-    let color = this.printSlipReportService.initData.color
-    return `cloudapp-theme--${ color }`
+    return `cloudapp-theme--${ this.appService.initData.color }`
   }
 
 
   get includedColumnOptions(): ColumnOption[] {
     return this.printSlipReportService.includedColumnOptions
-  }
-
-
-  get libraryCode(): string {
-    return this.printSlipReportService.libraryCode
   }
 
 
@@ -163,16 +155,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   get printKey(): string {
     return navigator.platform.indexOf('Mac') > -1 ? '⌘P' : 'Ctrl+P'
-  }
-
-
-  get printSlipReportService(): PrintSlipReportService | undefined {
-    let s = window['printSlipReportService']
-    if (!s) {
-      window.close()
-      throw Error('No printSlipReportService defined on window')
-    }
-    return s
   }
 
 }
