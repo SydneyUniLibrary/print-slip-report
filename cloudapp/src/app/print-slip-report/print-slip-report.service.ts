@@ -1,10 +1,10 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import { AppService } from '../app.service'
-import { RequestedResource, RequestedResourcesService } from '../requested-resources'
-import { SlipReportErrorEvent } from '../slip-report'
 import {
-  PrintSlipReportCompleteEvent, PrintSlipReportWindowService,
-} from './window.service'
+  ColumnDefinition, COLUMNS_DEFINITIONS, RequestedResource, RequestedResourcesService,
+} from '../requested-resources'
+import { SlipReportErrorEvent } from '../slip-report'
+import { PrintSlipReportCompleteEvent, PrintSlipReportWindowService } from './window.service'
 
 
 
@@ -27,6 +27,9 @@ export class PrintSlipReportService {
       let resources = await this.requestedResourcesService.findRequestedResources(
         this.pageSize,
         this.progressChange,
+        ColumnDefinition.combinedEnrichmentOptions(
+          this.includedColumnOptions.map(opt => COLUMNS_DEFINITIONS.get(opt.code))
+        ),
       )
       this.printSlipReportWindowService.complete.emit(new PrintSlipReportCompleteEvent(resources.length))
       return resources

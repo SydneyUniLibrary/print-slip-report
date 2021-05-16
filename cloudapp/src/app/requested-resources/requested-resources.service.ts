@@ -1,11 +1,10 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import {
-  CloudAppRestService,
-  HttpMethod,
-  Request as CloudAppRestServiceRequest,
-  RestErrorResponse,
+  CloudAppRestService, HttpMethod, Request as CloudAppRestServiceRequest, RestErrorResponse,
 } from '@exlibris/exl-cloudapp-angular-lib'
 import { AppService } from '../app.service'
+import { EnrichmentOptions } from './column-definitions'
+import { ItemEnrichmentService } from './item-enrichment.service'
 import { RequestedResource } from './requested-resources'
 
 
@@ -18,17 +17,33 @@ export class RequestedResourcesService {
   constructor(
     private appService: AppService,
     private restService: CloudAppRestService,
+    private itemEnrichmentService: ItemEnrichmentService,
   ) { }
+
+
+  private constructPage(
+    pageNumber: number,
+    pageSize: number,
+    enrichmentOptions: EnrichmentOptions
+  ): Page {
+    return new Page(
+      pageNumber,
+      pageSize,
+      enrichmentOptions,
+      this.appService,
+      this.restService,
+      this.itemEnrichmentService,
+    )
+  }
 
 
   async findRequestedResources(
     pageSize: number,
     progressChange: EventEmitter<number>,
+    enrichmentOptions: EnrichmentOptions,
   ): Promise<RequestedResource[]> {
 
-    let pages: Page[] = [
-      new Page(0, pageSize, this.appService, this.restService)
-    ]
+    let pages: Page[] = [ this.constructPage(0, pageSize, enrichmentOptions) ]
 
     let totalRecordCount = await pages[0].fetchPage()
     if (progressChange) {
@@ -36,8 +51,8 @@ export class RequestedResourcesService {
     }
     if (totalRecordCount > 0) {
 
-      pages = this.setupPages(pageSize, pages[0], totalRecordCount)
-      let pagesIterator: Iterator<Page> = pages.values()
+      pages = this.setupPages(pageSize, pages[0], totalRecordCount, enrichmentOptions)
+      let pagesIterator: IterableIterator<Page> = pages.values()
 
       type PendingPromiseValue = PageFetchValue | void
       let pendingPromises: Promise<PendingPromiseValue>[] = []
@@ -56,7 +71,7 @@ export class RequestedResourcesService {
         )
       }
 
-      addToPendingPromises([pagesIterator.next().value.fetch()])
+      addToPendingPromises([ (pagesIterator.next().value as Page).fetch() ])
 
       while (pendingPromises.length > 0) {
         let progress = pages.reduce<number>((acc, page) => acc + page.progress, 0) / pages.length
@@ -65,11 +80,11 @@ export class RequestedResourcesService {
         }
 
         let ret = await Promise.race(pendingPromises)
-        if (ret && 'additionalPendingPromises' in ret) {
+        if (ret && ret?.additionalPendingPromises) {
           addToPendingPromises(ret.additionalPendingPromises)
           let n = pagesIterator.next()
-          if (n.value) {
-            addToPendingPromises([n.value.fetch()])
+          if (!n.done) {
+            addToPendingPromises([ (n.value as Page).fetch() ])
           }
         }
       }
@@ -87,12 +102,17 @@ export class RequestedResourcesService {
   }
 
 
-  private setupPages(pageSize: number, page0: Page, totalRecordCount: number): Page[] {
+  private setupPages(
+    pageSize: number,
+    page0: Page,
+    totalRecordCount: number,
+    enrichmentOptions: EnrichmentOptions
+  ): Page[] {
     let numPages = Math.ceil(totalRecordCount / pageSize)
     let pages = new Array<Page>(numPages)
     pages[0] = page0
     for (let i = 1; i < numPages; i++) {
-      pages[i] = new Page(i, pageSize, this.appService, this.restService)
+      pages[i] = this.constructPage(i, pageSize, enrichmentOptions)
     }
     return pages
   }
@@ -112,19 +132,39 @@ type PageFetchValue = { additionalPendingPromises: Promise<void>[] }
 
 class Page {
 
+  private pendingPromises: PageFetchValue['additionalPendingPromises'] = []
+  private totalPromises?: number
   readonly offset: number
-  progress: number = 0  // Between 0 and 100 inclusive
   requests: RequestedResource[] = []
 
 
   constructor(
     public readonly pageNumber: number,
     public readonly pageSize: number,
+    public readonly enrichmentOptions: EnrichmentOptions,
     private readonly appService: AppService,
     private readonly restService: CloudAppRestService,
+    private readonly itemEnrichmentService: ItemEnrichmentService,
   ) {
     this.offset = this.pageNumber * this.pageSize
-    console.log('Page constructor pageNumber', this.pageNumber)
+  }
+
+
+  private addToPendingPromises(additionalPendingPromises: Promise<void>[] | undefined) {
+    if (additionalPendingPromises?.length) {
+      this.pendingPromises = this.pendingPromises.concat(
+        additionalPendingPromises.map(p => {
+          // Remove the promise from pendingPromises when it resolves
+          let p2 = p.then(x => {
+            let i = this.pendingPromises.indexOf(p2)
+            this.pendingPromises.splice(i, 1)
+            return x
+          })
+          return p2
+        })
+      )
+      this.totalPromises += additionalPendingPromises.length
+    }
   }
 
 
@@ -134,8 +174,13 @@ class Page {
    */
   async fetch(): Promise<PageFetchValue> {
     await this.fetchPage()
-    this.progress = 100
-    return { additionalPendingPromises: [] }
+    this.totalPromises = 0
+    if (this.enrichmentOptions?.withItemEnrichment) {
+      for (let r of this.requests) {
+        this.addToPendingPromises(this.itemEnrichmentService.enrich(r))
+      }
+    }
+    return { additionalPendingPromises: this.pendingPromises }
   }
 
 
@@ -153,6 +198,19 @@ class Page {
         throw InvalidParameterError.from(err) ?? err
 
       }
+    }
+  }
+
+
+  get progress(): number {
+    if (this?.totalPromises) {
+      return (
+        100
+        * (this.totalPromises - this.pendingPromises.length + 1)
+        / (this.totalPromises + 1)
+      )
+    } else {
+      return 0
     }
   }
 

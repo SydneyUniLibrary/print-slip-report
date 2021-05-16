@@ -33,6 +33,7 @@ export class DownloadExcelSlipReportService {
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
       DownloadExcelSlipReportService.PAGE_SIZE,
       this.progressChange,
+      ColumnDefinition.combinedEnrichmentOptions(columnDefinitions),
     )
     if (resources.length > 0) {
       const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
