@@ -89,11 +89,11 @@ export type RequestEnrichedRequestedResource = RequestedResource & {
     issue: string
     chapter_or_article_title: string
     chapter_or_article_author: string
-    required_pages_range: {
-      from_page: string,
-      to_page: string
-    }
-    resource_sharing: {
+    required_pages_range?: Array<{
+      from_page?: string,
+      to_page?: string
+    }>
+    resource_sharing?: {
       id: string,
       status: StringWithAttr,
       link: string | null

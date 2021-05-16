@@ -6,6 +6,7 @@ import { AppService } from '../app.service'
 import { EnrichmentOptions } from './column-definitions'
 import { ItemEnrichmentService } from './item-enrichment.service'
 import { RequestedResource } from './requested-resources'
+import { RequestEnrichmentService } from './request-enrichment-service'
 
 
 
@@ -18,6 +19,7 @@ export class RequestedResourcesService {
     private appService: AppService,
     private restService: CloudAppRestService,
     private itemEnrichmentService: ItemEnrichmentService,
+    private requestEnrichmentService: RequestEnrichmentService,
   ) { }
 
 
@@ -33,6 +35,7 @@ export class RequestedResourcesService {
       this.appService,
       this.restService,
       this.itemEnrichmentService,
+      this.requestEnrichmentService,
     )
   }
 
@@ -145,6 +148,7 @@ class Page {
     private readonly appService: AppService,
     private readonly restService: CloudAppRestService,
     private readonly itemEnrichmentService: ItemEnrichmentService,
+    private readonly requestEnrichmentService: RequestEnrichmentService,
   ) {
     this.offset = this.pageNumber * this.pageSize
   }
@@ -178,6 +182,11 @@ class Page {
     if (this.enrichmentOptions?.withItemEnrichment) {
       for (let r of this.requests) {
         this.addToPendingPromises(this.itemEnrichmentService.enrich(r))
+      }
+    }
+    if (this.enrichmentOptions?.withRequestEnrichment) {
+      for (let r of this.requests) {
+        this.addToPendingPromises(this.requestEnrichmentService.enrich(r))
       }
     }
     return { additionalPendingPromises: this.pendingPromises }

@@ -7,6 +7,7 @@ import {
 
 export interface EnrichmentOptions {
   withItemEnrichment?: boolean
+  withRequestEnrichment?: boolean
 }
 
 
@@ -49,6 +50,23 @@ export class ItemEnrichedColumnDefinition extends ColumnDefinition {
 }
 
 
+export class RequestEnrichedColumnDefinition extends ColumnDefinition {
+
+  constructor(
+    public code: string,
+    public name: string,
+    public mapFn: (requestedResource: RequestEnrichedRequestedResource) => string
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withRequestEnrichment: true }
+  }
+
+}
+
+
 export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
   new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
@@ -65,6 +83,10 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('request-date', 'Request Date', x => x?.request?.[0]?.request_date),
   new ColumnDefinition('barcode', 'Barcode', x => x?.location?.copy?.[0]?.barcode),
   new ItemEnrichedColumnDefinition('description', 'Description', x => x?.location?.copy?.[0]?.description),
+  new RequestEnrichedColumnDefinition('volume', 'Volume', x => x?.request?.[0]?.volume),
+  new RequestEnrichedColumnDefinition('issue', 'Issue', x => x?.request?.[0]?.issue),
+  new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
+  new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
   new ColumnDefinition('pickup-location', 'Pickup Location', x => x?.request?.[0]?.destination?.desc),
   new ColumnDefinition('item-call-number', 'Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
   new ItemEnrichedColumnDefinition('material-type', 'Material Type', x => x?.location?.copy?.[0]?.physical_material_type.desc),
@@ -73,6 +95,29 @@ export const COLUMNS_DEFINITIONS = toMap([
 ])
 
 
+function chapterOrArticleMapFn(requestedResource: RequestEnrichedRequestedResource): string {
+  let req = requestedResource?.request?.[0]
+  return _filteredJoin([ req?.chapter_or_article_title, req?.chapter_or_article_author ], ' / ')
+}
+
+
+function pagesMapFn(requestedResource: RequestEnrichedRequestedResource): string {
+  return _filteredJoin(
+    requestedResource?.request?.[0]?.required_pages_range?.map(range => _filteredJoin([ range.from_page, range.to_page ], '-')),
+    ', '
+  )
+}
+
+
 function toMap(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
   return new Map(list.map(x => [ x.code, x ]))
+}
+
+
+function _filteredJoin(arr: Array<string | undefined> | undefined, sep: string): string {
+  return (
+    (arr && arr.length)
+    ? arr.filter(x => x && x.length).join(sep)
+    : ''
+  )
 }
