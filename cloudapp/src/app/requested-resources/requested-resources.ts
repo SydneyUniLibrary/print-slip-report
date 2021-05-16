@@ -63,12 +63,15 @@ export interface RequestedResourceResourceMetadata {
 //---------------------------------------------------------------------------
 
 
-export type ItemEnrichedRequestedResource = RequestedResource & {
-  resource_metadata: RequestedResource['resource_metadata'] & {
+export type ItemEnrichment<
+  BaseResourceMetadata extends RequestedResourceResourceMetadata,
+  BaseLocation extends RequestedResourceLocation
+> = {
+  resource_metadata: BaseResourceMetadata & {
     complete_edition: string
   }
-  location: RequestedResource['location'] & {
-    copy: Array<RequestedResource['location']['copy'][number] & {
+  location: BaseLocation & {
+    copy: Array<BaseLocation['copy'][number] & {
       description: string
       physical_material_type: StringWithAttr
       enumeration_a: string
@@ -88,16 +91,26 @@ export type ItemEnrichedRequestedResource = RequestedResource & {
   }
 }
 
+export type ItemEnrichedRequestedResource = (
+  RequestedResource
+  & ItemEnrichment<RequestedResource['resource_metadata'], RequestedResource['location']>
+)
 
-export type LocationEnrichedRequestedResource = RequestedResource & {
-  location: RequestedResource['location'] & {
+
+export type LocationEnrichment<BaseLocation extends RequestedResourceLocation> = {
+  location: BaseLocation & {
     shelving_location: { code: string, name: string }
   }
 }
 
+export type LocationEnrichedRequestedResource = (
+  RequestedResource
+  & LocationEnrichment<RequestedResource['location']>
+)
 
-export type RequestEnrichedRequestedResource = RequestedResource & {
-  request: Array<RequestedResource['request'] & {
+
+export type RequestEnrichment<BaseRequest extends RequestedResourceRequest[]> = {
+  request: Array<BaseRequest[number] & {
     volume: string
     issue: string
     chapter_or_article_title: string
@@ -114,9 +127,14 @@ export type RequestEnrichedRequestedResource = RequestedResource & {
   }>
 }
 
+export type RequestEnrichedRequestedResource = (
+  RequestedResource
+  & RequestEnrichment<RequestedResource['request']>
+)
 
-export type UserEnrichedRequestedResource = RequestedResource & {
-  request: Array<RequestedResource['request'][number] & {
+
+export type UserEnrichment<BaseRequest extends RequestedResourceRequest[]> = {
+  request: Array<BaseRequest[number] & {
     requester: StringWithAttr & {
       user_group: string
     }
