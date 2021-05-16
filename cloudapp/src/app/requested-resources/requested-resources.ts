@@ -140,3 +140,12 @@ export type UserEnrichment<BaseRequest extends RequestedResourceRequest[]> = {
     }
   }>
 }
+
+
+//---------------------------------------------------------------------------
+
+
+export type ItemAndRequestEnrichedRequestedResource = (
+  ItemEnrichedRequestedResource
+  & RequestEnrichment<ItemEnrichedRequestedResource['request']>
+)

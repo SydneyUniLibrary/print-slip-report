@@ -1,6 +1,6 @@
 import {
-  ItemEnrichedRequestedResource, LocationEnrichedRequestedResource, RequestedResource, RequestEnrichedRequestedResource,
-  UserEnrichedRequestedResource,
+  ItemAndRequestEnrichedRequestedResource, ItemEnrichedRequestedResource, LocationEnrichedRequestedResource,
+  RequestedResource, RequestEnrichedRequestedResource, UserEnrichedRequestedResource,
 } from './requested-resources'
 
 
@@ -50,6 +50,23 @@ export class ItemEnrichedColumnDefinition extends ColumnDefinition {
 }
 
 
+export class ItemAndRequestEnrichedColumnDefinition extends ColumnDefinition {
+
+  constructor(
+    public code: string,
+    public name: string,
+    public mapFn: (requestedResource: ItemAndRequestEnrichedRequestedResource) => string
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withItemEnrichment: true, withRequestEnrichment: true }
+  }
+
+}
+
+
 export class RequestEnrichedColumnDefinition extends ColumnDefinition {
 
   constructor(
@@ -83,8 +100,8 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('request-date', 'Request Date', x => x?.request?.[0]?.request_date),
   new ColumnDefinition('barcode', 'Barcode', x => x?.location?.copy?.[0]?.barcode),
   new ItemEnrichedColumnDefinition('description', 'Description', x => x?.location?.copy?.[0]?.description),
-  new RequestEnrichedColumnDefinition('volume', 'Volume', x => x?.request?.[0]?.volume),
-  new RequestEnrichedColumnDefinition('issue', 'Issue', x => x?.request?.[0]?.issue),
+  new ItemAndRequestEnrichedColumnDefinition('volume', 'Volume', volumeMapFn),
+  new ItemAndRequestEnrichedColumnDefinition('issue', 'Issue', issueMapFn),
   new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
   new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
   new ColumnDefinition('pickup-location', 'Pickup Location', x => x?.request?.[0]?.destination?.desc),
@@ -101,11 +118,29 @@ function chapterOrArticleMapFn(requestedResource: RequestEnrichedRequestedResour
 }
 
 
+function issueMapFn(requestedResource: ItemAndRequestEnrichedRequestedResource): string {
+  let issue = requestedResource.request?.[0]?.issue
+  if (!issue || !issue.length) {
+    issue = requestedResource.location?.copy?.[0]?.chronology_i
+  }
+  return issue
+}
+
+
 function pagesMapFn(requestedResource: RequestEnrichedRequestedResource): string {
   return _filteredJoin(
     requestedResource?.request?.[0]?.required_pages_range?.map(range => _filteredJoin([ range.from_page, range.to_page ], '-')),
     ', '
   )
+}
+
+
+function volumeMapFn(requestedResource: ItemAndRequestEnrichedRequestedResource): string {
+  let volume = requestedResource.request?.[0]?.volume
+  if (!volume || !volume.length) {
+    volume = requestedResource.location?.copy?.[0]?.enumeration_a
+  }
+  return volume
 }
 
 
