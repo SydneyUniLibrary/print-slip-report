@@ -5,7 +5,19 @@ import {
 
 
 
+export interface EnrichmentOptions {
+  withItemEnrichment?: boolean
+}
+
+
 export class ColumnDefinition {
+
+  static combinedEnrichmentOptions(columnDefinitions: ColumnDefinition[]): EnrichmentOptions {
+    return columnDefinitions.reduce<EnrichmentOptions>(
+      (acc, x) => ({ ...acc, ...x.enrichmentOptions }),
+      {}
+    )
+  }
 
   constructor(
     public code: string,
@@ -13,16 +25,26 @@ export class ColumnDefinition {
     public mapFn: (requestedResource: RequestedResource) => string
   ) {}
 
+  get enrichmentOptions(): EnrichmentOptions {
+    return {}
+  }
+
 }
 
 
-export class ItemEnrichedColumnDefinition {
+export class ItemEnrichedColumnDefinition extends ColumnDefinition {
 
   constructor(
     public code: string,
     public name: string,
     public mapFn: (requestedResource: ItemEnrichedRequestedResource) => string
-  ) {}
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withItemEnrichment: true }
+}
 
 }
 
