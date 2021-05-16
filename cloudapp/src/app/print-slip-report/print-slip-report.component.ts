@@ -84,7 +84,7 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
 
   get includedColumnOptions(): ColumnOption[] {
-    return this.printSlipReportService.includedColumnOptions
+    return this.appService.includedColumnOptions
   }
 
 
