@@ -71,6 +71,19 @@ export type ItemEnrichedRequestedResource = RequestedResource & {
     copy: Array<RequestedResource['location']['copy'][number] & {
       description: string
       physical_material_type: StringWithAttr
+      enumeration_a: string
+      enumeration_b: string
+      enumeration_c: string
+      enumeration_d: string
+      enumeration_e: string
+      enumeration_f: string
+      enumeration_g: string
+      enumeration_h: string
+      chronology_i: string
+      chronology_j: string
+      chronology_k: string
+      chronology_l: string
+      chronology_m: string
     }>
   }
 }

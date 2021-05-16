@@ -24,8 +24,22 @@ export class ItemEnrichmentService {
           if (i == 0) {
             enrichedRequestedResource.resource_metadata.complete_edition = item?.bib_data?.complete_edition
           }
-          enrichedCopy.description = item?.item_data?.description
-          enrichedCopy.physical_material_type = item?.item_data?.physical_material_type
+          let d = item.item_data
+          enrichedCopy.description = d.description
+          enrichedCopy.physical_material_type = d.physical_material_type
+          enrichedCopy.enumeration_a = d.enumeration_a
+          enrichedCopy.enumeration_b = d.enumeration_b
+          enrichedCopy.enumeration_c = d.enumeration_c
+          enrichedCopy.enumeration_d = d.enumeration_d
+          enrichedCopy.enumeration_e = d.enumeration_e
+          enrichedCopy.enumeration_f = d.enumeration_f
+          enrichedCopy.enumeration_g = d.enumeration_g
+          enrichedCopy.enumeration_h = d.enumeration_h
+          enrichedCopy.chronology_i = d.chronology_i
+          enrichedCopy.chronology_j = d.chronology_j
+          enrichedCopy.chronology_k = d.chronology_k
+          enrichedCopy.chronology_l = d.chronology_l
+          enrichedCopy.chronology_m = d.chronology_m
         }
       })
     )
