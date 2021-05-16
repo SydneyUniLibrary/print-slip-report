@@ -29,7 +29,7 @@ import { PrintSlipReportWindowService } from './window.service'
     },
     {
       provide: AppService,
-      useFactory: (a: AppModuleServicesService) => { console.log('AppService factory', a.appService); return a.appService },
+      useFactory: (a: AppModuleServicesService) => a.appService,
       deps: [ AppModuleServicesService ],
     },
     {
