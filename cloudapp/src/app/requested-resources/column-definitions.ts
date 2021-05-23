@@ -8,6 +8,7 @@ import {
 export interface EnrichmentOptions {
   withItemEnrichment?: boolean
   withRequestEnrichment?: boolean
+  withUserEnrichment?: boolean
 }
 
 
@@ -84,6 +85,23 @@ export class RequestEnrichedColumnDefinition extends ColumnDefinition {
 }
 
 
+export class UserEnrichedColumnDefinition extends ColumnDefinition {
+
+  constructor(
+    public code: string,
+    public name: string,
+    public mapFn: (requestedResource: UserEnrichedRequestedResource ) => string
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withUserEnrichment: true }
+  }
+
+}
+
+
 export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
   new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
@@ -109,6 +127,7 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ItemEnrichedColumnDefinition('material-type', 'Material Type', x => x?.location?.copy?.[0]?.physical_material_type.desc),
   new ColumnDefinition('request-note', 'Request Note', x => x?.request?.[0]?.comment),
   new ColumnDefinition('storage-location-id', 'Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
+  new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', x => x?.request?.[0]?.requester?.user_group?.desc)
 ])
 
 

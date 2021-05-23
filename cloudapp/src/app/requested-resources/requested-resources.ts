@@ -41,7 +41,7 @@ export interface RequestedResourceRequest {
   destination: StringWithAttr
   request_date: string
   request_time: string
-  requester: StringWithAttr
+  requester: StringWithAttr & { link: string }
   comment: string
   printed: boolean
   reported: boolean
@@ -135,11 +135,16 @@ export type RequestEnrichedRequestedResource = (
 
 export type UserEnrichment<BaseRequest extends RequestedResourceRequest[]> = {
   request: Array<BaseRequest[number] & {
-    requester: StringWithAttr & {
-      user_group: string
+    requester: BaseRequest[number]['requester'] & {
+      user_group: StringWithAttr
     }
   }>
 }
+
+export type UserEnrichedRequestedResource = (
+  RequestedResource
+  & UserEnrichment<RequestedResource['request']>
+)
 
 
 //---------------------------------------------------------------------------
