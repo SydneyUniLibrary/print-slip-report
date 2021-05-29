@@ -128,6 +128,7 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('isbn', 'ISBN', x => x?.resource_metadata?.isbn),
   new ColumnDefinition('issn', 'ISSN', x => x?.resource_metadata?.issn),
   new ItemEnrichedColumnDefinition('edition', 'Edition', x => x?.resource_metadata?.complete_edition),
+  new ColumnDefinition('imprint', 'Imprint', imprintMapFn),
   new ColumnDefinition('publisher', 'Publisher', x => x?.resource_metadata?.publisher),
   new ColumnDefinition('publication-date', 'Publication Date', x => x?.resource_metadata?.publication_year),
   new ColumnDefinition('request-type', 'Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
@@ -154,6 +155,14 @@ export const COLUMNS_DEFINITIONS = toMap([
 function chapterOrArticleMapFn(requestedResource: RequestEnrichedRequestedResource): string {
   let req = requestedResource?.request?.[0]
   return _filteredJoin([ req?.chapter_or_article_title, req?.chapter_or_article_author ], ' / ')
+}
+
+
+function imprintMapFn(requestedResource: RequestEnrichedRequestedResource): string {
+  let publisher = requestedResource.resource_metadata?.publisher
+  let publication_place = requestedResource.resource_metadata?.publication_place
+  let publication_year = requestedResource.resource_metadata?.publication_year
+  return _filteredJoin([ publication_place, publisher, publication_year ], ' ')
 }
 
 
