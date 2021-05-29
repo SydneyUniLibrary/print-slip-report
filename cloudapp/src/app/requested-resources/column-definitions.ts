@@ -147,17 +147,17 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('requested-for', 'Requested For', ({ request }) => request.requester?.desc),
   new ColumnDefinition('request-id', 'Request ID', ({ request }) => request.id),
   new ColumnDefinition('request-date', 'Request Date', ({ request }) => request.request_date),
-  new ColumnDefinition('barcode', 'Barcode', ({ location }) => location.copy?.[0]?.barcode),  // TODO: Concat the barcodes of request.copies (issue 40)
-  new ItemEnrichedColumnDefinition('description', 'Description', ({ location }) => location.copy?.[0]?.description),  // TODO: Dedup and concat the description of request.copies
+  new RequestEnrichedColumnDefinition('barcode', 'Barcode', ({ location }) => location.copy?.[0]?.barcode),  // TODO: Concat the barcodes of request.copies (issue 40)
+  new ItemAndRequestEnrichedColumnDefinition('description', 'Description', ({ location }) => location.copy?.[0]?.description),  // TODO: Dedup and concat the description of request.copies
   new ItemAndRequestEnrichedColumnDefinition('volume', 'Volume', volumeMapFn),
   new ItemAndRequestEnrichedColumnDefinition('issue', 'Issue', issueMapFn),
   new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
   new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
   new ColumnDefinition('pickup-location', 'Pickup Location', ({ request }) => request.destination?.desc),
-  new ColumnDefinition('item-call-number', 'Item Call Number', ({ location }) => location.copy?.[0]?.alternative_call_number),  // TODO: Dedup and concat the alternative_call_number of request.copies
-  new ItemEnrichedColumnDefinition('material-type', 'Material Type', ({ location }) => location.copy?.[0]?.physical_material_type.desc),
+  new RequestEnrichedColumnDefinition('item-call-number', 'Item Call Number', ({ location }) => location.copy?.[0]?.alternative_call_number),  // TODO: Dedup and concat the alternative_call_number of request.copies
+  new ItemAndRequestEnrichedColumnDefinition('material-type', 'Material Type', ({ location }) => location.copy?.[0]?.physical_material_type.desc),
   new ColumnDefinition('request-note', 'Request Note', ({ request }) => request.comment),
-  new ColumnDefinition('storage-location-id', 'Storage Location ID', ({ location }) => location.copy?.[0]?.storage_location_id),  // TODO: Dedup and concat the storage_location_id of request.copies
+  new RequestEnrichedColumnDefinition('storage-location-id', 'Storage Location ID', ({ location }) => location.copy?.[0]?.storage_location_id),  // TODO: Dedup and concat the storage_location_id of request.copies
   new RequestEnrichedColumnDefinition('resource-sharing-request-id', 'Resource Sharing Request ID', ({ request }) => request.resource_sharing?.id),
   new RequestEnrichedColumnDefinition('resource-sharing-volume', 'Resource Sharing Volume', ({ request }) => request.resource_sharing?.volume),
   new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', ({ request }) => request.requester?.user_group?.desc),
