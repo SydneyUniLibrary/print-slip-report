@@ -2,11 +2,11 @@ import { Platform } from '@angular/cdk/platform'
 import { DOCUMENT } from '@angular/common'
 import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
+import * as _ from 'lodash'
 import { Subscription } from 'rxjs'
 import { AppService } from '../app.service'
-import { COLUMNS_DEFINITIONS } from '../requested-resources/column-definitions'
 import { ColumnOption } from '../column-options'
-import { RequestedResource } from '../requested-resources'
+import { COLUMNS_DEFINITIONS, RequestedResource } from '../requested-resources'
 import { PrintSlipReportService } from './print-slip-report.service'
 
 
@@ -53,7 +53,7 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
       // Delay slightly so that the user perceives the progress spinner showing 100%
       // but only if the mapping happens too quickly.
       let x = await Promise.all([
-        new Promise( resolve => resolve(requestedResources.map(x => this.mapColumns(x)))),
+        (async () => this.mapRequestedResources(requestedResources))(),
         new Promise(resolve => setTimeout(resolve, 500)),
       ])
       this.mappedRequestedResources = x[0] as string[][]
@@ -87,20 +87,33 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  private mapColumns(requestedResource: RequestedResource): string[] {
-    return this.includedColumnOptions.map(col => {
-      try {
-        let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
-        return (
-          (col.limit && v.length > col.limit)
-          ? `${v.substring(0, col.limit)}…`
-          : v
-        )
-      } catch (err) {
-        console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
-        return undefined
-      }
-    })
+  private mapRequestedResources(requestedResource: RequestedResource[]): string[][] {
+    return _.flatMap(
+      requestedResource.map(requestedResource =>
+        this.mapColumns(requestedResource)
+      )
+    )
+  }
+
+
+  private mapColumns(requestedResource: RequestedResource): Array<string[] | undefined> {
+    let resource_metadata = requestedResource.resource_metadata
+    let location = requestedResource.location
+    return requestedResource.request.map(request =>
+      this.includedColumnOptions.map(col => {
+        try {
+          let v = COLUMNS_DEFINITIONS.get(col.code).mapFn({ resource_metadata, location, request })
+          return (
+            (col.limit && v.length > col.limit)
+            ? `${v.substring(0, col.limit)}…`
+            : v
+          )
+        } catch (err) {
+          console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
+          return undefined
+        }
+      })
+    )
   }
 
 
