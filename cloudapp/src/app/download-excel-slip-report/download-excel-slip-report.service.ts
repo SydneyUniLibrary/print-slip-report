@@ -1,5 +1,6 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import * as FileSaver from 'file-saver'
+import * as _ from 'lodash'
 import * as XLSX from 'sheetjs-style'
 import { AppService } from '../app.service'
 import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../requested-resources'
@@ -53,30 +54,33 @@ export class DownloadExcelSlipReportService {
 
 
   private createOutputFormat(resources: RequestedResource[], columnDefinitions: ColumnDefinition[]): string[][] {
-    let data: string[][] = resources.map(resource => this.mapColumns(resource, columnDefinitions))
+    let data: string[][] = _.flatMap(
+      resources.map(requestedResource =>
+        this.mapColumns(requestedResource, columnDefinitions)
+      )
+    )
     data.unshift(this.createHeader(columnDefinitions))
     return data
   }
 
 
-  private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): string[] {
-    // TODO: Map each of the requests, not just the first
-    return columnDefinitions.map(col => {
-      try {
-        let value = COLUMNS_DEFINITIONS.get(col.code).mapFn({
-          resource_metadata: requestedResource.resource_metadata,
-          location: requestedResource.location,
-          request: requestedResource.request[0],
-        })
-        if (!value) {
-          value = '-'
+  private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): Array<string[] | undefined> {
+    let resource_metadata = requestedResource.resource_metadata
+    let location = requestedResource.location
+    return requestedResource.request.map(request =>
+      columnDefinitions.map(col => {
+        try {
+          let value = COLUMNS_DEFINITIONS.get(col.code).mapFn({ resource_metadata, location, request })
+          if (!value) {
+            value = '-'
+          }
+          return value
+        } catch (err) {
+          console.error(`Failed to mapped column ${col.name} for `, requestedResource, err)
+          return undefined
         }
-        return value
-      } catch (err) {
-        console.error(`Failed to mapped column ${col.name} for `, requestedResource, err)
-        return undefined
-      }
-    })
+      })
+    )
   }
 
 
