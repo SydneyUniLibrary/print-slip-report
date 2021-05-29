@@ -1,7 +1,7 @@
 import * as _ from 'lodash'
 import {
-  ItemAndRequestEnrichedRequestedResource, ItemEnrichedRequestedResource, LocationEnrichedRequestedResource,
-  RequestedResource, RequestEnrichedRequestedResource, UserEnrichedRequestedResource,
+  ItemAndLocationEnrichedRequestedResource, ItemAndRequestEnrichedRequestedResource, ItemEnrichedRequestedResource,
+  LocationEnrichedRequestedResource, RequestedResource, RequestEnrichedRequestedResource, UserEnrichedRequestedResource,
 } from './requested-resources'
 
 
@@ -60,6 +60,23 @@ export class ItemEnrichedColumnDefinition extends ColumnDefinition {
 
   get enrichmentOptions(): EnrichmentOptions {
     return { withItemEnrichment: true }
+  }
+
+}
+
+
+export class ItemAndLocationEnrichedColumnDefinition extends ColumnDefinition {
+
+  constructor(
+    public code: string,
+    public name: string,
+    public mapFn: ColumnMapFn<ItemAndLocationEnrichedRequestedResource>,
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withItemEnrichment: true, withLocationEnrichment: true }
   }
 
 }
@@ -135,7 +152,7 @@ export class UserEnrichedColumnDefinition extends ColumnDefinition {
 
 export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', ({ resource_metadata }) => resource_metadata.title),
-  new LocationEnrichedColumnDefinition('location','Location', locationMapFn),
+  new ItemAndLocationEnrichedColumnDefinition('location','Location', locationMapFn),
   new ColumnDefinition('call-number', 'Call Number', ({ location }) => location.call_number),
   new ColumnDefinition('author', 'Author', ({ resource_metadata }) => resource_metadata.author),
   new ColumnDefinition('isbn', 'ISBN', ({ resource_metadata }) => resource_metadata.isbn),
@@ -196,7 +213,7 @@ function issueMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnri
 }
 
 
-function locationMapFn({ location }: MapFnParams<typeof LocationEnrichedColumnDefinition>): string | undefined {
+function locationMapFn({ location }: MapFnParams<typeof ItemAndLocationEnrichedColumnDefinition>): string | undefined {
   let details = location?.shelving_location_details
   return (
     details?.name
