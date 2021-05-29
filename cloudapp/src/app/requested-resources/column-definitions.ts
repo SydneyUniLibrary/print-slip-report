@@ -1,3 +1,4 @@
+import * as _ from 'lodash'
 import {
   ItemAndRequestEnrichedRequestedResource, ItemEnrichedRequestedResource, LocationEnrichedRequestedResource,
   RequestedResource, RequestEnrichedRequestedResource, UserEnrichedRequestedResource,
@@ -147,24 +148,25 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('requested-for', 'Requested For', ({ request }) => request.requester?.desc),
   new ColumnDefinition('request-id', 'Request ID', ({ request }) => request.id),
   new ColumnDefinition('request-date', 'Request Date', ({ request }) => request.request_date),
-  new ColumnDefinition('barcode', 'Barcode', ({ location }) => location.copy?.[0]?.barcode),  // TODO: Concat the barcodes of request.copies (issue 40)
-  new ItemEnrichedColumnDefinition('description', 'Description', ({ location }) => location.copy?.[0]?.description),  // TODO: Dedup and concat the description of request.copies
+  new RequestEnrichedColumnDefinition('barcode', 'Barcode', perCopy(copy => copy.barcode)),
+  new ItemAndRequestEnrichedColumnDefinition('description', 'Description', perCopy(copy => copy.description)),
   new ItemAndRequestEnrichedColumnDefinition('volume', 'Volume', volumeMapFn),
   new ItemAndRequestEnrichedColumnDefinition('issue', 'Issue', issueMapFn),
   new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
   new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
   new ColumnDefinition('pickup-location', 'Pickup Location', ({ request }) => request.destination?.desc),
-  new ColumnDefinition('item-call-number', 'Item Call Number', ({ location }) => location.copy?.[0]?.alternative_call_number),  // TODO: Dedup and concat the alternative_call_number of request.copies
-  new ItemEnrichedColumnDefinition('material-type', 'Material Type', ({ location }) => location.copy?.[0]?.physical_material_type.desc),
+  new RequestEnrichedColumnDefinition('item-call-number', 'Item Call Number', perCopy(copy => copy.alternative_call_number)),
+  new ItemAndRequestEnrichedColumnDefinition('material-type', 'Material Type', perCopy(copy => copy.physical_material_type?.desc)),
   new ColumnDefinition('request-note', 'Request Note', ({ request }) => request.comment),
-  new ColumnDefinition('storage-location-id', 'Storage Location ID', ({ location }) => location.copy?.[0]?.storage_location_id),  // TODO: Dedup and concat the storage_location_id of request.copies
+  new RequestEnrichedColumnDefinition('storage-location-id', 'Storage Location ID', perCopy(copy => copy.storage_location_id)),
   new RequestEnrichedColumnDefinition('resource-sharing-request-id', 'Resource Sharing Request ID', ({ request }) => request.resource_sharing?.id),
   new RequestEnrichedColumnDefinition('resource-sharing-volume', 'Resource Sharing Volume', ({ request }) => request.resource_sharing?.volume),
   new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', ({ request }) => request.requester?.user_group?.desc),
 ])
 
 
-type MapFnParams<T extends new (...args: any) => any> = Parameters<ConstructorParameters<T>[2]>[0]
+type MapFn<T extends new (...args: any) => any> = ConstructorParameters<T>[2]
+type MapFnParams<T extends new (...args: any) => any> = Parameters<MapFn<T>>[0]
 
 
 function chapterOrArticleMapFn({ request }: MapFnParams<typeof RequestEnrichedColumnDefinition>): string | undefined {
@@ -182,8 +184,13 @@ function imprintMapFn({ resource_metadata }: MapFnParams<typeof ColumnDefinition
 
 function issueMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
   let issue = request.issue
-  if (!issue || !issue.length) {
-    issue = location.copy?.[0]?.chronology_i  // TODO: Dedup and concat the chronology_i of request.copies
+  if (!issue?.length) {
+    issue = _filteredDedupedJoin(
+      location.copy.map(
+        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => c.chronology_i
+      ),
+      ' ',
+    )
   }
   return issue
 }
@@ -209,10 +216,29 @@ function pagesMapFn({ request }: MapFnParams<typeof RequestEnrichedColumnDefinit
 
 function volumeMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
   let volume = request.volume
-  if (!volume || !volume.length) {
-    volume = location.copy?.[0]?.enumeration_a  // TODO: Dedup and concat the enumeration_a of request.copies
+  if (!volume?.length) {
+    volume = _filteredDedupedJoin(
+      location.copy.map(
+        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => c.enumeration_a
+      ),
+      ' ',
+    )
   }
   return volume
+}
+
+
+type PerCopyMapFn = (copy: ItemEnrichedRequestedResource['location']['copy'][number]) => string | undefined
+
+function perCopy(perCopyMapFn: PerCopyMapFn): MapFn<typeof RequestEnrichedColumnDefinition> {
+  return ({ location }) => (
+    _filteredDedupedJoin(
+      location.copy.map(
+        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => perCopyMapFn(c)
+      ),
+      ' ',
+    )
+  )
 }
 
 
@@ -222,5 +248,9 @@ function toMap(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
 
 
 function _filteredJoin(arr: Array<string | undefined> | undefined, sep: string): string | undefined {
-  return arr?.filter(x => x && x.length)?.join(sep)
+  return arr?.filter(x => x?.length)?.join(sep)
+}
+
+function _filteredDedupedJoin(arr: Array<string | undefined> | undefined, sep: string): string | undefined {
+  return _.uniq(arr?.filter(x => x?.length))?.join(sep)
 }

@@ -45,6 +45,7 @@ export interface RequestedResourceRequest {
   comment: string
   printed: boolean
   reported: boolean
+  copies?: Set<RequestedResourceLocation['copy'][number]>
 }
 
 
@@ -63,37 +64,49 @@ export interface RequestedResourceResourceMetadata {
 //---------------------------------------------------------------------------
 
 
+export type ItemEnrichmentCopy<BaseCopy extends RequestedResourceLocation['copy'][number]> = (
+  BaseCopy & {
+    description: string
+    physical_material_type: StringWithAttr
+    enumeration_a: string
+    enumeration_b: string
+    enumeration_c: string
+    enumeration_d: string
+    enumeration_e: string
+    enumeration_f: string
+    enumeration_g: string
+    enumeration_h: string
+    chronology_i: string
+    chronology_j: string
+    chronology_k: string
+    chronology_l: string
+    chronology_m: string
+  }
+)
+
 export type ItemEnrichment<
   BaseResourceMetadata extends RequestedResourceResourceMetadata,
-  BaseLocation extends RequestedResourceLocation
+  BaseLocation extends RequestedResourceLocation,
+  BaseRequest extends RequestedResourceRequest,
 > = {
   resource_metadata: BaseResourceMetadata & {
     complete_edition: string
   }
   location: BaseLocation & {
-    copy: Array<BaseLocation['copy'][number] & {
-      description: string
-      physical_material_type: StringWithAttr
-      enumeration_a: string
-      enumeration_b: string
-      enumeration_c: string
-      enumeration_d: string
-      enumeration_e: string
-      enumeration_f: string
-      enumeration_g: string
-      enumeration_h: string
-      chronology_i: string
-      chronology_j: string
-      chronology_k: string
-      chronology_l: string
-      chronology_m: string
-    }>
+    copy: Array<ItemEnrichmentCopy<BaseLocation['copy'][number]>>
   }
+  request: Array<BaseRequest & {
+    copies?: Set<ItemEnrichmentCopy<BaseLocation['copy'][number]>>
+  }>
 }
 
 export type ItemEnrichedRequestedResource = (
   RequestedResource
-  & ItemEnrichment<RequestedResource['resource_metadata'], RequestedResource['location']>
+  & ItemEnrichment<
+    RequestedResource['resource_metadata'],
+    RequestedResource['location'],
+    RequestedResource['request'][number]
+  >
 )
 
 
@@ -102,7 +115,6 @@ export type LocationEnrichment<BaseLocation extends RequestedResourceLocation> =
     shelving_location_details: { code: string, name: string }
   }
 }
-
 
 export type LocationEnrichedRequestedResource = (
   RequestedResource
@@ -117,13 +129,13 @@ export type RequestEnrichment<BaseRequest extends RequestedResourceRequest[]> = 
     chapter_or_article_title: string
     chapter_or_article_author: string
     required_pages_range?: Array<{
-      from_page?: string,
+      from_page?: string
       to_page?: string
     }>
     resource_sharing?: {
       id: string,
-      status: StringWithAttr,
-      link: string | null,
+      status: StringWithAttr
+      link: string | null
       volume?: string
     }
   }>
