@@ -99,9 +99,10 @@ export type ItemEnrichedRequestedResource = (
 
 export type LocationEnrichment<BaseLocation extends RequestedResourceLocation> = {
   location: BaseLocation & {
-    shelving_location: { code: string, name: string }
+    shelving_location_details: { code: string, name: string }
   }
 }
+
 
 export type LocationEnrichedRequestedResource = (
   RequestedResource

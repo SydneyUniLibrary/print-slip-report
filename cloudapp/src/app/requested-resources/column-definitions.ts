@@ -7,6 +7,7 @@ import {
 
 export interface EnrichmentOptions {
   withItemEnrichment?: boolean
+  withLocationEnrichment?: boolean
   withRequestEnrichment?: boolean
   withUserEnrichment?: boolean
 }
@@ -46,7 +47,7 @@ export class ItemEnrichedColumnDefinition extends ColumnDefinition {
 
   get enrichmentOptions(): EnrichmentOptions {
     return { withItemEnrichment: true }
-}
+  }
 
 }
 
@@ -63,6 +64,23 @@ export class ItemAndRequestEnrichedColumnDefinition extends ColumnDefinition {
 
   get enrichmentOptions(): EnrichmentOptions {
     return { withItemEnrichment: true, withRequestEnrichment: true }
+  }
+
+}
+
+
+export class LocationEnrichedColumnDefinition extends ColumnDefinition {
+
+  constructor(
+    public code: string,
+    public name: string,
+    public mapFn: (requestedResource: LocationEnrichedRequestedResource) => string
+  ) {
+    super(code, name, mapFn)
+  }
+
+  get enrichmentOptions(): EnrichmentOptions {
+    return { withLocationEnrichment: true }
   }
 
 }
@@ -104,7 +122,7 @@ export class UserEnrichedColumnDefinition extends ColumnDefinition {
 
 export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
-  new ColumnDefinition('location','Location', x => x?.location?.shelving_location),
+  new LocationEnrichedColumnDefinition('location','Location', locationMapFn),
   new ColumnDefinition('call-number', 'Call Number', x => x?.location?.call_number),
   new ColumnDefinition('author', 'Author', x => x?.resource_metadata?.author),
   new ColumnDefinition('isbn', 'ISBN', x => x?.resource_metadata?.isbn),
@@ -143,6 +161,16 @@ function issueMapFn(requestedResource: ItemAndRequestEnrichedRequestedResource):
     issue = requestedResource.location?.copy?.[0]?.chronology_i
   }
   return issue
+}
+
+
+function locationMapFn(requestedResource: LocationEnrichedRequestedResource): string {
+  let details = requestedResource?.location?.shelving_location_details
+  return (
+    details?.name
+    ? `${ details.name } (${ details.code })`
+    : requestedResource?.location?.shelving_location ?? ''
+  )
 }
 
 

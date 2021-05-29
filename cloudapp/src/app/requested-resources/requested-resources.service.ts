@@ -5,6 +5,7 @@ import {
 import { AppService } from '../app.service'
 import { EnrichmentOptions } from './column-definitions'
 import { ItemEnrichmentService } from './item-enrichment.service'
+import { LocationEnrichmentService } from './location-enrichment-service'
 import { RequestedResource } from './requested-resources'
 import { RequestEnrichmentService } from './request-enrichment-service'
 import { UserEnrichmentService } from './user-enrichment-service'
@@ -20,6 +21,7 @@ export class RequestedResourcesService {
     private appService: AppService,
     private restService: CloudAppRestService,
     private itemEnrichmentService: ItemEnrichmentService,
+    private locationEnrichmentService: LocationEnrichmentService,
     private requestEnrichmentService: RequestEnrichmentService,
     private userEnrichmentService: UserEnrichmentService,
   ) { }
@@ -37,6 +39,7 @@ export class RequestedResourcesService {
       this.appService,
       this.restService,
       this.itemEnrichmentService,
+      this.locationEnrichmentService,
       this.requestEnrichmentService,
       this.userEnrichmentService,
     )
@@ -151,6 +154,7 @@ class Page {
     private readonly appService: AppService,
     private readonly restService: CloudAppRestService,
     private readonly itemEnrichmentService: ItemEnrichmentService,
+    private readonly locationEnrichmentService: LocationEnrichmentService,
     private readonly requestEnrichmentService: RequestEnrichmentService,
     private readonly userEnrichmentService: UserEnrichmentService,
   ) {
@@ -191,6 +195,11 @@ class Page {
     if (this.enrichmentOptions?.withRequestEnrichment) {
       for (let r of this.requests) {
         this.addToPendingPromises(this.requestEnrichmentService.enrich(r))
+      }
+    }
+    if (this.enrichmentOptions?.withLocationEnrichment) {
+      for (let r of this.requests) {
+        this.addToPendingPromises(this.locationEnrichmentService.enrich(r))
       }
     }
     if (this.enrichmentOptions?.withUserEnrichment) {
