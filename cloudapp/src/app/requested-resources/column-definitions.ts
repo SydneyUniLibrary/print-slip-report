@@ -154,6 +154,7 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ColumnDefinition('title', 'Title', ({ resource_metadata }) => resource_metadata.title),
   new ItemAndLocationEnrichedColumnDefinition('location','Location', locationMapFn),
   new ColumnDefinition('call-number', 'Call Number', ({ location }) => location.call_number),
+  new ItemAndRequestEnrichedColumnDefinition('accession-number', 'Accession Number', perCopy(copy => copy.accession_number)),
   new ColumnDefinition('author', 'Author', ({ resource_metadata }) => resource_metadata.author),
   new ColumnDefinition('isbn', 'ISBN', ({ resource_metadata }) => resource_metadata.isbn),
   new ColumnDefinition('issn', 'ISSN', ({ resource_metadata }) => resource_metadata.issn),
