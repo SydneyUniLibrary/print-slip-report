@@ -81,6 +81,8 @@ export type ItemEnrichmentCopy<BaseCopy extends RequestedResourceLocation['copy'
     chronology_k: string
     chronology_l: string
     chronology_m: string
+    in_temp_location: boolean
+    temp_location: StringWithAttr
   }
 )
 
@@ -162,6 +164,12 @@ export type UserEnrichedRequestedResource = (
 
 
 //---------------------------------------------------------------------------
+
+
+export type ItemAndLocationEnrichedRequestedResource = (
+  ItemEnrichedRequestedResource
+  & LocationEnrichment<ItemEnrichedRequestedResource['location']>
+)
 
 
 export type ItemAndRequestEnrichedRequestedResource = (

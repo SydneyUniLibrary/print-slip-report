@@ -40,6 +40,9 @@ export class ItemEnrichmentService {
           enrichedCopy.chronology_k = d.chronology_k
           enrichedCopy.chronology_l = d.chronology_l
           enrichedCopy.chronology_m = d.chronology_m
+          let h = item.holding_data
+          enrichedCopy.in_temp_location = h.in_temp_location
+          enrichedCopy.temp_location = h.temp_location
         }
       })
     )
