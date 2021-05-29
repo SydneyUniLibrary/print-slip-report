@@ -4,9 +4,8 @@ import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angula
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
 import { Subscription } from 'rxjs'
 import { AppService } from '../app.service'
-import { COLUMNS_DEFINITIONS } from '../requested-resources/column-definitions'
 import { ColumnOption } from '../column-options'
-import { RequestedResource } from '../requested-resources'
+import { COLUMNS_DEFINITIONS, RequestedResource } from '../requested-resources'
 import { PrintSlipReportService } from './print-slip-report.service'
 
 
@@ -88,9 +87,14 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
 
   private mapColumns(requestedResource: RequestedResource): string[] {
+    // TODO: Map each of the requests, not just the first
     return this.includedColumnOptions.map(col => {
       try {
-        let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
+        let v = COLUMNS_DEFINITIONS.get(col.code).mapFn({
+          resource_metadata: requestedResource.resource_metadata,
+          location: requestedResource.location,
+          request: requestedResource.request[0],
+        })
         return (
           (col.limit && v.length > col.limit)
           ? `${v.substring(0, col.limit)}…`

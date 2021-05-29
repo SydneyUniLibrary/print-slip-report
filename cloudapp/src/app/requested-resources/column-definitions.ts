@@ -5,6 +5,18 @@ import {
 
 
 
+export type ColumnMapFn<T extends RequestedResource> = (
+  (
+    requested_resource: {
+      resource_metadata: T['resource_metadata'],
+      location: T['location'],
+      request: T['request'][number],
+    },
+  )
+  => string | undefined
+)
+
+
 export interface EnrichmentOptions {
   withItemEnrichment?: boolean
   withLocationEnrichment?: boolean
@@ -25,7 +37,7 @@ export class ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: RequestedResource) => string
+    public mapFn: ColumnMapFn<RequestedResource>
   ) {}
 
   get enrichmentOptions(): EnrichmentOptions {
@@ -40,7 +52,7 @@ export class ItemEnrichedColumnDefinition extends ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: ItemEnrichedRequestedResource) => string
+    public mapFn: ColumnMapFn<ItemEnrichedRequestedResource>
   ) {
     super(code, name, mapFn)
   }
@@ -57,7 +69,7 @@ export class ItemAndRequestEnrichedColumnDefinition extends ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: ItemAndRequestEnrichedRequestedResource) => string
+    public mapFn: ColumnMapFn<ItemAndRequestEnrichedRequestedResource>,
   ) {
     super(code, name, mapFn)
   }
@@ -74,7 +86,7 @@ export class LocationEnrichedColumnDefinition extends ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: LocationEnrichedRequestedResource) => string
+    public mapFn: ColumnMapFn<LocationEnrichedRequestedResource>,
   ) {
     super(code, name, mapFn)
   }
@@ -91,7 +103,7 @@ export class RequestEnrichedColumnDefinition extends ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: RequestEnrichedRequestedResource) => string
+    public mapFn: ColumnMapFn<RequestEnrichedRequestedResource>,
   ) {
     super(code, name, mapFn)
   }
@@ -108,7 +120,7 @@ export class UserEnrichedColumnDefinition extends ColumnDefinition {
   constructor(
     public code: string,
     public name: string,
-    public mapFn: (requestedResource: UserEnrichedRequestedResource ) => string
+    public mapFn: ColumnMapFn<UserEnrichedRequestedResource>
   ) {
     super(code, name, mapFn)
   }
@@ -121,82 +133,84 @@ export class UserEnrichedColumnDefinition extends ColumnDefinition {
 
 
 export const COLUMNS_DEFINITIONS = toMap([
-  new ColumnDefinition('title', 'Title', x => x?.resource_metadata?.title),
+  new ColumnDefinition('title', 'Title', ({ resource_metadata }) => resource_metadata.title),
   new LocationEnrichedColumnDefinition('location','Location', locationMapFn),
-  new ColumnDefinition('call-number', 'Call Number', x => x?.location?.call_number),
-  new ColumnDefinition('author', 'Author', x => x?.resource_metadata?.author),
-  new ColumnDefinition('isbn', 'ISBN', x => x?.resource_metadata?.isbn),
-  new ColumnDefinition('issn', 'ISSN', x => x?.resource_metadata?.issn),
-  new ItemEnrichedColumnDefinition('edition', 'Edition', x => x?.resource_metadata?.complete_edition),
+  new ColumnDefinition('call-number', 'Call Number', ({ location }) => location.call_number),
+  new ColumnDefinition('author', 'Author', ({ resource_metadata }) => resource_metadata.author),
+  new ColumnDefinition('isbn', 'ISBN', ({ resource_metadata }) => resource_metadata.isbn),
+  new ColumnDefinition('issn', 'ISSN', ({ resource_metadata }) => resource_metadata.issn),
+  new ItemEnrichedColumnDefinition('edition', 'Edition', ({ resource_metadata }) => resource_metadata.complete_edition),
   new ColumnDefinition('imprint', 'Imprint', imprintMapFn),
-  new ColumnDefinition('publisher', 'Publisher', x => x?.resource_metadata?.publisher),
-  new ColumnDefinition('publication-date', 'Publication Date', x => x?.resource_metadata?.publication_year),
-  new ColumnDefinition('request-type', 'Request Type', x => x?.request?.[0]?.request_sub_type?.desc),
-  new ColumnDefinition('requested-for', 'Requested For', x => x?.request?.[0]?.requester?.desc),
-  new ColumnDefinition('request-id', 'Request ID', x => x?.request?.[0]?.id),
-  new ColumnDefinition('request-date', 'Request Date', x => x?.request?.[0]?.request_date),
-  new ColumnDefinition('barcode', 'Barcode', x => x?.location?.copy?.[0]?.barcode),
-  new ItemEnrichedColumnDefinition('description', 'Description', x => x?.location?.copy?.[0]?.description),
+  new ColumnDefinition('publisher', 'Publisher', ({ resource_metadata }) => resource_metadata.publisher),
+  new ColumnDefinition('publication-date', 'Publication Date', ({ resource_metadata }) => resource_metadata.publication_year),
+  new ColumnDefinition('request-type', 'Request Type', ({ request}) => request.request_sub_type?.desc),
+  new ColumnDefinition('requested-for', 'Requested For', ({ request }) => request.requester?.desc),
+  new ColumnDefinition('request-id', 'Request ID', ({ request }) => request.id),
+  new ColumnDefinition('request-date', 'Request Date', ({ request }) => request.request_date),
+  new ColumnDefinition('barcode', 'Barcode', ({ location }) => location.copy?.[0]?.barcode),  // TODO: Concat the barcodes of request.copies (issue 40)
+  new ItemEnrichedColumnDefinition('description', 'Description', ({ location }) => location.copy?.[0]?.description),  // TODO: Dedup and concat the description of request.copies
   new ItemAndRequestEnrichedColumnDefinition('volume', 'Volume', volumeMapFn),
   new ItemAndRequestEnrichedColumnDefinition('issue', 'Issue', issueMapFn),
   new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
   new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
-  new ColumnDefinition('pickup-location', 'Pickup Location', x => x?.request?.[0]?.destination?.desc),
-  new ColumnDefinition('item-call-number', 'Item Call Number', x => x?.location?.copy?.[0]?.alternative_call_number),
-  new ItemEnrichedColumnDefinition('material-type', 'Material Type', x => x?.location?.copy?.[0]?.physical_material_type.desc),
-  new ColumnDefinition('request-note', 'Request Note', x => x?.request?.[0]?.comment),
-  new ColumnDefinition('storage-location-id', 'Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
-  new RequestEnrichedColumnDefinition('resource-sharing-request-id', 'Resource Sharing Request ID', x => x?.request?.[0]?.resource_sharing?.id),
-  new RequestEnrichedColumnDefinition('resource-sharing-volume', 'Resource Sharing Volume', x => x?.request?.[0]?.resource_sharing?.volume),
-  new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', x => x?.request?.[0]?.requester?.user_group?.desc)
+  new ColumnDefinition('pickup-location', 'Pickup Location', ({ request }) => request.destination?.desc),
+  new ColumnDefinition('item-call-number', 'Item Call Number', ({ location }) => location.copy?.[0]?.alternative_call_number),  // TODO: Dedup and concat the alternative_call_number of request.copies
+  new ItemEnrichedColumnDefinition('material-type', 'Material Type', ({ location }) => location.copy?.[0]?.physical_material_type.desc),
+  new ColumnDefinition('request-note', 'Request Note', ({ request }) => request.comment),
+  new ColumnDefinition('storage-location-id', 'Storage Location ID', ({ location }) => location.copy?.[0]?.storage_location_id),  // TODO: Dedup and concat the storage_location_id of request.copies
+  new RequestEnrichedColumnDefinition('resource-sharing-request-id', 'Resource Sharing Request ID', ({ request }) => request.resource_sharing?.id),
+  new RequestEnrichedColumnDefinition('resource-sharing-volume', 'Resource Sharing Volume', ({ request }) => request.resource_sharing?.volume),
+  new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', ({ request }) => request.requester?.user_group?.desc),
 ])
 
 
-function chapterOrArticleMapFn(requestedResource: RequestEnrichedRequestedResource): string {
-  let req = requestedResource?.request?.[0]
-  return _filteredJoin([ req?.chapter_or_article_title, req?.chapter_or_article_author ], ' / ')
+type MapFnParams<T extends new (...args: any) => any> = Parameters<ConstructorParameters<T>[2]>[0]
+
+
+function chapterOrArticleMapFn({ request }: MapFnParams<typeof RequestEnrichedColumnDefinition>): string | undefined {
+  return _filteredJoin([ request.chapter_or_article_title, request.chapter_or_article_author ], ' / ')
 }
 
 
-function imprintMapFn(requestedResource: RequestEnrichedRequestedResource): string {
-  let publisher = requestedResource.resource_metadata?.publisher
-  let publication_place = requestedResource.resource_metadata?.publication_place
-  let publication_year = requestedResource.resource_metadata?.publication_year
+function imprintMapFn({ resource_metadata }: MapFnParams<typeof ColumnDefinition>): string | undefined {
+  let publisher = resource_metadata.publisher
+  let publication_place = resource_metadata.publication_place
+  let publication_year = resource_metadata.publication_year
   return _filteredJoin([ publication_place, publisher, publication_year ], ' ')
 }
 
 
-function issueMapFn(requestedResource: ItemAndRequestEnrichedRequestedResource): string {
-  let issue = requestedResource.request?.[0]?.issue
+function issueMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
+  let issue = request.issue
   if (!issue || !issue.length) {
-    issue = requestedResource.location?.copy?.[0]?.chronology_i
+    issue = location.copy?.[0]?.chronology_i  // TODO: Dedup and concat the chronology_i of request.copies
   }
   return issue
 }
 
 
-function locationMapFn(requestedResource: LocationEnrichedRequestedResource): string {
-  let details = requestedResource?.location?.shelving_location_details
+function locationMapFn({ location }: MapFnParams<typeof LocationEnrichedColumnDefinition>): string | undefined {
+  let details = location?.shelving_location_details
   return (
     details?.name
     ? `${ details.name } (${ details.code })`
-    : requestedResource?.location?.shelving_location ?? ''
+    : location?.shelving_location ?? ''
   )
 }
 
 
-function pagesMapFn(requestedResource: RequestEnrichedRequestedResource): string {
+function pagesMapFn({ request }: MapFnParams<typeof RequestEnrichedColumnDefinition>): string | undefined {
   return _filteredJoin(
-    requestedResource?.request?.[0]?.required_pages_range?.map(range => _filteredJoin([ range.from_page, range.to_page ], '-')),
+    request.required_pages_range?.map(range => _filteredJoin([ range.from_page, range.to_page ], '-')),
     ', '
   )
 }
 
 
-function volumeMapFn(requestedResource: ItemAndRequestEnrichedRequestedResource): string {
-  let volume = requestedResource.request?.[0]?.volume
+function volumeMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
+  let volume = request.volume
   if (!volume || !volume.length) {
-    volume = requestedResource.location?.copy?.[0]?.enumeration_a
+    volume = location.copy?.[0]?.enumeration_a  // TODO: Dedup and concat the enumeration_a of request.copies
   }
   return volume
 }
@@ -207,10 +221,6 @@ function toMap(list: ColumnDefinition[]): Map<string, ColumnDefinition> {
 }
 
 
-function _filteredJoin(arr: Array<string | undefined> | undefined, sep: string): string {
-  return (
-    (arr && arr.length)
-    ? arr.filter(x => x && x.length).join(sep)
-    : ''
-  )
+function _filteredJoin(arr: Array<string | undefined> | undefined, sep: string): string | undefined {
+  return arr?.filter(x => x && x.length)?.join(sep)
 }

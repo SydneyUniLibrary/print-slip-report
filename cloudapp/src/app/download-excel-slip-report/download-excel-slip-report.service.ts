@@ -60,9 +60,14 @@ export class DownloadExcelSlipReportService {
 
 
   private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): string[] {
+    // TODO: Map each of the requests, not just the first
     return columnDefinitions.map(col => {
       try {
-        let value: string = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
+        let value = COLUMNS_DEFINITIONS.get(col.code).mapFn({
+          resource_metadata: requestedResource.resource_metadata,
+          location: requestedResource.location,
+          request: requestedResource.request[0],
+        })
         if (!value) {
           value = '-'
         }
