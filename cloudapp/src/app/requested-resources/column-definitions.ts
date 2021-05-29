@@ -145,6 +145,8 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ItemEnrichedColumnDefinition('material-type', 'Material Type', x => x?.location?.copy?.[0]?.physical_material_type.desc),
   new ColumnDefinition('request-note', 'Request Note', x => x?.request?.[0]?.comment),
   new ColumnDefinition('storage-location-id', 'Storage Location ID', x => x?.location?.copy?.[0]?.storage_location_id),
+  new RequestEnrichedColumnDefinition('resource-sharing-request-id', 'Resource Sharing Request ID', x => x?.request?.[0]?.resource_sharing?.id),
+  new RequestEnrichedColumnDefinition('resource-sharing-volume', 'Resource Sharing Volume', x => x?.request?.[0]?.resource_sharing?.volume),
   new UserEnrichedColumnDefinition('requester-user-group', 'Requester User Group', x => x?.request?.[0]?.requester?.user_group?.desc)
 ])
 
