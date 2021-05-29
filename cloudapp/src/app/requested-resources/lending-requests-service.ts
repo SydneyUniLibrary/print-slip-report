@@ -38,7 +38,6 @@ export class LendingRequestsService {
     let cacheKey = `${ library }‡${ status }`
     let promise = this._lendingRequestsForLibraryCache.get(cacheKey)
     if (!promise) {
-      console.log('LendingRequestsService lendingRequestsForLibraryWithStatus library', library, 'status', status)
       promise = (
         this.restService
         .call({

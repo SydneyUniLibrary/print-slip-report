@@ -46,7 +46,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
         progress => {
           this.zone.run(() => {
             this.progress = progress || 0
-            console.log('PrintSlipReportComponent ngOnInit progressChange progress', progress)
           })
         }
       )

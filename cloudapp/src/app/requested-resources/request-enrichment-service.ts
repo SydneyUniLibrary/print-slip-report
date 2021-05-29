@@ -42,7 +42,6 @@ export class RequestEnrichmentService {
                 let lendingRequest = lendingRequestsForLibrary.find(
                   r => r.request_id == enrichedRequest.resource_sharing.id
                 )
-                console.log('RequestEnrichmentService enrich lendingRequest', lendingRequest)
                 enrichedRequest.resource_sharing.volume = lendingRequest.volume
               } catch (e) {
                 console.error(e)
