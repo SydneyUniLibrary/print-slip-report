@@ -182,6 +182,8 @@ export const COLUMNS_DEFINITIONS = toMap([
 ])
 
 
+type ItemEnrichmentCopy = ItemEnrichedRequestedResource['location']['copy'][number]
+
 type MapFn<T extends new (...args: any) => any> = ConstructorParameters<T>[2]
 type MapFnParams<T extends new (...args: any) => any> = Parameters<MapFn<T>>[0]
 
@@ -202,12 +204,7 @@ function imprintMapFn({ resource_metadata }: MapFnParams<typeof ColumnDefinition
 function issueMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
   let issue = request.issue
   if (!issue?.length) {
-    issue = _filteredDedupedJoin(
-      location.copy.map(
-        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => c.chronology_i
-      ),
-      ' ',
-    )
+    issue = _filteredDedupedJoin(location.copy.map((c: ItemEnrichmentCopy) => c.chronology_i), ' ')
   }
   return issue
 }
@@ -234,12 +231,7 @@ function pagesMapFn({ request }: MapFnParams<typeof RequestEnrichedColumnDefinit
 function volumeMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnrichedColumnDefinition>): string | undefined {
   let volume = request.volume
   if (!volume?.length) {
-    volume = _filteredDedupedJoin(
-      location.copy.map(
-        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => c.enumeration_a
-      ),
-      ' ',
-    )
+    volume = _filteredDedupedJoin(location.copy.map((c: ItemEnrichmentCopy) => c.enumeration_a), ' ')
   }
   return volume
 }
@@ -249,12 +241,7 @@ type PerCopyMapFn = (copy: ItemEnrichedRequestedResource['location']['copy'][num
 
 function perCopy(perCopyMapFn: PerCopyMapFn): MapFn<typeof RequestEnrichedColumnDefinition> {
   return ({ location }) => (
-    _filteredDedupedJoin(
-      location.copy.map(
-        (c: ItemEnrichedRequestedResource['location']['copy'][number]) => perCopyMapFn(c)
-      ),
-      ' ',
-    )
+    _filteredDedupedJoin(location.copy.map((c: ItemEnrichmentCopy) => perCopyMapFn(c)), ' ')
   )
 }
 
