@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CloudAppRestService, HttpMethod } from '@exlibris/exl-cloudapp-angular-lib'
+import { LendingRequestsService } from './lending-requests-service'
 import { RequestedResource, RequestEnrichedRequestedResource } from './requested-resources'
 
 
@@ -10,6 +11,7 @@ import { RequestedResource, RequestEnrichedRequestedResource } from './requested
 export class RequestEnrichmentService {
 
   constructor(
+    private lendingRequestsService: LendingRequestsService,
     private restService: CloudAppRestService,
   ) { }
 
@@ -29,6 +31,23 @@ export class RequestEnrichmentService {
           }
           if (almaRequest.resource_sharing) {
             enrichedRequest.resource_sharing = almaRequest.resource_sharing
+            if (almaRequest?.request_sub_type?.value?.startsWith('RESOURCE_SHARING')) {
+              try {
+                let lendingRequestsForLibrary = (
+                  await this.lendingRequestsService.lendingRequestsForLibraryWithStatus(
+                    almaRequest.pickup_location_library,
+                    enrichedRequest.resource_sharing.status.value,
+                  )
+                )
+                let lendingRequest = lendingRequestsForLibrary.find(
+                  r => r.request_id == enrichedRequest.resource_sharing.id
+                )
+                console.log('RequestEnrichmentService enrich lendingRequest', lendingRequest)
+                enrichedRequest.resource_sharing.volume = lendingRequest.volume
+              } catch (e) {
+                console.error(e)
+              }
+            }
           }
         }
       })

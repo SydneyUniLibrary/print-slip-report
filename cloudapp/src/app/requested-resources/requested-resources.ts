@@ -123,7 +123,8 @@ export type RequestEnrichment<BaseRequest extends RequestedResourceRequest[]> = 
     resource_sharing?: {
       id: string,
       status: StringWithAttr,
-      link: string | null
+      link: string | null,
+      volume?: string
     }
   }>
 }
