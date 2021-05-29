@@ -33,7 +33,6 @@ export class RequestEnrichmentService {
           await this._enrichRequest(req, almaRequest)
         }
         req.copies = new Set(requestedResource.location.copy)
-        console.log('RequestEnrichmentService _enrichOneRequest', req)
       })
     )
   }
@@ -45,16 +44,13 @@ export class RequestEnrichmentService {
     )
     return (
       requestedResource.location.copy.map(async copy => {
-        console.log('RequestEnrichmentService _enrichManyRequests copy', copy)
         for (let almaRequest of copy.link ? await this._fetchItemRequests(`${ copy.link }/requests`) : []) {
           let req = reqMap.get(almaRequest.request_id)
           if (req.copies?.size) {
             req.copies.add(copy)
-            console.log('RequestEnrichmentService _enrichManyRequests add', req)
           } else {
             await this._enrichRequest(req, almaRequest)
             req.copies = new Set([ copy ])
-            console.log('RequestEnrichmentService _enrichManyRequests enrich', req)
           }
         }
       })
