@@ -91,12 +91,12 @@ export type ItemEnrichment<
 > = {
   resource_metadata: BaseResourceMetadata & {
     complete_edition: string
-  },
+  }
   location: BaseLocation & {
-    copy: Array<ItemEnrichmentCopy<BaseLocation['copy'][number]>>,
-  },
+    copy: Array<ItemEnrichmentCopy<BaseLocation['copy'][number]>>
+  }
   request: Array<BaseRequest & {
-    copies?: Set<ItemEnrichmentCopy<BaseLocation['copy'][number]>>,
+    copies?: Set<ItemEnrichmentCopy<BaseLocation['copy'][number]>>
   }>
 }
 
@@ -129,13 +129,13 @@ export type RequestEnrichment<BaseRequest extends RequestedResourceRequest[]> = 
     chapter_or_article_title: string
     chapter_or_article_author: string
     required_pages_range?: Array<{
-      from_page?: string,
+      from_page?: string
       to_page?: string
     }>
     resource_sharing?: {
       id: string,
-      status: StringWithAttr,
-      link: string | null,
+      status: StringWithAttr
+      link: string | null
       volume?: string
     }
   }>
