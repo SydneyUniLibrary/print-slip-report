@@ -211,12 +211,24 @@ function issueMapFn({ location, request }: MapFnParams<typeof ItemAndRequestEnri
 
 
 function locationMapFn({ location }: MapFnParams<typeof ItemAndLocationEnrichedColumnDefinition>): string | undefined {
-  let details = location?.shelving_location_details
-  return (
-    details?.name
-    ? `${ details.name } (${ details.code })`
-    : location?.shelving_location ?? ''
-  )
+  console.log('locationMapFn location', location)
+  if (location.copy.some((c: ItemEnrichmentCopy) => c.in_temp_location)) {
+    return _filteredDedupedJoin(
+      location.copy.map((c: ItemEnrichmentCopy) =>
+        c.temp_location?.desc
+        ? `${ c.temp_location.desc } (${ c.temp_location.value })`
+        : c.temp_location?.value
+      ),
+      ' ',
+    )
+  } else {
+    let details = location?.shelving_location_details
+    return (
+      details?.name
+        ? `${ details.name } (${ details.code })`
+        : location?.shelving_location ?? ''
+    )
+  }
 }
 
 
