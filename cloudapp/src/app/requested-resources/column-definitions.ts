@@ -172,7 +172,7 @@ export const COLUMNS_DEFINITIONS = toMap([
   new ItemAndRequestEnrichedColumnDefinition('issue', 'Issue', issueMapFn),
   new RequestEnrichedColumnDefinition('chapter-or-article', 'Chapter/Article', chapterOrArticleMapFn),
   new RequestEnrichedColumnDefinition('pages', 'Pages', pagesMapFn),
-  new ColumnDefinition('pickup-location', 'Pickup Location', ({ request }) => request.destination?.desc),
+  new RequestEnrichedColumnDefinition('pickup-location', 'Pickup Location', ({ request }) => request.pickup_location),
   new RequestEnrichedColumnDefinition('item-call-number', 'Item Call Number', perCopy(copy => copy.alternative_call_number)),
   new ItemAndRequestEnrichedColumnDefinition('material-type', 'Material Type', perCopy(copy => copy.physical_material_type?.desc)),
   new ColumnDefinition('request-note', 'Request Note', ({ request }) => request.comment),

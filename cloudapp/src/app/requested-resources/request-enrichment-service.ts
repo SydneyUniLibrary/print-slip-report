@@ -65,6 +65,7 @@ export class RequestEnrichmentService {
     enrichedRequest.issue = almaRequest.issue
     enrichedRequest.chapter_or_article_title = almaRequest.chapter_or_article_title
     enrichedRequest.chapter_or_article_author = almaRequest.chapter_or_article_author
+    enrichedRequest.pickup_location = almaRequest.pickup_location
     if (almaRequest.required_pages_range) {
       enrichedRequest.required_pages_range = almaRequest.required_pages_range
     }

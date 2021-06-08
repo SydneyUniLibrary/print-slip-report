@@ -46,6 +46,7 @@ export interface RequestedResourceRequest {
   printed: boolean
   reported: boolean
   copies?: Set<RequestedResourceLocation['copy'][number]>
+  pickup_location: string
 }
 
 
