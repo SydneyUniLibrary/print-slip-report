@@ -1,8 +1,6 @@
 <form [formGroup]="form" *ngIf="ready">
 
   <div class="eca-actions">
-    <button mat-flat-button color="secondary" (click)="onReset()">Reset</button>
-    <div class="btn-separator"></div>
     <button mat-flat-button color="secondary" (click)="beforeDownload()" routerLink="download-excel-slip-report" [disabled]="!form.valid || loading">Download</button>
     <button mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
   </div>
@@ -29,7 +27,7 @@
   <mat-tab label="Columns">
     <mat-error *ngIf="columnOptionsListControl.invalid">{{ columnOptionsListError }}</mat-error>
     <div [style.margin-top.px]="12">
-      <app-column-options-list formControlName="columnOptionsList" required></app-column-options-list>
+      <app-column-options-list formControlName="columnOptionsList" required (resetToDefaults)="this.onResetToDefaults()"></app-column-options-list>
     </div>
   </mat-tab>
 

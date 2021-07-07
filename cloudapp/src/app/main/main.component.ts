@@ -199,7 +199,7 @@ export class MainComponent implements AfterViewInit, OnInit {
   }
 
 
-  async onReset() {
+  async onResetToDefaults() {
     await this.appService.reset()
     this.syncFromAppService()
   }

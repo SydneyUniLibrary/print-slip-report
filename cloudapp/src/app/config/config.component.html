@@ -11,10 +11,12 @@
   <mat-card>
     <mat-card-header>
       <mat-card-title>Default columns</mat-card-title>
-      <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the reset button.</mat-card-subtitle>
+      <mat-card-subtitle>These columns will be selected when someone first uses the app or when they click the defaults button.</mat-card-subtitle>
     </mat-card-header>
     <mat-card-content>
-      <app-column-options-list alwaysShowChips="true" alwaysShowHidden="true" formControlName="columnOptionsList"></app-column-options-list>
+      <app-column-options-list [alwaysShowChips]="true" [alwaysShowHidden]="true" [showDefaultsButton]="false"
+                               formControlName="columnOptionsList">
+      </app-column-options-list>
     </mat-card-content>
   </mat-card>
 </mat-tab>

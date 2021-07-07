@@ -9,6 +9,9 @@
 
   <ng-template #enabled>
     <mat-toolbar class="toolbar">
+      <button *ngIf="showDefaultsButton"
+              mat-button matTooltip="Reset which columns are selected back to their defaults"
+              (click)="this.resetToDefaults.emit()">Defaults</button>
       <span class="spacer"></span>
       <button *ngIf="!alwaysShowHidden && hasHidden && !showingHidden"
               (click)="showingHidden = true; usedShowHiddenButton = true"
