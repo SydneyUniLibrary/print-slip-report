@@ -1,13 +1,13 @@
 <form [formGroup]="form" *ngIf="ready">
 
   <div class="eca-actions">
-    <button mat-flat-button color="secondary" (click)="onReset()">Reset</button>
-    <div class="btn-separator"></div>
     <button mat-flat-button color="secondary" (click)="beforeDownload()" routerLink="download-excel-slip-report" [disabled]="!form.valid || loading">Download</button>
     <button mat-flat-button color="primary" (click)="onPrint()" [disabled]="!form.valid || loading">Print</button>
   </div>
 
-  <div>
+  <mat-tab-group>
+
+  <mat-tab label="Location">
 
     <mat-form-field class="library-code-form-field" [style.margin-right.px]="8" hideRequiredMarker="true">
       <mat-label>Library code</mat-label>
@@ -15,7 +15,6 @@
       <mat-hint>Enter the library's code, not its name</mat-hint>
       <mat-error *ngIf="libraryCodeControl.invalid">{{ libraryCodeError }}</mat-error>
     </mat-form-field>
-
     <mat-form-field class="circ-desk-code-form-field" hideRequiredMarker="true"
                     hintLabel="Enter the desk's code, not its name">
       <mat-label>Circulation desk code</mat-label>
@@ -23,15 +22,16 @@
       <mat-error *ngIf="circDeskCodeControl.invalid">{{ circDeskCodeError }}</mat-error>
     </mat-form-field>
 
-  </div>
+  </mat-tab>
 
-  <div>
-    <div [style.margin-top.px]="48">Columns</div>
+  <mat-tab label="Columns">
     <mat-error *ngIf="columnOptionsListControl.invalid">{{ columnOptionsListError }}</mat-error>
     <div [style.margin-top.px]="12">
-      <app-column-options-list formControlName="columnOptionsList" required></app-column-options-list>
+      <app-column-options-list formControlName="columnOptionsList" required (resetToDefaults)="this.onResetToDefaults()"></app-column-options-list>
     </div>
-  </div>
+  </mat-tab>
+
+  </mat-tab-group>
 
 </form>
 

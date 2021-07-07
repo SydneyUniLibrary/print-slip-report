@@ -1,13 +1,14 @@
 .library-code-form-field {
-  width: 144px;
+  display: block;
 }
 
 .circ-desk-code-form-field {
-  width: 144px;
+  display: block;
+  margin-top: 24px;
 }
 
 .btn-separator {
-    border-left: 1px solid #efefef;
-    margin-left: 7px;
-    height: 34px;
+  border-left: 1px solid #efefef;
+  height: 34px;
+  margin-left: 7px;
 }

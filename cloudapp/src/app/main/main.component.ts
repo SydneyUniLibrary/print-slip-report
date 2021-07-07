@@ -199,8 +199,8 @@ export class MainComponent implements AfterViewInit, OnInit {
   }
 
 
-  async onReset() {
-    await this.appService.reset()
+  async onResetToDefaults() {
+    await this.appService.resetColumnsToDefaults()
     this.syncFromAppService()
   }
 
