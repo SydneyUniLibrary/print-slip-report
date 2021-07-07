@@ -2,10 +2,11 @@ import { Platform } from '@angular/cdk/platform'
 import { DOCUMENT } from '@angular/common'
 import { Component, Inject, NgZone, OnDestroy, OnInit, Renderer2 } from '@angular/core'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
+import * as _ from 'lodash'
 import { Subscription } from 'rxjs'
-import { COLUMNS_DEFINITIONS } from '../column-definitions'
+import { AppService } from '../app.service'
 import { ColumnOption } from '../column-options'
-import { RequestedResource } from '../requested-resources'
+import { COLUMNS_DEFINITIONS, RequestedResource } from '../requested-resources'
 import { PrintSlipReportService } from './print-slip-report.service'
 
 
@@ -26,8 +27,10 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   constructor(
     private alert: AlertService,
+    private appService: AppService,
     @Inject(DOCUMENT) private document: Document,
     private platform: Platform,
+    private printSlipReportService: PrintSlipReportService,
     private renderer: Renderer2,
     private zone: NgZone,
   ) {
@@ -43,7 +46,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
         progress => {
           this.zone.run(() => {
             this.progress = progress || 0
-            console.log('PrintSlipReportComponent ngOnInit progressChange progress', progress)
           })
         }
       )
@@ -51,7 +53,7 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
       // Delay slightly so that the user perceives the progress spinner showing 100%
       // but only if the mapping happens too quickly.
       let x = await Promise.all([
-        new Promise( resolve => resolve(requestedResources.map(x => this.mapColumns(x)))),
+        (async () => this.mapRequestedResources(requestedResources))(),
         new Promise(resolve => setTimeout(resolve, 500)),
       ])
       this.mappedRequestedResources = x[0] as string[][]
@@ -75,41 +77,43 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  get circDeskCode(): string {
-    return this.printSlipReportService.circDeskCode
-  }
-
-
   get cloudAppThemeClass(): string {
-    let color = this.printSlipReportService.initData.color
-    return `cloudapp-theme--${ color }`
+    return `cloudapp-theme--${ this.appService.initData.color }`
   }
 
 
   get includedColumnOptions(): ColumnOption[] {
-    return this.printSlipReportService.includedColumnOptions
+    return this.appService.includedColumnOptions
   }
 
 
-  get libraryCode(): string {
-    return this.printSlipReportService.libraryCode
+  private mapRequestedResources(requestedResource: RequestedResource[]): string[][] {
+    return _.flatMap(
+      requestedResource.map(requestedResource =>
+        this.mapColumns(requestedResource)
+      )
+    )
   }
 
 
-  private mapColumns(requestedResource: RequestedResource): string[] {
-    return this.includedColumnOptions.map(col => {
-      try {
-        let v = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
-        return (
-          (col.limit && v.length > col.limit)
-          ? `${v.substring(0, col.limit)}…`
-          : v
-        )
-      } catch (err) {
-        console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
-        return undefined
-      }
-    })
+  private mapColumns(requestedResource: RequestedResource): Array<string[] | undefined> {
+    let resource_metadata = requestedResource.resource_metadata
+    let location = requestedResource.location
+    return requestedResource.request.map(request =>
+      this.includedColumnOptions.map(col => {
+        try {
+          let v = COLUMNS_DEFINITIONS.get(col.code).mapFn({ resource_metadata, location, request })
+          return (
+            (col.limit && v.length > col.limit)
+            ? `${v.substring(0, col.limit)}…`
+            : v
+          )
+        } catch (err) {
+          console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
+          return undefined
+        }
+      })
+    )
   }
 
 
@@ -163,16 +167,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   get printKey(): string {
     return navigator.platform.indexOf('Mac') > -1 ? '⌘P' : 'Ctrl+P'
-  }
-
-
-  get printSlipReportService(): PrintSlipReportService | undefined {
-    let s = window['printSlipReportService']
-    if (!s) {
-      window.close()
-      throw Error('No printSlipReportService defined on window')
-    }
-    return s
   }
 
 }

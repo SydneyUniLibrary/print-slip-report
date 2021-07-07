@@ -1,5 +1,5 @@
 import { Component } from '@angular/core'
-import { AppService } from './app.service'
+import { InitService } from '@exlibris/exl-cloudapp-angular-lib'
 
 
 
@@ -9,6 +9,9 @@ import { AppService } from './app.service'
 })
 export class AppComponent {
 
-  constructor(private appService: AppService) { }
+  // noinspection JSUnusedLocalSymbols
+  constructor(
+    private initService: InitService
+  ) { }
 
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core'
 import { FormBuilder, FormControl } from '@angular/forms'
 import { AlertService } from '@exlibris/exl-cloudapp-angular-lib'
-import { COLUMNS_DEFINITIONS } from '../column-definitions'
+import { COLUMNS_DEFINITIONS } from '../requested-resources'
 import { ColumnOption } from '../column-options'
 import { CircDeskCodeDefault } from './circ-desk-code-defaults.component'
 import { ConfigService } from './config.service'

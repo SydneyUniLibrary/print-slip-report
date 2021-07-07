@@ -8,24 +8,15 @@ import { MaterialModule, getTranslateModule, AlertModule } from '@exlibris/exl-c
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import { CircDeskCodeDefaultsComponent } from './config/circ-desk-code-defaults.component'
-import { ColumnOptionComponent } from './column-options/column-option.component';
-import { ColumnOptionsListComponent } from './column-options/column-options-list.component';
-import { ConfigComponent } from './config/config.component';
+import { ColumnOptionsModule } from './column-options'
 import { MainComponent } from './main/main.component';
-import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.component';
 
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    CircDeskCodeDefaultsComponent,
-    ColumnOptionComponent,
-    ColumnOptionsListComponent,
-    ConfigComponent,
     MainComponent,
-    PrintSlipReportComponent,
   ],
   imports: [
     MaterialModule,
@@ -37,6 +28,7 @@ import { PrintSlipReportComponent } from './print-slip-report/print-slip-report.
     FormsModule,
     ReactiveFormsModule,
     getTranslateModule(),
+    ColumnOptionsModule,
   ],
   providers: [
     { provide: MAT_FORM_FIELD_DEFAULT_OPTIONS, useValue: { appearance: 'standard' } },

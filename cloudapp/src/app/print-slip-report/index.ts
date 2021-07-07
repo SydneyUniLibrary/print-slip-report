@@ -1,6 +1,2 @@
-export {
-  PrintSlipReportCompleteEvent, 
-  PrintSlipReportError, 
-  PrintSlipReportErrorEvent,
-  PrintSlipReportService
-} from './print-slip-report.service'
+export { PrintSlipReportCompleteEvent, PrintSlipReportWindowService } from './window.service'
+

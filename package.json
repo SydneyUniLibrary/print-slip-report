@@ -1,7 +1,7 @@
 {
   "name": "eca-print-slip-report",
   "description": "A customisable alternative to Alma's built-in print slip report",
-  "version": "2021.0.0-beta.7",
+  "version": "2021.1",
   "license": "BSD-3-Clause",
   "homepage": "https://github.com/SydneyUniLibrary/print-slip-report",
   "bugs": "https://github.com/SydneyUniLibrary/print-slip-report/issues",
@@ -16,18 +16,20 @@
     "@angular/forms": "^9.1.0",
     "@angular/material": "^9.2.0",
     "@angular/router": "^9.1.0",
-    "@exlibris/exl-cloudapp-angular-lib": "^0.5.0",
-    "@exlibris/exl-cloudapp-base": "^0.5.0",
+    "@exlibris/exl-cloudapp-angular-lib": "^1.0.0",
+    "@exlibris/exl-cloudapp-base": "^1.0.0",
     "@ngx-translate/core": "^12.1.0",
     "file-saver": "^2.0.5",
     "lodash": "^4.17.15",
+    "lru-cache": "^6.0.0",
     "ngx-toastr": "^12.0.0",
-    "rxjs": "^6.5.5",
+    "rxjs": "^6.6.7",
     "sheetjs-style": "^0.15.6",
     "uuid": "^8.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.168",
+    "@types/lru-cache": "^5.1.0",
     "@types/uuid": "^8.3.0"
   }
 }

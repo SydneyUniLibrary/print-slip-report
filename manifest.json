@@ -3,7 +3,7 @@
    "title": "Print Slip Report",
    "subtitle": "A customisable alternative to Alma's built-in print slip report",
    "author": "slippery slips",
-   "description": "*** BETA RELEASE *** Print only some of the columns of the print slip report.",
+   "description": "Print or download only some of the columns of the print slip report.",
    "license": "https://raw.githubusercontent.com/SydneyUniLibrary/print-slip-report/main/LICENSE",
    "contentSecurity": {
       "sandbox": {

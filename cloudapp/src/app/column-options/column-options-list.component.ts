@@ -1,5 +1,5 @@
 import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop'
-import { AfterContentInit, Component, Input, OnDestroy, OnInit } from '@angular/core'
+import { AfterContentInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core'
 import {
   ControlValueAccessor, FormArray, FormBuilder, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, RequiredValidator,
   ValidationErrors,
@@ -39,6 +39,8 @@ export class ColumnOptionsListComponent
     list: this.fb.array([])
   })
   highlightShowHiddenButton = false
+  @Output() resetToDefaults = new EventEmitter<undefined>()
+  @Input() showDefaultsButton = true
   showingHidden = false
   usedShowHiddenButton = false
 

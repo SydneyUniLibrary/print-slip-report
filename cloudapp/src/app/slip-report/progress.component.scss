@@ -1,0 +1,21 @@
+.horizontal {
+
+  .loading-msg {
+    padding-left: 5rem;
+  }
+
+}
+
+
+.vertical {
+
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+
+  .loading-msg {
+    display: block;
+    padding-top: 2rem;
+  }
+
+}

@@ -1,10 +1,10 @@
 import { EventEmitter, Injectable } from '@angular/core'
 import * as FileSaver from 'file-saver'
+import * as _ from 'lodash'
 import * as XLSX from 'sheetjs-style'
-
+import { AppService } from '../app.service'
+import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../requested-resources'
 import { ColumnOption } from '../column-options'
-import { ColumnDefinition, COLUMNS_DEFINITIONS } from '../column-definitions'
-import { PrintSlipReportError } from '../print-slip-report'
 import { RequestedResource, RequestedResourcesService } from '../requested-resources'
 
 
@@ -12,37 +12,39 @@ import { RequestedResource, RequestedResourcesService } from '../requested-resou
 @Injectable({
   providedIn: 'root',
 })
-export class ExcelExportService {
+export class DownloadExcelSlipReportService {
   private static readonly FILE_NAME: string = 'requested-resources'
   private static readonly EXCEL_TYPE: string = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
   private static readonly EXCEL_EXTENSION: string = '.xlsx'
 
   private static readonly PAGE_SIZE: number = 100
 
+
+  progressChange = new EventEmitter<number>()
+
+
   constructor(
-    private requestedResourcesService: RequestedResourcesService
+    private appService: AppService,
+    private requestedResourcesService: RequestedResourcesService,
   ) { }
 
 
-  async generateExcel(circDeskCode: string, libraryCode: string, columnOptions: ColumnOption[]) {
-
-    const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(columnOptions)
+  async generateExcel(): Promise<string | undefined> {
+    const columnDefinitions: ColumnDefinition[] = this.getColumnDefinitions(this.appService.includedColumnOptions)
     const resources: RequestedResource[] = await this.requestedResourcesService.findRequestedResources(
-      circDeskCode,
-      libraryCode,
-      ExcelExportService.PAGE_SIZE,
-      null,
-      (count: number) => { console.debug('completed', count) },
-      (err: PrintSlipReportError) => { console.debug('error', err) }
+      DownloadExcelSlipReportService.PAGE_SIZE,
+      this.progressChange,
+      ColumnDefinition.combinedEnrichmentOptions(columnDefinitions),
     )
-
-    const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
-    const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
-    this.setCellWith(worksheet, columnDefinitions)
-    this.setCellStyles(worksheet)
-    const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
-    const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
-    this.saveAsExcelFile(excelBuffer)
+    if (resources.length > 0) {
+      const data: string[][] = this.createOutputFormat(resources, columnDefinitions)
+      const worksheet: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data)
+      this.setCellWith(worksheet, columnDefinitions)
+      this.setCellStyles(worksheet)
+      const workbook: XLSX.WorkBook = { Sheets: { 'data': worksheet }, SheetNames: ['data'] }
+      const excelBuffer: any = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+      return this.saveAsExcelFile(excelBuffer)
+    }
   }
 
 
@@ -52,25 +54,33 @@ export class ExcelExportService {
 
 
   private createOutputFormat(resources: RequestedResource[], columnDefinitions: ColumnDefinition[]): string[][] {
-    let data: string[][] = resources.map(resource => this.mapColumns(resource, columnDefinitions))
+    let data: string[][] = _.flatMap(
+      resources.map(requestedResource =>
+        this.mapColumns(requestedResource, columnDefinitions)
+      )
+    )
     data.unshift(this.createHeader(columnDefinitions))
     return data
   }
 
 
-  private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): string[] {
-    return columnDefinitions.map(col => {
-      try {
-        let value: string = COLUMNS_DEFINITIONS.get(col.code).mapFn(requestedResource)
-        if (!value) {
-          value = '-'
+  private mapColumns(requestedResource: RequestedResource, columnDefinitions: ColumnDefinition[]): Array<string[] | undefined> {
+    let resource_metadata = requestedResource.resource_metadata
+    let location = requestedResource.location
+    return requestedResource.request.map(request =>
+      columnDefinitions.map(col => {
+        try {
+          let value = COLUMNS_DEFINITIONS.get(col.code).mapFn({ resource_metadata, location, request })
+          if (!value) {
+            value = '-'
+          }
+          return value
+        } catch (err) {
+          console.error(`Failed to mapped column ${col.name} for `, requestedResource, err)
+          return undefined
         }
-        return value
-      } catch (err) {
-        console.error(`Failed to mapped column ${col.name} for `, requestedResource, err)
-        return undefined
-      }
-    })
+      })
+    )
   }
 
 
@@ -123,9 +133,11 @@ export class ExcelExportService {
   }
 
 
-  private saveAsExcelFile(buffer: any) {
-    const blob: Blob = new Blob([buffer], { type: ExcelExportService.EXCEL_TYPE })
-    const filename = ExcelExportService.FILE_NAME + '_export_' + new Date().getTime() + ExcelExportService.EXCEL_EXTENSION
+  private saveAsExcelFile(buffer: any): string {
+    const blob: Blob = new Blob([buffer], { type: DownloadExcelSlipReportService.EXCEL_TYPE })
+    const filename = DownloadExcelSlipReportService.FILE_NAME + '_export_' + new Date().getTime() + DownloadExcelSlipReportService.EXCEL_EXTENSION
     FileSaver.saveAs(blob, filename)
+    return filename
   }
+
 }
