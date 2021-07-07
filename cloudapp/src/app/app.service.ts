@@ -73,9 +73,6 @@ export class AppService {
   async reset() {
     await this.configService.load()
 
-    this.libraryCode = this.initData?.user?.currentlyAtLibCode ?? ''
-    this.circDeskCode = this.defaultCircDeskCode
-
     let missingColumnDefinitions = new Map(COLUMNS_DEFINITIONS)   // Copy because we are going to mutate it
     this.columnOptions = [
       // Start with the columns in the order they are from the app configuration,
