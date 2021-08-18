@@ -50,3 +50,5 @@ Thumbs.db
 build
 cloudapp/src/assets/manifest*.json
 config.json
+# See: https://github.com/ExLibrisGroup/cloudapp-sdk/issues/48
+cloudapp/src/proxy.conf.js
