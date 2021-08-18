@@ -1,16 +1,18 @@
 <ng-container *ngIf="!loading; else progressSpinner">
-  <table>
-    <thead>
-      <tr>
-        <td *ngFor="let c of includedColumnOptions">{{ c.name }}</td>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let r of mappedRequestedResources">
-        <td *ngFor="let v of r">{{ v }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div *ngFor="let table of tables | keyvalue">
+    <table>
+      <thead>
+        <tr>
+          <td *ngFor="let column of includedColumnOptions">{{ column.name }}</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of table.value">
+          <td *ngFor="let value of row.values">{{ value }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </ng-container>
 
 <ng-template #progressSpinner>

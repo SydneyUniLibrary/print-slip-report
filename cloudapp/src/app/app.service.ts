@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core'
 import { CloudAppEventsService, CloudAppStoreService, InitData } from '@exlibris/exl-cloudapp-angular-lib'
 import * as _ from 'lodash'
-import { last } from 'rxjs/operators'
 import { COLUMNS_DEFINITIONS } from './requested-resources/column-definitions'  // Direct to avoid circular dependency
 import { ColumnOption } from './column-options'
 import { ConfigService } from './config/config.service'
@@ -79,18 +78,18 @@ export class AppService {
       // Start with the columns in the order they are from the app configuration,
       ...(
         (this.configService.config?.columnDefaults ?? [])
-        // ... minus any that aren't defined anymore
-        .filter(c => missingColumnDefinitions.has(c.code))
-        .map(c => {
-          let name = missingColumnDefinitions.get(c.code).name
-          missingColumnDefinitions.delete(c.code)
-          return { include: false, limit: 0, hiddenInApp: false, ...c, name }
-        })
+          // ... minus any that aren't defined anymore
+          .filter(c => missingColumnDefinitions.has(c.code))
+          .map(c => {
+            let name = missingColumnDefinitions.get(c.code).name
+            missingColumnDefinitions.delete(c.code)
+            return { include: false, limit: 0, hiddenInApp: false, ...c, name }
+          })
       ),
       // Add any columns not in the app configuration, in the order they appear in the column definitions
       ...(
         Array.from(missingColumnDefinitions.values())
-             .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
+          .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
       )
     ]
   }
@@ -108,6 +107,11 @@ export class AppService {
 
   set libraryCode(c) {
     this._libraryCode = c.trim()
+  }
+
+
+  get groupByLocation(): boolean {
+    return this.configService.groupByLocation
   }
 
 
@@ -147,18 +151,18 @@ export class AppService {
         // Start with the columns in the order they are from the last used options,
         ...(
           (lastUsedOptions?.columnOptions ?? [])
-          // ... minus any that aren't defined anymore
-          .filter(c => missingColumnDefinitions.has(c.code))
-          .map(c => {
-            let name = missingColumnDefinitions.get(c.code).name
-            missingColumnDefinitions.delete(c.code)
-            return { include: false, limit: 0, hiddenInApp: false, ...c, name }
-          })
+            // ... minus any that aren't defined anymore
+            .filter(c => missingColumnDefinitions.has(c.code))
+            .map(c => {
+              let name = missingColumnDefinitions.get(c.code).name
+              missingColumnDefinitions.delete(c.code)
+              return { include: false, limit: 0, hiddenInApp: false, ...c, name }
+            })
         ),
         // Add any columns not in the app configuration, in the order they appear in the column definitions
         ...(
           Array.from(missingColumnDefinitions.values())
-               .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
+            .map(c => ({ code: c.code, name: c.name, include: false, limit: 0, hiddenInApp: false }))
         )
       ]
     } else {
@@ -168,15 +172,15 @@ export class AppService {
 
 
   async saveLastUsed() {
-    let lastUsedOptions =  {
+    let lastUsedOptions = {
       libraryCode: this.libraryCode,
       circDeskCode: this.circDeskCode,
       columnOptions: (
         this.columnOptionsAreCustomised
-        ? this.columnOptions.map(c => ({
+          ? this.columnOptions.map(c => ({
             code: c.code, include: c.include, limit: c.limit, hiddenInApp: c.hiddenInApp
           }))
-        : undefined
+          : undefined
       )
     }
     if (lastUsedOptions.columnOptions) {

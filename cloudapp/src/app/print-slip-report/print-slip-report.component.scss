@@ -6,12 +6,50 @@
 table,
 th,
 td {
-  border: 1px solid;
   border-collapse: collapse;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+
+table,
+th:first-child,
+td:first-child {
+  border-left: none;
 }
 
 
 th,
 td {
   padding: .2rem .1rem;
+}
+
+
+td:first-child {
+  font-weight: 500;
+}
+
+
+thead {
+  font-weight: 500;
+  line-height: 150%;
+}
+
+
+@media screen {
+  table {
+    margin-bottom: 20px;
+  }
+}
+
+
+@media print {
+  div table {
+    page-break-after: always;
+  }
+
+
+  div:last-child table {
+    page-break-after: avoid;
+  }
 }

@@ -20,6 +20,7 @@ export class ConfigComponent implements OnInit {
   form = this.fb.group({  // Initialised properly in restoreConfig()
     circDeskCodeDefaults: [ [] ],
     columnOptionsList: [ [] ],
+    groupByLocation: [ [] ],
   })
   ready = false
   saving = false
@@ -52,6 +53,11 @@ export class ConfigComponent implements OnInit {
   }
 
 
+  get groupByLocation(): FormControl {
+    return this.form.get('groupByLocation') as FormControl
+  }
+
+
   async onSave() {
     try {
       this.saving = true
@@ -71,6 +77,7 @@ export class ConfigComponent implements OnInit {
     this.form.setValue({
       circDeskCodeDefaults: this.restoreCircDeskCodeDefaults(),
       columnOptionsList: this.restoreColumnOptionsList(),
+      groupByLocation: this.restoreGroupByLocation(),
     })
   }
 
@@ -112,10 +119,15 @@ export class ConfigComponent implements OnInit {
     return columnOptions
   }
 
+  private restoreGroupByLocation(): boolean {
+    return this.configService.groupByLocation || false;
+  }
+
 
   async saveConfig() {
     this.saveCircDeskCodeDefaults()
     this.saveColumnOptionsList()
+    this.saveGroupByLocation()
     await this.configService.save()
   }
 
@@ -135,6 +147,11 @@ export class ConfigComponent implements OnInit {
         code: c.code, include: c.include, limit: c.limit, hiddenInApp: c.hiddenInApp,
       }))
     )
+  }
+
+
+  private saveGroupByLocation() {
+    this.configService.groupByLocation = this.form.value.groupByLocation
   }
 
 }

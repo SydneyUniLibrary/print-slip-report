@@ -223,7 +223,6 @@ class Page {
         return resp?.total_record_count ?? 0
       } catch (err) {
         throw InvalidParameterError.from(err) ?? err
-
       }
     }
   }
@@ -256,8 +255,17 @@ class Page {
       library: this.appService.libraryCode,
       circ_desk: this.appService.circDeskCode,
       limit: this.pageSize,
-      offset: this.offset
+      offset: this.offset,
+      order_by: this.getOrderBy()
     }
+  }
+
+  
+  private getOrderBy() {
+    if (this.appService.groupByLocation) {
+      return 'location'
+    }
+    return 'call_number'
   }
 
 }

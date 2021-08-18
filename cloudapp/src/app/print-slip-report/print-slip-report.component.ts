@@ -19,7 +19,7 @@ import { PrintSlipReportService } from './print-slip-report.service'
 export class PrintSlipReportComponent implements OnDestroy, OnInit {
 
   loading = true
-  mappedRequestedResources: string[][]
+  tables: Map<string, TableRow[]>
   printAlertTimoutId?: number
   progress?: number
   progressChangeSub?: Subscription
@@ -29,7 +29,6 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
     private alert: AlertService,
     private appService: AppService,
     @Inject(DOCUMENT) private document: Document,
-    private platform: Platform,
     private printSlipReportService: PrintSlipReportService,
     private renderer: Renderer2,
     private zone: NgZone,
@@ -56,14 +55,14 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
         (async () => this.mapRequestedResources(requestedResources))(),
         new Promise(resolve => setTimeout(resolve, 500)),
       ])
-      this.mappedRequestedResources = x[0] as string[][]
+      this.tables = x[0] as Map<string, TableRow[]>
       if (requestedResources.length > 0) {
         this.print()
       }
-    /*
-    } catch (err) {
-      MainComponent will take care of surfacing the error in the UI via PrintSlipReportService's error event.
-    */
+      /*
+      } catch (err) {
+        MainComponent will take care of surfacing the error in the UI via PrintSlipReportService's error event.
+      */
     } finally {
       this.loading = false
     }
@@ -87,33 +86,47 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
   }
 
 
-  private mapRequestedResources(requestedResource: RequestedResource[]): string[][] {
-    return _.flatMap(
+  private mapRequestedResources(requestedResource: RequestedResource[]): Map<string, TableRow[]> {
+    let tableRows = _.flatMap(
       requestedResource.map(requestedResource =>
         this.mapColumns(requestedResource)
       )
     )
+    let map: Map<string, TableRow[]> = new Map()
+    tableRows.forEach((row) => {
+      if (!map.has(row.group)) {
+        map.set(row.group, [])
+      }
+      map.get(row.group).push(row)
+      return map;
+    })
+    return map
   }
 
 
-  private mapColumns(requestedResource: RequestedResource): Array<string[] | undefined> {
+  private mapColumns(requestedResource: RequestedResource): TableRow[] | undefined {
     let resource_metadata = requestedResource.resource_metadata
     let location = requestedResource.location
-    return requestedResource.request.map(request =>
-      this.includedColumnOptions.map(col => {
+    return requestedResource.request.map(request => {
+      let values = this.includedColumnOptions.map(col => {
         try {
           let v = COLUMNS_DEFINITIONS.get(col.code).mapFn({ resource_metadata, location, request })
           return (
             (col.limit && v.length > col.limit)
-            ? `${v.substring(0, col.limit)}…`
-            : v
+              ? `${v.substring(0, col.limit)}…`
+              : v
           )
         } catch (err) {
           console.error(`Failed to mapped column ${ col.name } for `, requestedResource, err)
           return undefined
         }
       })
-    )
+      let group = 'none'
+      if (this.appService.groupByLocation) {
+        group = location.shelving_location
+      }
+      return new TableRow(values, group)
+    })
   }
 
 
@@ -169,4 +182,15 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
     return navigator.platform.indexOf('Mac') > -1 ? '⌘P' : 'Ctrl+P'
   }
 
+}
+
+
+class TableRow {
+  values: string[]
+  group: string
+
+  constructor(values: string[], group: string) {
+    this.values = values
+    this.group = group
+  }
 }
