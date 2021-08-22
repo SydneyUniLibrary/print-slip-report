@@ -7,6 +7,7 @@ import * as _ from 'lodash'
 export type PrintSlipReportConfig = {
   libraryConfigs: PrintSlipReportLibraryConfig[]
   columnDefaults: PrintSlipReportColumnConfig[]
+  groupByLocation: boolean
 }
 
 export type PrintSlipReportLibraryConfig = {
@@ -56,9 +57,19 @@ export class ConfigService {
   }
 
 
+  get groupByLocation() {
+    return this.config?.groupByLocation
+  }
+
+
+  set groupByLocation(v) {
+    this.config = { ...this.config, groupByLocation: v }
+  }
+
+  
   async load() {
     if (!this.loaded) {
-      this.config = { columnDefaults: [], libraryConfigs: [] }
+      this.config = { columnDefaults: [], libraryConfigs: [] , groupByLocation: false }
       try {
         let loadedConfig: PrintSlipReportConfig | { } = await this.configService.get().toPromise()
         _.defaultsDeep(loadedConfig, { columnDefaults: [ { include: false, limit: 0 } ] })

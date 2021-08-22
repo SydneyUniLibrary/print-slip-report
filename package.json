@@ -11,25 +11,26 @@
     "start": "eca start"
   },
   "dependencies": {
-    "@angular/common": "^9.1.0",
-    "@angular/core": "^9.1.0",
-    "@angular/forms": "^9.1.0",
-    "@angular/material": "^9.2.0",
-    "@angular/router": "^9.1.0",
-    "@exlibris/exl-cloudapp-angular-lib": "^1.0.0",
-    "@exlibris/exl-cloudapp-base": "^1.0.0",
-    "@ngx-translate/core": "^12.1.0",
-    "file-saver": "^2.0.5",
-    "lodash": "^4.17.15",
+    "@angular/common": "^11.0.0",
+    "@angular/core": "^11.0.0",
+    "@angular/forms": "^11.0.0",
+    "@angular/material": "^11.0.0",
+    "@angular/router": "^11.0.0",
+    "@angular/animations": "^11.0.0",
+    "@exlibris/exl-cloudapp-angular-lib": "^1.4.0",
+    "@exlibris/exl-cloudapp-base": "^1.4.0",
+    "@ngx-translate/core": "^13.0.0",
+    "file-saver": "^2.0.0",
+    "lodash": "^4.0.0",
     "lru-cache": "^6.0.0",
-    "ngx-toastr": "^12.0.0",
-    "rxjs": "^6.6.7",
-    "sheetjs-style": "^0.15.6",
+    "rxjs": "^6.0.0",
+    "sheetjs-style": "^0.15.0",
     "uuid": "^8.0.0"
   },
   "devDependencies": {
-    "@types/lodash": "^4.14.168",
-    "@types/lru-cache": "^5.1.0",
-    "@types/uuid": "^8.3.0"
+    "@angular-devkit/build-angular": "0.1102.14",
+    "@types/lodash": "^4.0.0",
+    "@types/lru-cache": "^5.0.0",
+    "@types/uuid": "^8.0.0"
   }
 }
