@@ -8,6 +8,7 @@ export type PrintSlipReportConfig = {
   libraryConfigs: PrintSlipReportLibraryConfig[]
   columnDefaults: PrintSlipReportColumnConfig[]
   groupByLocation: boolean
+  sortByFirstColumn: boolean
 }
 
 export type PrintSlipReportLibraryConfig = {
@@ -66,10 +67,20 @@ export class ConfigService {
     this.config = { ...this.config, groupByLocation: v }
   }
 
+
+  get sortByFirstColumn() {
+    return this.config?.sortByFirstColumn
+  }
+
+
+  set sortByFirstColumn(v) {
+    this.config = { ...this.config, sortByFirstColumn: v }
+  }
+
   
   async load() {
     if (!this.loaded) {
-      this.config = { columnDefaults: [], libraryConfigs: [] , groupByLocation: false }
+      this.config = { columnDefaults: [], libraryConfigs: [] , groupByLocation: false, sortByFirstColumn: false }
       try {
         let loadedConfig: PrintSlipReportConfig | { } = await this.configService.get().toPromise()
         _.defaultsDeep(loadedConfig, { columnDefaults: [ { include: false, limit: 0 } ] })

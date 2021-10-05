@@ -115,6 +115,11 @@ export class AppService {
   }
 
 
+  get sortByFirstColumn(): boolean {
+    return this.configService.sortByFirstColumn
+  }
+
+
   popLastSlipReportError(): SlipReportError | undefined {
     let e = this.lastSlipReportError
     this.lastSlipReportError = undefined

@@ -92,15 +92,25 @@ export class PrintSlipReportComponent implements OnDestroy, OnInit {
         this.mapColumns(requestedResource)
       )
     )
-    let map: Map<string, TableRow[]> = new Map()
+    let groupedTables: Map<string, TableRow[]> = new Map()
     tableRows.forEach((row) => {
-      if (!map.has(row.group)) {
-        map.set(row.group, [])
+      if (!groupedTables.has(row.group)) {
+        groupedTables.set(row.group, [])
       }
-      map.get(row.group).push(row)
-      return map;
+      groupedTables.get(row.group).push(row)
+      return groupedTables;
     })
-    return map
+    if (this.appService.sortByFirstColumn) {
+      groupedTables.forEach((tableRowGroup) => {
+        tableRowGroup = tableRowGroup.sort((tableRow1, tableRow2) => {
+          if (tableRow1.values.length < 1) {
+            return 0
+          }
+          return ('' + tableRow1.values[0]).localeCompare(tableRow2.values[0])
+        });
+      })
+    }
+    return groupedTables
   }
 
 

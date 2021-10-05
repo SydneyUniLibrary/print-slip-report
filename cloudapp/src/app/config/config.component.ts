@@ -21,6 +21,7 @@ export class ConfigComponent implements OnInit {
     circDeskCodeDefaults: [ [] ],
     columnOptionsList: [ [] ],
     groupByLocation: [ [] ],
+    sortByFirstColumn: [ [] ],
   })
   ready = false
   saving = false
@@ -58,6 +59,11 @@ export class ConfigComponent implements OnInit {
   }
 
 
+  get sortByFirstColumn(): FormControl {
+    return this.form.get('sortByFirstColumn') as FormControl
+  }
+
+
   async onSave() {
     try {
       this.saving = true
@@ -78,6 +84,7 @@ export class ConfigComponent implements OnInit {
       circDeskCodeDefaults: this.restoreCircDeskCodeDefaults(),
       columnOptionsList: this.restoreColumnOptionsList(),
       groupByLocation: this.restoreGroupByLocation(),
+      sortByFirstColumn: this.restoreSortByFirstColumn(),
     })
   }
 
@@ -119,8 +126,14 @@ export class ConfigComponent implements OnInit {
     return columnOptions
   }
 
+
   private restoreGroupByLocation(): boolean {
     return this.configService.groupByLocation || false;
+  }
+
+
+  private restoreSortByFirstColumn(): boolean {
+    return this.configService.sortByFirstColumn || false;
   }
 
 
@@ -128,6 +141,7 @@ export class ConfigComponent implements OnInit {
     this.saveCircDeskCodeDefaults()
     this.saveColumnOptionsList()
     this.saveGroupByLocation()
+    this.saveSortByFirstColumn()
     await this.configService.save()
   }
 
@@ -152,6 +166,11 @@ export class ConfigComponent implements OnInit {
 
   private saveGroupByLocation() {
     this.configService.groupByLocation = this.form.value.groupByLocation
+  }
+
+
+  private saveSortByFirstColumn() {
+    this.configService.sortByFirstColumn = this.form.value.sortByFirstColumn
   }
 
 }
